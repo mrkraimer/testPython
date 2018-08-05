@@ -1,0 +1,30 @@
+provider ca number of channels 10000
+seconds to create channels 0.0769898891449
+seconds for first get 271.361615896
+seconds for put 1.1806139946
+seconds for second get 1.36613988876
+
+provider pva number of channels 10000
+seconds to create channels 0.0756208896637
+seconds for first get 2329.770679
+seconds for put 4.15195012093
+seconds for second get 5.22075510025
+error X35 X35 connection state DISCONNECTED
+....
+
+provider ca number of channels 50000
+seconds to create channels 0.275658845901
+seconds for first get 1357.26623011
+seconds for put 6.18291687965
+seconds for second get 5.74782395363
+
+NOTE The following is for 20000 instead of 50000. I lost patience waiting
+BUT it is about twice the time for 10000 channels
+provider pva number of channels 20000
+seconds to create channels 0.149340867996
+seconds for first get 4359.78711581
+seconds for put 8.19511389732
+seconds for second get 8.56921291351
+error X116 X116 connection state DISCONNECTED
+...
+
