@@ -1,13 +1,11 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
-import sys, time, logging
-
+import sys, time
 from p4p.client.thread import Context
-
 import numpy as np
 
 nSinceLastReport = 0
-lasttime = time.time()
+lasttime = time.time() - 2
 
 def mycallback(arg):
     global nSinceLastReport
@@ -19,26 +17,16 @@ def mycallback(arg):
     if(timediff<1) : return
     events = nSinceLastReport/timediff
     sz = arr.size
-    print("size ",sz)
     if sz<10 :
-        print("size is %d" % (sz))
         print(arr)
     events = nSinceLastReport/timediff
     elements = events*sz/1e6
-    print("monitors/sec ",events," megaElements/sec ",elements," timediff ",timediff)
+    print("monitors/sec ",events," megaElements/sec ",elements)
     lasttime = timenow
     nSinceLastReport = 0
 
-print("Create Context")
 with Context('pva') as ctxt:
-    print("Subscribe to", sys.argv[1])
     S = ctxt.monitor(sys.argv[1], mycallback)
-    print("Waiting")
-    try:
-        time.sleep(2)
-        input("enter something")
-    except KeyboardInterrupt:
-        pass
-    print("Close subscription")
+    input("enter something")
     S.close()
 print('Exiting')
