@@ -9,7 +9,8 @@ This is the code that is used to compare the python performance.
 
 To run the test, in one window, run:
 
->mrk> pwd
+```
+mrk> pwd
 /home/epicsv4/masterCPP/exampleCPP/arrayPerformance
 mrk> bin/linux-x86_64/arrayPerformanceMain
 arrayPerformance 10000000 0.0001 1 2
@@ -38,11 +39,12 @@ exarrayPerformance value 103 time 1.02836 Iterations/sec 15.5588 megaElements/se
  monitors/sec 16 first 102 last 102 changed {1, 4} overrun {} megaElements/sec 156.465
 itarrayPerformance value 120 time 1.04606 Iterations/sec 16.2514 megaElements/sec 162.514
  monitors/sec 17 first 119 last 119 changed {1, 4} overrun {} megaElements/sec 160.746
-
+```
 
 In another window run:
 
->mrk> pwd
+```
+mrk> pwd
 /home/epicsv4/masterCPP/exampleCPP/arrayPerformance
 mrk> bin/linux-x86_64/longArrayMonitorMain
 Type exit to stop: 
@@ -53,6 +55,7 @@ Type exit to stop:
  monitors/sec 10 first 183 last 183 changed {1, 3, 4} overrun {} megaElements/sec 98.9655
  monitors/sec 9 first 194 last 194 changed {1, 4} overrun {} megaElements/sec 83.1417
  monitors/sec 11 first 205 last 205 changed {1, 4} overrun {} megaElements/sec 107.873
+```
 
 This is what can be used to compare the python performance.
 
