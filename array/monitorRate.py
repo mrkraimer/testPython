@@ -4,19 +4,31 @@ import sys,time
 import numpy as np
 from pvaccess import *
 
+nargs = len(sys.argv)
+if nargs<2 :
+    print("args: channelName numpy=True")
+    exit()
+channelName = sys.argv[1]
+useNumpy = True
+if nargs>2 : useNumpy = sys.argv[2]
+
 nSinceLastReport = 0
 lasttime = time.time() -2
 
 def mycallback(arg):
     global nSinceLastReport
     global lasttime
-    arr = arg['value']
+    global useNumpy
+    if useNumpy!='False' :
+        arr = arg['value']
+    else :
+        arr = arg.getScalarArray('value')
     nSinceLastReport = nSinceLastReport +1
     timenow = time.time()
     timediff = timenow - lasttime
     if(timediff<1) : return
     events = nSinceLastReport/timediff
-    sz = arr.size
+    sz = len(arr)   ## this works if ndarray is 1d array
     if sz<10 :
         print(arr)
     events = nSinceLastReport/timediff
