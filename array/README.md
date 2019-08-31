@@ -3,8 +3,8 @@
 **testPvaPy/array** has python code that demonstrates **pvaPy** performance when the client uses numpy support.
 
 From the early days of EPICS V4 (2013) **exampleCPP** implemented **arrayPerformance**,
-which was used to measure the performance of arrays with may elements.
-Most of the examples shown below were for a int64 array with 10 megaElements, i.e. 80 megaBytes.
+which was used to measure the performance of large arrays.
+Most of the examples shown below were for an int64 array with 10 megaElements, i.e. 80 megaBytes.
 
 A summary of the results below is:
 
@@ -15,8 +15,14 @@ arrayPerformanceMain longArrayMonitorMain monitorRate.py monitorRateP4P.py monit
 
 Notes:
 
-* All results are megaElements/second. This multiply 8 to get megaBytes/second.
-* The last coluumn shows that not using numpy.ndarray causes a significent performance loss.
+* All results are megaElements/second. Thus multiply by 8 to get megaBytes/second.
+* The last coluumn shows that not using numpy causes a significent performance loss.
+
+There is also an example **putArrayFast.py**.
+This is a python client that sends arrays to a server.
+It shows that the performance is about 1/2 the rate of what a server generating the arrays provides.
+But since this involves an extra transfer of each array over the network it is what is expected.
+It does show that using python with numpy support provides good performance.
 
 ## exampleCPP/arrayPerformance
 
