@@ -113,7 +113,7 @@ monitors/sec  6.814508991932873  megaElements/sec  68.14508991932874
 ### not using ndarray: arr = arg.getScalarArray('value')
 
 ```
-mrk> python monitorRate.py arrayPerformance False
+mrk> python monitorRate.py arrayPerformance false
 monitors/sec  0.878050108031692  megaElements/sec  8.78050108031692
 monitors/sec  0.8107910516342132  megaElements/sec  8.107910516342132
 monitors/sec  0.8494896140510062  megaElements/sec  8.494896140510061
