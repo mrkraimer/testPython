@@ -6,10 +6,10 @@ from pvaccess import *
 
 nargs = len(sys.argv)
 if nargs<2 :
-    print("args: channelName numpy=True")
+    print("args: channelName numpy=true")
     exit()
 channelName = sys.argv[1]
-useNumpy = True
+useNumpy = "true"
 if nargs>2 : useNumpy = sys.argv[2]
 
 nSinceLastReport = 0
@@ -19,7 +19,7 @@ def mycallback(arg):
     global nSinceLastReport
     global lasttime
     global useNumpy
-    if useNumpy!='False' :
+    if useNumpy=='true' :
         arr = arg['value']
     else :
         arr = arg.getScalarArray('value')
