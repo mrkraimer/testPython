@@ -6,20 +6,21 @@
 **testPvaPy/array** has python code that demonstrates **pvaPy** performance when the client uses numpy support.
 
 From the early days of EPICS V4 (2013) **exampleCPP** implemented **arrayPerformance**,
-which was used to measure the performance of large arrays.
+which was used to measure the monitor performance of large arrays.
 Most of the examples shown below were for an int64 array with 10 megaElements, i.e. 80 megaBytes.
 
 A summary of the results below is:
 
 ```
 arrayPerformanceMain longArrayMonitorMain monitorRate.py monitorRateP4P.py monitorRate.py(getScalarArray)
-                 164                   94            83                43             8
+                 76                   83            83                43             8
 ```
 
 Notes:
 
 * All results are megaElements/second. Thus multiply by 8 to get megaBytes/second.
 * The last coluumn shows that not using numpy causes a significent performance loss.
+* arrayPerformanceMain was measured while longArrayMonitorMain was running and is the monitor/sec value.
 
 There is also an example **putArrayFast.py**.
 This is a python client that sends arrays to a server.
@@ -40,18 +41,18 @@ mrk> pwd
 mrk> bin/linux-x86_64/arrayPerformanceMain
 arrayPerformance 10000000 0.0001 1 2
 ...
-arrayPerformance value 36 time 1.02704 Iterations/sec 16.5524 megaElements/sec 165.524
- monitors/sec 17 first 35 last 35 changed {1, 4} overrun {} megaElements/sec 165.519
-arrayPerformance value 51 time 1.01022 Iterations/sec 14.8482 megaElements/sec 148.482
- monitors/sec 14 first 50 last 50 changed {1, 4} overrun {} megaElements/sec 138.453
-arrayPerformance value 68 time 1.02382 Iterations/sec 16.6045 megaElements/sec 166.045
- monitors/sec 17 first 67 last 67 changed {1, 4} overrun {} megaElements/sec 165.794
-arrayPerformance value 87 time 1.0095 Iterations/sec 18.8211 megaElements/sec 188.211
- monitors/sec 19 first 86 last 86 changed {1, 4} overrun {} megaElements/sec 186.169
-arrayPerformance value 103 time 1.02836 Iterations/sec 15.5588 megaElements/sec 155.588
- monitors/sec 16 first 102 last 102 changed {1, 4} overrun {} megaElements/sec 156.465
-arrayPerformance value 120 time 1.04606 Iterations/sec 16.2514 megaElements/sec 162.514
- monitors/sec 17 first 119 last 119 changed {1, 4} overrun {} megaElements/sec 160.746
+arrayPerformance value 630 time 1.03036 Iterations/sec 11.6464 megaElements/sec 116.464
+ monitors/sec 7 first 636 last 636 changed {1, 4} overrun {1, 4} megaElements/sec 66.1776
+arrayPerformance value 642 time 1.0302 Iterations/sec 11.6483 megaElements/sec 116.483
+ monitors/sec 9 first 649 last 649 changed {1, 4} overrun {} megaElements/sec 83.9152
+arrayPerformance value 654 time 1.0109 Iterations/sec 11.8706 megaElements/sec 118.706
+ monitors/sec 9 first 661 last 661 changed {1, 4} overrun {1, 4} megaElements/sec 86.1056
+arrayPerformance value 667 time 1.08081 Iterations/sec 12.028 megaElements/sec 120.28
+ monitors/sec 9 first 675 last 675 changed {1, 4} overrun {1, 4} megaElements/sec 79.0863
+arrayPerformance value 680 time 1.03192 Iterations/sec 12.5979 megaElements/sec 125.979
+ monitors/sec 8 first 688 last 688 changed {1, 4} overrun {1, 4} megaElements/sec 73.4352
+arrayPerformance value 692 time 1.04915 Iterations/sec 11.4379 megaElements/sec 114.379
+ monitors/sec 8 first 701 last 701 changed {1, 4} overrun {1, 4} megaElements/sec 69.3863
 ```
 
 In another window run:
@@ -60,13 +61,13 @@ In another window run:
 mrk> pwd
 /home/epicsv4/masterCPP/exampleCPP/arrayPerformance
 mrk> bin/linux-x86_64/longArrayMonitorMain
-Type exit to stop: 
- monitors/sec 8 first 138 last 138 changed {1, 4} overrun {} megaElements/sec 87.309
- monitors/sec 9 first 148 last 148 changed {1, 4} overrun {} megaElements/sec 89.2977
- monitors/sec 10 first 160 last 160 changed {1, 4} overrun {} megaElements/sec 95.3641
- monitors/sec 12 first 172 last 172 changed {1, 3, 4} overrun {} megaElements/sec 109.662
- monitors/sec 10 first 183 last 183 changed {1, 3, 4} overrun {} megaElements/sec 98.9655
- monitors/sec 9 first 194 last 194 changed {1, 4} overrun {} megaElements/sec 83.1417
+ monitors/sec 10 first 646 last 646 changed {1, 4} overrun {1, 4} megaElements/sec 92.3162
+ monitors/sec 7 first 659 last 659 changed {1, 4} overrun {1, 4} megaElements/sec 67.2341
+ monitors/sec 10 first 673 last 673 changed {1, 4} overrun {1, 4} megaElements/sec 85.7956
+ monitors/sec 9 first 686 last 686 changed {1, 4} overrun {} megaElements/sec 83.7509
+ monitors/sec 11 first 698 last 698 changed {1, 4} overrun {} megaElements/sec 105.761
+ monitors/sec 10 first 711 last 711 changed {1, 4} overrun {1, 4} megaElements/sec 92.1672
+
 ```
 
 This is what can be used to compare the python performance.
