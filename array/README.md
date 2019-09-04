@@ -30,7 +30,7 @@ It does show that using python with numpy support provides good performance.
 
 ## exampleCPP/arrayPerformance
 
-**exampleCPP/arrayPerformance** is C++ code that demonstrates perforamnce for large arrays.
+**exampleCPP/arrayPerformance** is C++ code that measures performance for large arrays.
 This is the code that is used to compare the python performance.
 
 To run the test, in one window, run:
