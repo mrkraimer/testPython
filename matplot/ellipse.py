@@ -10,11 +10,10 @@ max = 1.0
 npts = 1000
 inc = (max-min)/npts
 t = np.arange(min, max, inc)
-m = 5
-n = 3
-x = np.cos(m*2*np.pi*t)
-y = np.sin(n*2*np.pi*t)
-
+a = 2.0
+b = 3.0
+x = a*np.cos(2*np.pi*t)
+y = b*np.sin(2*np.pi*t)
 chan = Channel("x")
 pv = chan.get("value")
 arr = pv['value']
