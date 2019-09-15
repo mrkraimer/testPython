@@ -5,7 +5,7 @@
 
 **testPvaPy/matplot** has python code that
 
-* calls addRecord to create two new scalar array record named **x** and **y**
+* calls addRecord to create two new scalar array records named **x** and **y**
 * **circle.py**, **ellipse.py**, **cardioid.py**, and **lissajous.py** all put to **x** and **y**
 * **plot.py** generates a plot
 
