@@ -11,5 +11,6 @@ chan = Channel("y")
 pv = chan.get("value")
 y = pv['value']
 plt.plot(x, y)
-plt.legend()
+plt.xlabel("x")
+plt.ylabel("y")
 plt.show()
