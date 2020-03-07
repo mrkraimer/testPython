@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from Dynamic_Viewer import ChannelStructure
+from Dynamic_Viewer import ChannelStructure,Dynamic_Channel_Provider
 from pvaccess import *
 import numpy as np
 import matplotlib.pyplot as plt
@@ -14,12 +14,13 @@ a = 3.0
 b = 2.0
 x = a*np.cos(2*np.pi*t)
 y = b*np.sin(2*np.pi*t)
-chan = Channel('dynamicRecord')
 struct = ChannelStructure()
 struct.putName(str('ellipse'))
 struct.putX(x)
 struct.putY(y)
 struct.computeLimits()
+provider = Dynamic_Channel_Provider()
+chan = Channel(provider.getChannelName())
 for ind in range(npts) :
     xarr = np.empty([ind])
     yarr = np.empty([ind])

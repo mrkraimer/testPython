@@ -31,6 +31,7 @@ class ChannelStructure(object) :
             ,'ymin':DOUBLE\
             ,'ymax':DOUBLE\
         })
+
     def set(self,data) :
         self.data = data
     def get(self) : 
@@ -92,11 +93,13 @@ class Dynamic_Channel_Provider(object) :
     '''
 
     def __init__(self) :
-        self.channelName = None
-    def setChannelName(self,channelName) :
-        self.channelName = channelName
+        self.channelName = str('dynamicRecord')
     def getChannelName(self) :
-        return self.channelName
+        name = os.getenv('DYNAMIC_VIEWER_CHANNELNAME')
+        if name== None : return self.channelName
+        return str(name)
+    def setChannelName(self,name) :
+        self.channelName = str(name)
     def start(self) :
         ''' called to start monitoring.'''
         raise Exception('derived class must implement NTNDA_Channel_Provider.start')
@@ -172,31 +175,25 @@ class Dynamic_Viewer(QWidget) :
         self.stopButton.setEnabled(False)
         self.stopButton.clicked.connect(self.stopEvent)
         self.stopButton.setFixedWidth(40)
-
-        self.providerNameLabel = QLabel("providerName:")
-        self.providerNameText = QLineEdit()
-        self.providerNameText.setEnabled(False)
-        self.providerNameText.setText(self.provider.getChannelName())
+        self.channelNameLabel = QLabel("channelName:")
+        self.channelNameText = QLineEdit()
+        self.channelNameText.setEnabled(True)
+        self.channelNameText.setText(self.provider.getChannelName())
+        self.channelNameText.editingFinished.connect(self.channelNameEvent)
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0);
         box.addWidget(self.startButton)
         box.addWidget(self.stopButton)
-        box.addWidget(self.providerNameLabel)
-        box.addWidget(self.providerNameText)
+        box.addWidget(self.channelNameLabel)
+        box.addWidget(self.channelNameText)
         wid =  QWidget()
         wid.setLayout(box)
         self.firstRow = wid
 # second row
-        self.nxText = QLabel()
-        self.nxText.setFixedWidth(50)
-        self.nyText = QLabel()
-        self.nyText.setFixedWidth(50)
-        self.nzText = QLabel()
-        self.nzText.setFixedWidth(20)
-        self.dtype = None
-        self.dtypeText = QLabel()
-        self.dtypeText.setFixedWidth(50)
-
+        self.nptsText = QLabel()
+        self.nptsText.setFixedWidth(50)
+        self.providerNameText = QLabel()
+        self.providerNameText.setFixedWidth(100)
         self.clearButton = QPushButton('clear')
         self.clearButton.setEnabled(True)
         self.clearButton.clicked.connect(self.clearEvent)
@@ -206,24 +203,16 @@ class Dynamic_Viewer(QWidget) :
         self.statusText.setFixedWidth(200)
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0);
-        nxLabel = QLabel("nx:")
-        nxLabel.setFixedWidth(20)
-        self.nxText.setText('0')
-        box.addWidget(nxLabel)
-        box.addWidget(self.nxText)
-        nyLabel = QLabel("ny:")
-        nyLabel.setFixedWidth(20)
-        self.nyText.setText('0')
-        box.addWidget(nyLabel)
-        box.addWidget(self.nyText)
-        nzLabel = QLabel("nz:")
-        nzLabel.setFixedWidth(20)
-        self.nzText.setText('0')
-        box.addWidget(nzLabel)
-        box.addWidget(self.nzText)
-        dtypeLabel = QLabel("dtype:")
-        box.addWidget(dtypeLabel)
-        box.addWidget(self.dtypeText)
+        nptsLabel = QLabel("npts:")
+        nptsLabel.setFixedWidth(50)
+        self.nptsText.setText('0')
+        providerNameLabel = QLabel("providerName:")
+        providerNameLabel.setFixedWidth(100)
+        self.providerNameText.setText('')
+        box.addWidget(nptsLabel)
+        box.addWidget(self.nptsText)
+        box.addWidget(providerNameLabel)
+        box.addWidget(self.providerNameText)
         box.addWidget(self.clearButton)
         statusLabel = QLabel("  status:")
         statusLabel.setFixedWidth(50)
@@ -258,6 +247,12 @@ class Dynamic_Viewer(QWidget) :
         self.statusText.setText('')
         self.statusText.setStyleSheet("background-color:white")
 
+    def channelNameEvent(self) :
+        try:
+            self.provider.setChannelName(self.channelNameText.text())
+        except Exception as error:
+            self.statusText.setText(str(error))
+
     def start(self) :
         self.provider.start()
         self.isStarted = True
@@ -279,11 +274,11 @@ class Dynamic_Viewer(QWidget) :
         value = arg.get("status")
         if value!=None :
             if value=="disconnected" :
-#               self.channelNameLabel.setStyleSheet("background-color:red")
+                self.channelNameLabel.setStyleSheet("background-color:red")
                 self.statusText.setText('disconnected')
                 return
             elif value=="connected" :
-#                    self.channelNameLabel.setStyleSheet("background-color:green")
+                self.channelNameLabel.setStyleSheet("background-color:green")
                 self.statusText.setText('connected')
                 return
             else :
@@ -294,14 +289,14 @@ class Dynamic_Viewer(QWidget) :
         if value==None :
              self.statusText.setText('bad callback')
              return
-        self.providerNameText.setText(value.getName())
         x = value.getX()
         y = value.getY()
         if len(x)!=len(y) :
             self.statusText.setText('x and y have different lengths')
             return
         npts = len(x)
-        
+        self.nptsText.setText(str(npts))
+        self.providerNameText.setText(str(value.getName()))
         pixarray = np.full((size,size),255,dtype="uint8")
         pixelLevels = (int(0),int(128))
         if len(x)==0 :

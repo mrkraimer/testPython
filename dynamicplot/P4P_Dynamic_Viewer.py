@@ -1,13 +1,4 @@
 #!/usr/bin/env python
-'''
-Copyright - See the COPYRIGHT that is included with this distribution.
-    Dynamic_Viewer is distributed subject to a Software License Agreement found
-    in file LICENSE that is included with this distribution.
-
-author Marty Kraimer
-    latest date 2020.03.02
-    original development started 2019.12
-'''
 
 from Dynamic_Viewer import Dynamic_Viewer,Dynamic_Channel_Provider
 from p4p.client.thread import Context
@@ -83,7 +74,7 @@ if __name__ == '__main__':
     nargs = len(sys.argv)
     if nargs>=2 :
         channelName = sys.argv[1]
-    p4pProvider.setChannelName(channelName)
+        p4pProvider.setChannelName(channelName)
     p4pProvider.viewer = Dynamic_Viewer(p4pProvider,"P4P")
     sys.exit(app.exec_())
 
