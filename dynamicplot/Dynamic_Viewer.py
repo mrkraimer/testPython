@@ -13,25 +13,21 @@ import ctypes
 import ctypes.util
 import os
 
-#from pvaccess import *
-from pvaccess import PvObject,DOUBLE,STRING
-
 size = int(600)
 
 class ChannelStructure(object) :
     ''' a class for the data a channel must provide'''
 
     def __init__(self) :
-        self.data = PvObject(\
-        {   'name':STRING\
-            ,'x':[DOUBLE]\
-            ,'y':[DOUBLE]\
-            ,'xmin':DOUBLE\
-            ,'xmax':DOUBLE\
-            ,'ymin':DOUBLE\
-            ,'ymax':DOUBLE\
-        })
-
+        self.data = \
+        {   'name':str("dynamicRecord")\
+            ,'x': np.zeros((0),dtype="float64")\
+            ,'y': np.zeros((0),dtype="float64")\
+            ,'xmin':float(0)
+            ,'xmax':float(0)\
+            ,'ymin':float(0)\
+            ,'ymax':float(0)\
+        }
     def set(self,data) :
         self.data = data
     def get(self) : 
