@@ -1,9 +1,9 @@
-# testPvaPy/array
+# testPython/array
 
 **Author** Marty Kraimer
 **Date** 2019.09.04
 
-**testPvaPy/array** has python code that demonstrates **pvaPy** performance when the client uses numpy support.
+**testPython/array** has python code that demonstrates **pvaPy** performance when the client uses numpy support.
 
 From the early days of EPICS V4 (2013) **exampleCPP** implemented **arrayPerformance**,
 which was used to measure the monitor performance of large arrays.
@@ -73,7 +73,7 @@ mrk> bin/linux-x86_64/longArrayMonitorMain
 This is what can be used to compare the python performance.
 
 
-## testPvaPy/array/monitorRate.py
+## testPython/array/monitorRate.py
 
 ### using ndarray: arr = arg['value']
 
@@ -89,7 +89,7 @@ monitors/sec  9.203942969533294  megaElements/sec  92.03942969533294
 ```
 
 
-## testPvaPy/array/monitorRateP4P.py
+## testPython/array/monitorRateP4P.py
 
 
 ```
@@ -123,7 +123,7 @@ monitors/sec  0.8687278367738523  megaElements/sec  8.687278367738523
 
 ```
 mrk> pwd
-/home/epicsv4/masterCPP/testPvaPy/array
+/home/epicsv4/masterCPP/testPython/array
 mrk> python putArrayFast.py
 must supply three args: channelName numElements sleepTime
 mrk> python putArrayFast.py PVRlongArray 10000000 .0001

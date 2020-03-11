@@ -1,6 +1,6 @@
-# testPvaPy
+# testPython
 
-This contains code for testing pvaPy
+This contains code for testing pvaPy and p4p
 
 ## testpath
 
@@ -27,14 +27,14 @@ This issues monitors on up to 50000 channels and allows the user to specify the 
 Examples are:
 
       mrk> pwd
-      /home/epicsv4/masterCPP/testPvaPy/examples
+      /home/epicsv4/masterCPP/testPython/examples
       mrk> source ../setpath 
       mrk> python monitorN.py 50000 pva
 
 and
 
       mrk> pwd
-      /home/epicsv4/masterCPP/testPvaPy/examples
+      /home/epicsv4/masterCPP/testPython/examples
       mrk> source ../setpath 
       mrk> python monitorN.py 50000 ca
 
@@ -49,14 +49,14 @@ Note that if the monitors are not issued before the put and get, then each put c
 Examples are:
 
       mrk> pwd
-      /home/epicsv4/masterCPP/testPvaPy/examples
+      /home/epicsv4/masterCPP/testPython/examples
       mrk> source ../setpath 
       mrk> python monitorPutGetN.py 50000 pva
 
 and
 
       mrk> pwd
-      /home/epicsv4/masterCPP/testPvaPy/examples
+      /home/epicsv4/masterCPP/testPython/examples
       mrk> source ../setpath 
       mrk> python monitorPutGetN.py 50000 ca
 

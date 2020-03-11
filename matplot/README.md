@@ -1,9 +1,9 @@
-# testPvaPy/matplot
+# testPython/matplot
 
 **Author** Marty Kraimer
 **Date** 2019.09.15
 
-**testPvaPy/matplot** has python code that
+**testPython/matplot** has python code that
 
 * calls addRecord to create two new scalar array records named **x** and **y**
 * **circle.py**, **ellipse.py**, **cardioid.py**, and **lissajous.py** all put to **x** and **y**
