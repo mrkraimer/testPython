@@ -20,7 +20,7 @@ class ChannelStructure(object) :
 
     def __init__(self) :
         self.data = \
-        {   'name':str("dynamicRecord")\
+        {   'name':str("unknown")\
             ,'x': np.zeros((0),dtype="float64")\
             ,'y': np.zeros((0),dtype="float64")\
             ,'xmin':float(0)
@@ -89,11 +89,12 @@ class Dynamic_Channel_Provider(object) :
     '''
 
     def __init__(self) :
-        self.channelName = str('dynamicRecord')
+        self.channelName = None
     def getChannelName(self) :
+        if self.channelName!=None : return self.channelName
         name = os.getenv('DYNAMIC_VIEWER_CHANNELNAME')
-        if name== None : return self.channelName
-        return str(name)
+        if name== None : self.channelName = str('dynamicRecord')
+        return self.channelName
     def setChannelName(self,name) :
         self.channelName = str(name)
     def start(self) :
@@ -110,7 +111,7 @@ class Dynamic_Channel_Provider(object) :
         raise Exception('derived class must implement NTNDA_Channel_Provider.callback')
     
 
-class Image_Display(RawImageWidget,QWidget) :
+class Image_Display(RawImageWidget) :
     def __init__(self,parent=None, **kargs):
         RawImageWidget.__init__(self, parent=parent,scaled=False)
         super(QWidget, self).__init__(parent)
@@ -132,27 +133,6 @@ class Image_Display(RawImageWidget,QWidget) :
         self.setImage(image,levels=pixelLevels)
         self.update()
         
-    def mousePressEvent(self,event) :
-        self.mousePressPosition = QPoint(event.pos())
-        self.rubberBand.setGeometry(QRect(self.mousePressPosition,QSize()))
-        self.rubberBand.show()
-        self.mousePressed = True
-
-    def mouseMoveEvent(self,event) :
-        if not self.mousePressed : return
-        self.rubberBand.setGeometry(QRect(self.mousePressPosition,event.pos()).normalized())
-
-    def mouseReleaseEvent(self,event) :
-        if not self.mousePressed : return
-        self.mouseReleasePosition = QPoint(event.pos())
-        if not self.clientCallback==None : 
-            self.clientCallback(self.mousePressPosition,self.mouseReleasePosition)
-        self.rubberBand.hide()
-        self.mousePressed = False
-
-    def clientReleaseEvent(self,clientCallback) :
-        self.clientCallback = clientCallback
-
           
 class Dynamic_Viewer(QWidget) :
     def __init__(self,data_Provider, providerName,parent=None):

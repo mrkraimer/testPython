@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-from Dynamic_Viewer import ChannelStructure
+from Dynamic_Viewer import Dynamic_Channel_Provider
 from pvaccess import *
 import numpy as np
 from pvaccess import *
 
-name = ChannelStructure().getName()
+name = Dynamic_Channel_Provider().getChannelName()
 
 struct = PvObject(\
       {   'name':STRING\
