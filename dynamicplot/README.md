@@ -104,6 +104,27 @@ Then run any of the curve generating python modules. For example
 
 On the viewer a circle appears.
 
+The complete list of curve generation modules are:
+
+Using **P4P**
+
+* P4Pline.py
+* P4Pcircle.py
+* P4Pellipse.py
+* P4Pclover.py
+* P4Pheart.py
+* P4Plissajous.py
+
+Using **PVAPY**
+
+* PVAPYline.py
+* PVAPYcircle.py
+* PVAPYellipse.py
+* PVAPYclover.py
+* PVAPYheart.py
+* PVAPYlissajous.py
+
+
 ## Required python modules
 
 You must have python and pip installed.
@@ -130,6 +151,7 @@ The following is a list of modules required by PY_Dynamic_Viewer
 
 
 ## Theory of Operation
+
 
 
 ## Problems
