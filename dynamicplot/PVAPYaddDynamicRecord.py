@@ -19,6 +19,6 @@ structValue = PvObject({'value':struct})
 addRecordValue = PvObject({'argument':{'recordName':STRING,'union':()}})
 addRecordValue['argument.union'] = structValue;
 chan = Channel("PVRaddRecord")
-addRecordValue['argument.recordName'] = getDynamicRecordName();
+addRecordValue['argument.recordName'] = getDynamicRecordName()
 result = chan.putGet(addRecordValue,'putField(argument)getField(result)')
 print(result)
