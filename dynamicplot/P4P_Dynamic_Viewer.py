@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-from Dynamic_Viewer import Dynamic_Viewer,Dynamic_Channel_Provider
+from Dynamic_Viewer import Dynamic_Viewer
+from Dynamic_Common  import Dynamic_Channel_Provider,getDynamicRecordName,DynamicRecordData
 from p4p.client.thread import Context
 import sys
 from threading import Event
@@ -22,7 +23,7 @@ class P4PProvider(QObject,Dynamic_Channel_Provider) :
         self.firstCallback = True
         self.isClosed = False
         self.subscription = self.ctxt.monitor(
-              self.getChannelName(),
+              getDynamicRecordName(),
               self.p4pcallback,
               request='field()',
               notify_disconnect=True)
@@ -56,8 +57,16 @@ class P4PProvider(QObject,Dynamic_Channel_Provider) :
                 self.callback(arg)
                 self.firstCallback = False
                 self.callback(arg)
+            data = DynamicRecordData()
+            data.name = struct['name']
+            data.x = struct['x']
+            data.y = struct['y']
+            data.xmin = struct['xmin']
+            data.xmax = struct['xmax']
+            data.ymin = struct['ymin']
+            data.ymax = struct['ymax']
             arg = dict()
-            arg['value'] = struct
+            arg['value'] = data
             self.callback(arg)
             self.callbackDoneEvent.set()
             return

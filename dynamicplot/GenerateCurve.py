@@ -2,6 +2,9 @@
 
 import numpy as np
 
+def getCurveNames() :
+    return ("line","circle","ellipse","clover","heart","lissajous")
+
 def generateCurve(name) :
     if name==str("line") :
          npts = 1000

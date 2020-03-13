@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-from Dynamic_Viewer import Dynamic_Viewer,Dynamic_Channel_Provider
+from Dynamic_Viewer import Dynamic_Viewer
+from Dynamic_Common  import Dynamic_Channel_Provider,getDynamicRecordName,DynamicRecordData
 from pvaccess import *
 import sys
 from threading import Event
@@ -16,7 +17,7 @@ class PVAPYProvider(QObject,Dynamic_Channel_Provider) :
         self.callbackDoneEvent = Event()
 
     def start(self) :
-        self.channel = Channel(self.getChannelName())
+        self.channel = Channel(getDynamicRecordName())
         self.channel.monitor(self.pvapycallback,
               'field()')
     def stop(self) :
@@ -34,7 +35,16 @@ class PVAPYProvider(QObject,Dynamic_Channel_Provider) :
         struct = self.struct
         arg = dict()
         try :
-            arg['value'] = struct
+            data = DynamicRecordData()
+            data.name = struct['name']
+            data.x = struct['x']
+            data.y = struct['y']
+            data.xmin = struct['xmin']
+            data.xmax = struct['xmax']
+            data.ymin = struct['ymin']
+            data.ymax = struct['ymax']
+            arg = dict()
+            arg['value'] = data
             self.callback(arg)
             self.callbackDoneEvent.set()
             return
