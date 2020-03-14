@@ -3,7 +3,7 @@ from GenerateCurve import generateCurve,getCurveNames
 from Dynamic_Common import getDynamicRecordName,DynamicRecordData
 from pvaccess import *
 import numpy as np
-import sys
+import sys,time
 
 if __name__ == '__main__':
     nargs = len(sys.argv)
@@ -21,6 +21,7 @@ if __name__ == '__main__':
     data.x = x
     data.y = y
     data.computeLimits()
+    print('xmin=',data.xmin,' xmax=',data.xmax,' ymin=',data.ymin,' ymax=',data.ymax)
     putdata = PvObject(\
       {   'name':STRING\
           ,'xmin':DOUBLE\
@@ -35,6 +36,7 @@ if __name__ == '__main__':
     putdata['ymax'] = data.ymax
     chan.put(putdata)
     npts = len(x)
+    timestart = time.time()
     for ind in range(npts) :
         xarr = np.empty([ind])
         yarr = np.empty([ind])
@@ -45,3 +47,6 @@ if __name__ == '__main__':
         putdata['x'] = xarr
         putdata['y'] = yarr
         chan.put(putdata)
+    timenow = time.time()
+    timediff = timenow - timestart
+    print('putrate=',str(round(npts/timediff)),' per second')

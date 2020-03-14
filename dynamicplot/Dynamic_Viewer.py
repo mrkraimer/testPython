@@ -66,7 +66,7 @@ class Dynamic_Viewer(QWidget) :
         imageNameLabel.setFixedWidth(100)
         self.imageNameText = QLabel()
         self.imageNameText.setText('')
-        self.imageNameText.setFixedWidth(100)
+        self.imageNameText.setFixedWidth(80)
         self.nImages = 0
         imageRateLabel = QLabel("imageRate:")
         self.imageRateText = QLabel()
@@ -77,7 +77,7 @@ class Dynamic_Viewer(QWidget) :
         self.clearButton.setFixedWidth(40)
         self.statusText = QLineEdit()
         self.statusText.setText('nothing done so far')
-        self.statusText.setFixedWidth(200)
+        self.statusText.setFixedWidth(500)
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0);
         box.addWidget(self.startButton)
@@ -101,7 +101,7 @@ class Dynamic_Viewer(QWidget) :
         layout.setVerticalSpacing(0);
         layout.addWidget(self.firstRow,0,0)
         self.setLayout(layout)
-        self.setGeometry(QRect(10, 20, 600, 60))
+        self.setGeometry(QRect(10, 20, 800, 60))
         self.lasttime = time.time() -2
         self.show()
 

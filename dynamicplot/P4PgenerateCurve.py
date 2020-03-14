@@ -3,8 +3,7 @@ from GenerateCurve import generateCurve,getCurveNames
 from Dynamic_Common import getDynamicRecordName,DynamicRecordData
 from p4p.client.thread import Context
 import numpy as np
-import sys
-
+import sys,time
 if __name__ == '__main__':
     nargs = len(sys.argv)
     if nargs==1 :
@@ -21,9 +20,11 @@ if __name__ == '__main__':
     data.x = x
     data.y = y
     data.computeLimits()
+    print('xmin=',data.xmin,' xmax=',data.xmax,' ymin=',data.ymin,' ymax=',data.ymax)
     putdata = {"name":data.name,"xmin":data.xmin,"xmax":data.xmax,"ymin":data.ymin,"ymax":data.ymax}
     ctxt.put(getDynamicRecordName(),putdata)
     npts = len(x)
+    timestart = time.time()
     for ind in range(npts) :
         xarr = np.empty([ind])
         yarr = np.empty([ind])
@@ -34,3 +35,6 @@ if __name__ == '__main__':
         data.y = yarr
         putdata = {"x":xarr,"y":yarr}
         ctxt.put(getDynamicRecordName(),putdata)
+    timenow = time.time()
+    timediff = timenow - timestart
+    print('putrate=',str(round(npts/timediff)),' per second')
