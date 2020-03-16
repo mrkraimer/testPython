@@ -21,8 +21,6 @@ if __name__ == '__main__':
     data.y = y
     data.computeLimits()
     print('xmin=',data.xmin,' xmax=',data.xmax,' ymin=',data.ymin,' ymax=',data.ymax)
-    putdata = {"name":data.name,"xmin":data.xmin,"xmax":data.xmax,"ymin":data.ymin,"ymax":data.ymax}
-    ctxt.put(getDynamicRecordName(),putdata)
     npts = len(x)
     timestart = time.time()
     for ind in range(npts) :
@@ -33,7 +31,10 @@ if __name__ == '__main__':
            yarr[i] = y[i]
         data.x = xarr
         data.y = yarr
-        putdata = {"x":xarr,"y":yarr}
+        if ind==0 :
+            putdata = {"name":data.name,"xmin":data.xmin,"xmax":data.xmax,"ymin":data.ymin,"ymax":data.ymax,"x":x,"y":y}
+        else :
+            putdata = {"x":xarr,"y":yarr}
         ctxt.put(getDynamicRecordName(),putdata)
     timenow = time.time()
     timediff = timenow - timestart

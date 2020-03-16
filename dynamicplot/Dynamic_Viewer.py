@@ -37,9 +37,7 @@ class Image_Display(RawImageWidget) :
 
     def display(self,image,pixelLevels) :
         self.setImage(image,levels=pixelLevels)
-        self.update()
-        
-          
+  
 class Dynamic_Viewer(QWidget) :
     def __init__(self,data_Provider, providerName,parent=None):
         super(QWidget, self).__init__(parent)

@@ -22,19 +22,6 @@ if __name__ == '__main__':
     data.y = y
     data.computeLimits()
     print('xmin=',data.xmin,' xmax=',data.xmax,' ymin=',data.ymin,' ymax=',data.ymax)
-    putdata = PvObject(\
-      {   'name':STRING\
-          ,'xmin':DOUBLE\
-          ,'xmax':DOUBLE\
-          ,'ymin':DOUBLE\
-          ,'ymax':DOUBLE\
-      })
-    putdata['name'] = data.name
-    putdata['xmin'] = data.xmin
-    putdata['xmax'] = data.xmax
-    putdata['ymin'] = data.ymin
-    putdata['ymax'] = data.ymax
-    chan.put(putdata)
     npts = len(x)
     timestart = time.time()
     for ind in range(npts) :
@@ -43,9 +30,27 @@ if __name__ == '__main__':
         for i in range(ind) :
             xarr[i] = x[i]
             yarr[i] = y[i]
-        putdata = PvObject({'x':[DOUBLE],'y':[DOUBLE]})
-        putdata['x'] = xarr
-        putdata['y'] = yarr
+        if ind==0 :
+            putdata = PvObject(\
+            {   'name':STRING\
+                ,'xmin':DOUBLE\
+                ,'xmax':DOUBLE\
+                ,'ymin':DOUBLE\
+                ,'ymax':DOUBLE\
+                ,'x':[DOUBLE]\
+                ,'y':[DOUBLE]\
+            })
+            putdata['name'] = data.name
+            putdata['xmin'] = data.xmin
+            putdata['xmax'] = data.xmax
+            putdata['ymin'] = data.ymin
+            putdata['ymax'] = data.ymax
+            putdata['x'] = np.arange(0,dtype="float64")
+            putdata['y'] = np.arange(0,dtype="float64")
+        else :
+            putdata = PvObject({'x':[DOUBLE],'y':[DOUBLE]})
+            putdata['x'] = xarr
+            putdata['y'] = yarr
         chan.put(putdata)
     timenow = time.time()
     timediff = timenow - timestart
