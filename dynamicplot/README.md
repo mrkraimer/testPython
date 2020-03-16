@@ -1,12 +1,10 @@
-# testPython/dynamicplot 2020.03.11
+# testPython/dynamicplot 2020.03.16
 
-This is code that produces plots similar to **testPython/matplot** but dynamically.
+This is code that produces dynamic image plots.
 Dynamically means that the viewer shows the curve growing as the number of points increases.
 
-In addition an attempt is made to do everything using both pvapy and p4p,
+Implementations are provided for both pvapy and p4p,
 which are two different python wrappers for pvAccess/pvData.
-
-Below problems are described that discusses some problems with pvapy and p4p.
 
 Below there are instructions for
 
@@ -23,23 +21,19 @@ When **start** is pressed the following appears
 
 ![image window](image.png)
 
-### First row of control window
+### Control window
 
 1) **start**
 Clicking this button starts communication with the server.
 2) **stop**
 Clicking this button stops communication with the server.
-3) **channelName**
-This is the name of the channel that provides the DynamicArray.
-When in stopped mode a new channel name can be specified.
-
-### Second row of control window
-
-1) **npts**
+3) **npts**
 This is the number of (x,y) points for the current image.
-2) **providerName**
-This is the name of the current curve being displayed/
-3) **status**
+4) **imageName**
+This is the name of the current curve being displayed.
+5) **imageRate**
+This is the number of images/second being displayed.
+6) **status**
 This shows current status.
 Clicking **clear** erases the current status.
 
@@ -64,16 +58,23 @@ One of the records is one to add new records.
         structure result
             string status
 
+This is the default add record.
+It is also possible to use a different add record by setting an environment variable **ADD_RECORDNAME**.
+
 
 ### Create dynamicRecord
 
 Just issue the following:
 
-    python addDynamicRecord.py
+    python P4PaddDynamicRecord.py
+
+or
+
+    python PVAPYaddDynamicRecord.py
 
 
 Note that name for the record added is **dynamicRecord**.
-This can be changed by setting an environment variable **DYNAMIC_VIEWER_CHANNELNAME**.
+This can be changed by setting an environment variable **DYNAMIC_RECORDNAME**.
 
 The added record is :
 
@@ -99,30 +100,28 @@ If it shows no errors click connect and start.
 
 Then run any of the curve generating python modules. For example
 
-    mrk> python P4Pcircle.py
+    mrk> python P4PgenerateCurve.py circle
+
+or
+    mrk> python PVAPYgenerateCurve.py circle
+
+If either command is given without an argument then a list of curve types is provided.
+For example:
+
+    mrk> python PVAPYgenerateCurve.py
+    argument must be one of:  ('line', 'circle', 'ellipse', 'clover', 'heart', 'lissajous')
 
 
 On the viewer a circle appears.
 
-The complete list of curve generation modules are:
+Once a complete curve is generated then it is also posssible to generate a static plot.
+For example:
 
-Using **P4P**
+    python PVAPYstaticImage.py dynamicRecord
 
-* P4Pline.py
-* P4Pcircle.py
-* P4Pellipse.py
-* P4Pclover.py
-* P4Pheart.py
-* P4Plissajous.py
+produces:
 
-Using **PVAPY**
-
-* PVAPYline.py
-* PVAPYcircle.py
-* PVAPYellipse.py
-* PVAPYclover.py
-* PVAPYheart.py
-* PVAPYlissajous.py
+![image window](staticimage.png)
 
 
 ## Required python modules
@@ -150,14 +149,34 @@ The following is a list of modules required by PY_Dynamic_Viewer
 
 
 
-## Theory of Operation
+## Brief description of code
+
+### Dynamic_Common.py
+
+### GenerateCurve.py
+
+### Dynamic_Viewer.py
+
+### P4PaddDynamicRecord.py and PVAPYaddDynamicRecord.py
+
+### P4P_Dynamic_Viewer.py and PVAPY_Dynamic_Viewer.py
+
+### P4PgenerateCurve.py and PVAPYgenerateCurve.py
 
 
+## PVAPY_Dynamic_Viewer Problem
 
-## Problems
+**PVAPY_Dynamic_Viewer**
 
-### Neither P4P_addDynamicRecord.py or PVAPYaddDynamicRecord.py work
+1) Does not show complete dynamic image
+2) Displays images at slower rate then **P4P_Dynamic_Viewer**
 
-### PVAPYaddDynamicRecord.py does not show complete dynamic image
+To see this start it and the run a curve generation example.
+
+I suspect the problem is interaction with the difference between **pvapy** and **PYQt5** threading.
+
+**PVAPYnopyqtSignal_Dynamic_Viewer.py** is a version that does not use **PYQT5** threading.
+It displays images at a fast rate.
+But 
 
 
