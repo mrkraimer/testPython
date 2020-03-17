@@ -1,0 +1,11 @@
+#!/usr/bin/bash
+
+#while :
+for num in 1 2
+do
+   declare -a CURVES=('line' 'circle' 'ellipse' 'clover' 'heart' 'lissajous')
+   for CURVE in ${CURVES[@]}; do
+      echo 'curve= '$CURVE
+      python P4PgenerateCurve.py $CURVE
+   done 
+done

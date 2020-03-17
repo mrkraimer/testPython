@@ -1,4 +1,4 @@
-# testPython/dynamicplot 2020.03.16
+# testPython/dynamicplot 2020.03.17
 
 This is code that produces dynamic image plots.
 Dynamically means that the viewer shows the curve growing as the number of points increases.
@@ -166,17 +166,27 @@ The following is a list of modules required by PY_Dynamic_Viewer
 
 ## PVAPY_Dynamic_Viewer Problem
 
-**PVAPY_Dynamic_Viewer**
+**PVAPY_Dynamic_Viewer** does not use **PYQT5** threading, i.e. it calls Dynamic_Viewer.callback directly
+from it's monitor callback.
 
 1) Does not show complete dynamic image
-2) Displays images at slower rate then **P4P_Dynamic_Viewer**
+2) Displays images at slower rate then **P4P_Dynamic_Viewer**.
+Note that it thinks it is displaying them faster but the actual imapge rate is much slower.
+This is probably because PyQt5 is displaying the images via a separate thread.
+3) It sometimes gets in a mode where it is issuing messages:
 
-To see this start it and the run a curve generation example.
+    QBackingStore::endPaint() called with active painter; did you forget to destroy it or call QPainter::end() on it?
+    QBackingStore::endPaint() called with active painter; did you forget to destroy it or call QPainter::end() on it?
+
+
+To see this start it and also **P4P_Dynamic_Viewer** and then run:
+
+    ./gencurves
 
 I suspect the problem is interaction with the difference between **pvapy** and **PYQt5** threading.
 
-**PVAPYnopyqtSignal_Dynamic_Viewer.py** is a version that does not use **PYQT5** threading.
-It displays images at a fast rate.
-But 
+**PVAPYpyqtSignal_Dynamic_Viewer.py** is a version that uses **PYQT5** threading.
+It displays images at an even slower rate than **PVAPY_Dynamic_Viewer**.
+But it never issues the error messages.
 
 
