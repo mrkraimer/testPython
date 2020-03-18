@@ -5,22 +5,16 @@ from p4p.client.thread import Context
 import numpy as np
 import sys,time
 if __name__ == '__main__':
-    nargs = len(sys.argv)
-    if nargs==1 :
-        print('argument must be one of: ',getCurveNames())
-        exit()
-    if nargs!=2 : raise Exception('must specify curve name')
-    curveName = sys.argv[1]
-    data = generateCurve(curveName)
-    x = data["x"]
-    y = data["y"]
+    curveData = generateCurve(sys.argv)
+    x = curveData["x"]
+    y = curveData["y"]
+    curveName = curveData["name"]
     ctxt = Context('pva')
     data = DynamicRecordData()
-    data.name = curveName
     data.x = x
     data.y = y
     data.computeLimits()
-    print('xmin=',data.xmin,' xmax=',data.xmax,' ymin=',data.ymin,' ymax=',data.ymax)
+    print('name=',curveName,' xmin=',data.xmin,' xmax=',data.xmax,' ymin=',data.ymin,' ymax=',data.ymax)
     npts = len(x)
     timestart = time.time()
     for ind in range(npts) :
