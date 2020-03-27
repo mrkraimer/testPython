@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pythonpyt
 from GenerateCurve import generateCurve,getCurveNames
 from Dynamic_Common import getDynamicRecordName,DynamicRecordData
 from p4p.client.thread import Context
@@ -8,13 +8,13 @@ if __name__ == '__main__':
     curveData = generateCurve(sys.argv)
     x = curveData["x"]
     y = curveData["y"]
-    curveName = curveData["name"]
     ctxt = Context('pva')
     data = DynamicRecordData()
     data.x = x
     data.y = y
+    data.name = curveData["name"]
     data.computeLimits()
-    print('name=',curveName,' xmin=',data.xmin,' xmax=',data.xmax,' ymin=',data.ymin,' ymax=',data.ymax)
+    print('name=',data.name,' xmin=',data.xmin,' xmax=',data.xmax,' ymin=',data.ymin,' ymax=',data.ymax)
     npts = len(x)
     timestart = time.time()
     for ind in range(npts) :

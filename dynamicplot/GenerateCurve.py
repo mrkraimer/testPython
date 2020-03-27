@@ -4,7 +4,7 @@ import numpy as np
 import sys
 
 def getCurveNames() :
-    return ("line","circle","ellipse","clover","heart","lissajous")
+    return ("line","circle","ellipse","clover","heart","lissajous","figureight")
 
 def generateCurve(argv) :
     nargs = len(argv)
@@ -73,6 +73,18 @@ def generateCurve(argv) :
          if nargs>=4 : n = float(sys.argv[3])
          x = np.sin(n*2*np.pi*t)
          y = np.cos(m*2*np.pi*t)
+         return {"x":x,"y":y,"name":name}
+    if name==str("figureight") :
+         min = 0.0
+         max = 1.0
+         npts = 2000
+         inc = (max-min)/npts
+         a = 1
+         if nargs>=3 : a = float(sys.argv[2])
+         print('a=',a)
+         t = np.arange(min, max, inc)
+         x = a*np.sin(2*np.pi*t)*np.cos(2*np.pi*t)
+         y = a*np.sin(2*np.pi*t)
          return {"x":x,"y":y,"name":name}
     raise Exception(name + ' not implemented')
 
