@@ -4,6 +4,7 @@ from Dynamic_Viewer import Dynamic_Viewer
 from Dynamic_Common  import Dynamic_Channel_Provider,getDynamicRecordName,DynamicRecordData
 from p4p.client.thread import Context
 import sys
+import time
 from threading import Event
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QObject,pyqtSignal
@@ -17,6 +18,9 @@ class P4PProvider(QObject,Dynamic_Channel_Provider) :
         self.callbackDoneEvent = Event()
         self.firstCallback = True
         self.isClosed = True
+        self.monitorRateOnly = False
+        self.ncallbacks = 0
+        self.lastTime = time.time() 
         
     def start(self) :
         self.ctxt = Context('pva')
@@ -35,6 +39,15 @@ class P4PProvider(QObject,Dynamic_Channel_Provider) :
     def callback(self,arg) :
         self.viewer.callback(arg)
     def p4pcallback(self,arg) :
+        if self.monitorRateOnly :
+            self.ncallbacks += 1
+            timenow = time.time() 
+            timediff = timenow - self.lastTime
+            if timediff<1 : return
+            print('rate=',round(self.ncallbacks/timediff))
+            self.lastTime = timenow
+            self.ncallbacks = 0
+            return
         if self.isClosed : return
         self.struct = arg;
         self.callbacksignal.emit()
