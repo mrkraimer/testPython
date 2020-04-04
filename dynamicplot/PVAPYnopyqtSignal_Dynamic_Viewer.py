@@ -59,6 +59,6 @@ if __name__ == '__main__':
     if nargs>=2 :
         channelName = sys.argv[1]
         PVAPYProvider.setChannelName(channelName)
-    PVAPYProvider.viewer = Dynamic_Viewer(PVAPYProvider,"PVAPY")
+    PVAPYProvider.viewer = Dynamic_Viewer(PVAPYProvider,"PVAPYnopyqtsignal")
     sys.exit(app.exec_())
 
