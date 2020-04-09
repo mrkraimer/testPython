@@ -20,7 +20,18 @@ class PVAPYProvider(QObject,Dynamic_Channel_Provider) :
         self.callbackDoneEvent.set()
         self.data = None
 
-    def start(self) : self.channel.monitor(self.pvapycallback,'field()')
+    def connectionCallback(self,isConnected) :
+        print('connectionCallback isConnected=',isConnected)
+        arg = dict()
+        if(isConnected):
+            arg["status"] = "connected"
+        else:
+            arg["status"] = "disconnected"
+        self.viewer.callback(arg)
+
+    def start(self) : 
+        self.channel.setConnectionCallback(self.connectionCallback)
+        self.channel.monitor(self.pvapycallback,'field()')
     def stop(self) :
         self.channel.stopMonitor()
     def done(self) :

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 from GenerateCurve import generateCurve,getCurveNames
 from Dynamic_Common import getDynamicRecordName,DynamicRecordData
-from pvaccess import *
 import numpy as np
+from pvaccess import *
 import sys,time
 
 if __name__ == '__main__':
@@ -18,6 +18,19 @@ if __name__ == '__main__':
     data.computeLimits()
     print('name=',curveName,' xmin=',data.xmin,' xmax=',data.xmax,' ymin=',data.ymin,' ymax=',data.ymax)
     npts = len(x)
+    putdata = PvObject(\
+    {   'name':STRING\
+         ,'xmin':DOUBLE\
+         ,'xmax':DOUBLE\
+         ,'ymin':DOUBLE\
+         ,'ymax':DOUBLE\
+    })
+    putdata['name'] = data.name
+    putdata['xmin'] = data.xmin
+    putdata['xmax'] = data.xmax
+    putdata['ymin'] = data.ymin
+    putdata['ymax'] = data.ymax
+    chan.put(putdata)
     timestart = time.time()
     for ind in range(npts) :
         xarr = np.empty([ind])
@@ -25,27 +38,9 @@ if __name__ == '__main__':
         for i in range(ind) :
             xarr[i] = x[i]
             yarr[i] = y[i]
-        if ind==0 :
-            putdata = PvObject(\
-            {   'name':STRING\
-                ,'xmin':DOUBLE\
-                ,'xmax':DOUBLE\
-                ,'ymin':DOUBLE\
-                ,'ymax':DOUBLE\
-                ,'x':[DOUBLE]\
-                ,'y':[DOUBLE]\
-            })
-            putdata['name'] = data.name
-            putdata['xmin'] = data.xmin
-            putdata['xmax'] = data.xmax
-            putdata['ymin'] = data.ymin
-            putdata['ymax'] = data.ymax
-            putdata['x'] = np.arange(0,dtype="float64")
-            putdata['y'] = np.arange(0,dtype="float64")
-        else :
-            putdata = PvObject({'x':[DOUBLE],'y':[DOUBLE]})
-            putdata['x'] = xarr
-            putdata['y'] = yarr
+        putdata = PvObject({'x':[DOUBLE],'y':[DOUBLE]})
+        putdata['x'] = list(xarr)
+        putdata['y'] = list(yarr)
         chan.put(putdata)
     timenow = time.time()
     timediff = timenow - timestart
