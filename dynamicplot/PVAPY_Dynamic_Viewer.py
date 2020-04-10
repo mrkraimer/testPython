@@ -13,19 +13,19 @@ class PVAPYProvider(QObject,Dynamic_Channel_Provider) :
     monitorCallbacksignal = pyqtSignal()
     connectCallbacksignal = pyqtSignal()
     def __init__(self):
-        self.channel = Channel(getDynamicRecordName())
         QObject.__init__(self)
         Dynamic_Channel_Provider.__init__(self)
+        self.monitordata = None
+        self.connectdata = None
+        self.init()
+    def init(self) :
         self.connectCallbacksignal.connect(self.viewerconnectionCallback)
         self.monitorCallbacksignal.connect(self.viewermonitorCallback)
         self.callbackDoneEvent = Event()
         self.callbackDoneEvent.set()
-        self.monitordata = None
-        self.connectdata = None
-        self.setConnectionCallback()
-
-    def setConnectionCallback(self) :
+        self.channel = Channel(getDynamicRecordName())
         self.channel.setConnectionCallback(self.pvapyconnectioncallback)
+
     def start(self) : 
         self.channel.monitor(self.pvapymonitorcallback,'field()')
     def stop(self) :
