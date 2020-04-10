@@ -10,35 +10,55 @@ from PyQt5.QtCore import QObject,pyqtSignal
 import numpy as np
 
 class PVAPYProvider(QObject,Dynamic_Channel_Provider) :
-    callbacksignal = pyqtSignal()
+    monitorCallbacksignal = pyqtSignal()
+    connectCallbacksignal = pyqtSignal()
     def __init__(self):
         self.channel = Channel(getDynamicRecordName())
         QObject.__init__(self)
         Dynamic_Channel_Provider.__init__(self)
-        self.callbacksignal.connect(self.mycallback)
+        self.connectCallbacksignal.connect(self.myconnectionCallback)
+        self.monitorCallbacksignal.connect(self.mymonitorCallback)
         self.callbackDoneEvent = Event()
         self.callbackDoneEvent.set()
-        self.data = None
-
-    def connectionCallback(self,isConnected) :
-        print('connectionCallback isConnected=',isConnected)
-        arg = dict()
-        if(isConnected):
-            arg["status"] = "connected"
-        else:
-            arg["status"] = "disconnected"
-        self.viewer.callback(arg)
+        self.monitordata = None
+        self.connectdata = None
 
     def start(self) : 
-        self.channel.setConnectionCallback(self.connectionCallback)
-        self.channel.monitor(self.pvapycallback,'field()')
+        self.channel.setConnectionCallback(self.pvapyconnectioncallback)
+        self.channel.monitor(self.pvapymonitorcallback,'field()')
     def stop(self) :
         self.channel.stopMonitor()
     def done(self) :
         pass
-    def callback(self,arg) :
+
+    def viewerCallback(self,arg) :
         self.viewer.callback(arg)
-    def pvapycallback(self,arg) :
+
+    def pvapyconnectioncallback(self,arg) :
+        data = dict()
+        data["status"] = arg
+        self.connectdata = data
+        self.callbackDoneEvent.clear()
+        self.connectCallbacksignal.emit()
+
+    def myconnectionCallback(self) :
+        try:
+            arg = self.connectdata
+            viewerarg =  dict()
+            if arg["status"] == True :
+                viewerarg["status"] = "connected"
+            elif arg["status"] == False :
+                viewerarg["status"] = "disconnected"
+            else :
+                viewerarg["status"] = "bad status"
+            self.connectdata = None
+            self.viewerCallback(viewerarg)
+        except Exception as error:
+            arg["exception"] = repr(error)
+            self.viewerCallback(arg)
+        self.callbackDoneEvent.set()
+
+    def pvapymonitorcallback(self,arg) :
         data = DynamicRecordData()
         data.name = arg['name']
         data.x = np.copy(arg['x'])
@@ -47,23 +67,23 @@ class PVAPYProvider(QObject,Dynamic_Channel_Provider) :
         data.xmax = arg['xmax']
         data.ymin = arg['ymin']
         data.ymax = arg['ymax']
-        if not self.data:
-            self.data = data
+        if not self.monitordata:
+            self.monitordata = data
             self.callbackDoneEvent.clear()
-            self.callbacksignal.emit()
+            self.monitorCallbacksignal.emit()
         else:
-            self.data = data
+            self.monitordata = data
 
-    def mycallback(self) :
-        while self.data is not None:
+    def mymonitorCallback(self) :
+        while self.monitordata is not None:
             try:
                 arg = dict()
-                arg['value'] = self.data
-                self.data = None
-                self.callback(arg)
+                arg['value'] = self.monitordata
+                self.monitordata = None
+                self.viewerCallback(arg)
             except Exception as error:
                 arg["exception"] = repr(error)
-                self.callback(arg)
+                self.viewerCallback(arg)
         self.callbackDoneEvent.set()
         return
 
