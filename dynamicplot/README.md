@@ -1,4 +1,4 @@
-# testPython/dynamicplot 2020.03.18
+# testPython/dynamicplot 2020.04.08
 
 This is code that produces dynamic image plots.
 Dynamically means that the viewer shows the curve growing as the number of points increases.
@@ -213,29 +213,23 @@ This continues until all points have been sent.
 
 The code than terminates.
 
-## PVAPY_Dynamic_Viewer Problem
+## Threading rules for Python client working with PyQt5
 
-**PVAPY_Dynamic_Viewer** does not use **PYQT5** threading, i.e. it calls Dynamic_Viewer.callback directly
-from it's monitor callback.
+This assumes that a Python application has been started via **QApplication**.
+Also that there are three python objects involved:
 
-1) Does not show complete dynamic image
-2) Displays images at slower rate then **P4P_Dynamic_Viewer**.
-Note that it thinks it is displaying them faster but the actual imapge rate is much slower.
-This is probably because PyQt5 is displaying the images via a separate thread.
-3) It sometimes gets in a mode where it is issuing messages:
+1) The application itself.
+2) PyQt5 code.
+3) Python server code, e. g. P4P and PVAPY
 
-    QBackingStore::endPaint() called with active painter; did you forget to destroy it or call QPainter::end() on it?
-    QBackingStore::endPaint() called with active painter; did you forget to destroy it or call QPainter::end() on it?
+Each of these has data and threads that may or may not be **GIL** threads.
 
+The rules for accessing data are:
 
-To see this start it and also **P4P_Dynamic_Viewer** and then run:
+1) Server data can only be manipulated via the server thread.
+2) PyQt5 data can only me manipulated via the QApplication thread
+3) The application data can be manipulated via the thread from either the server or QApplication.
 
-    ./gencurves
-
-I suspect the problem is interaction with the difference between **pvapy** and **PYQt5** threading.
-
-**PVAPYpyqtSignal_Dynamic_Viewer.py** is a version that uses **PYQT5** threading.
-It displays images at an even slower rate than **PVAPY_Dynamic_Viewer**.
-But it never issues the error messages.
-
+Look at either **PVAPY_Dynamic_Viewer** or **P4PPY_Dynamic_Viewer** uses **pyqtSignal()**
+to transfer control from a server thread to the QApplication thread.
 

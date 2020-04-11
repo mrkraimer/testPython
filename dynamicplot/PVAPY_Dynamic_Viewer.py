@@ -17,6 +17,8 @@ class PVAPYProvider(QObject,Dynamic_Channel_Provider) :
         Dynamic_Channel_Provider.__init__(self)
         self.monitordata = None
         self.connectdata = None
+        self.firstStart = True
+        self.isConnected = False
         self.init()
     def init(self) :
         self.connectCallbacksignal.connect(self.viewerconnectionCallback)
@@ -27,6 +29,15 @@ class PVAPYProvider(QObject,Dynamic_Channel_Provider) :
         self.channel.setConnectionCallback(self.pvapyconnectioncallback)
 
     def start(self) : 
+        if self.firstStart :
+             self.firstStart = False
+             data = dict()
+             if self.isConnected==True :
+                 data["status"] = "connected"
+             else  :
+                 data["status"] = "disconnected"
+             
+             self.viewerCallback(data)
         self.channel.monitor(self.pvapymonitorcallback,'field()')
     def stop(self) :
         self.channel.stopMonitor()
@@ -37,6 +48,9 @@ class PVAPYProvider(QObject,Dynamic_Channel_Provider) :
         self.viewer.callback(arg)
 
     def pvapyconnectioncallback(self,arg) :
+        if self.firstStart :
+            self.isConnected = arg
+            return
         data = dict()
         if arg==True :
             data["status"] = "connected"
@@ -49,13 +63,14 @@ class PVAPYProvider(QObject,Dynamic_Channel_Provider) :
         self.connectCallbacksignal.emit()
 
     def viewerconnectionCallback(self) :
-        try:
-            arg = self.connectdata
-            self.connectdata = None
-            self.viewerCallback(arg)
-        except Exception as error:
-            arg["exception"] = repr(error)
-            self.viewerCallback(arg)
+        while self.connectdata is not None:
+            try:
+                arg = self.connectdata
+                self.connectdata = None
+                self.viewerCallback(arg)
+            except Exception as error:
+                arg["exception"] = repr(error)
+                self.viewerCallback(arg)
         self.callbackDoneEvent.set()
 
     def pvapymonitorcallback(self,arg) :
