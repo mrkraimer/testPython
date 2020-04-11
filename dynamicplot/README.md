@@ -227,9 +227,9 @@ Each of these has data and threads that may or may not be **GIL** threads.
 The rules for accessing data are:
 
 1) Server data can only be manipulated via the server thread.
-2) PyQt5 data can only me manipulated via the QApplication thread
-3) The application data can be manipulated via the thread from either the server or QApplication.
+2) PyQt5 data can only be manipulated via the QApplication thread
+3) The application data can be manipulated from either the server or QApplication thread.
 
-Look at either **PVAPY_Dynamic_Viewer** or **P4PPY_Dynamic_Viewer** uses **pyqtSignal()**
-to transfer control from a server thread to the QApplication thread.
+Look at either **PVAPY_Dynamic_Viewer** or **P4PPY_Dynamic_Viewer** to see how **pyqtSignal()**
+is used transfer control from the server thread to the QApplication thread.
 
