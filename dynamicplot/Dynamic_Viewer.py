@@ -22,11 +22,6 @@ class Image_Display(RawImageWidget) :
         RawImageWidget.__init__(self, parent=parent,scaled=False)
         super(QWidget, self).__init__(parent)
         self.setWindowTitle("image")
-        self.rubberBand = QRubberBand(QRubberBand.Rectangle,self)
-        self.mousePressPosition = QPoint(0,0)
-        self.mouseReleasePosition = QPoint(0,0)
-        self.clientCallback = None
-        self.mousePressed = False
         self.okToClose = False
         self.setGeometry(QRect(10, 300,size, size))
 
