@@ -19,6 +19,7 @@ class InitialValues() :
     ymin = float(-1.0)
 #    ymin = float(-.1)
     ymax = float(1.0)
+    # convert from x,y to pixel (width,height)
     yxratio = (ymax-ymin)/(xmax-xmin)
     if yxratio>1.0 :
         height = int(maxsize)
@@ -26,7 +27,6 @@ class InitialValues() :
     else :
         width = int(maxsize)
         height = math.ceil(width*yxratio)
-    print('yxratio=',yxratio,' height=',height, ' width=',width)
     xinc = (xmax-xmin)/float(width)
     yinc = (ymax-ymin)/float(height)
 
@@ -44,33 +44,32 @@ class CurrentValues() :
         self.xinc = ini.xinc
         self.yinc = ini.yinc
     def show(self) :
-        print('self.xmin=',self.xmin,' self.xmax=',self.xmax,' self.ymin=',self.ymin,' self.ymax=',self.ymax)
-        print('self.height=',self.height,' self.width=',self.width,' self.xinc=',self.xinc,' self.yinc=',self.yinc)
+        print('self.xmin=',self.xmin,' self.xmax=',self.xmax)
+        print('self.ymin=',self.ymin,' self.ymax=',self.ymax)
+        print('self.height=',self.height,' self.width=',self.width)
+        print('self.xinc=',self.xinc,' self.yinc=',self.yinc)
 
     def update(self,pxmin,pxmax,pymin,pymax) :
-        print('update pxmin=',pxmin,' pxmax=',pxmax,' pymin=',pymin,' pymax=',pymax)
-        self.show()
-        nx = pxmax - pxmin
-        ny = pymax - pymin
-        print('nx=',nx,' ny=',ny)
-        yxratio = float(ny)/float(nx)
+        # convert from pixel(x,y) to (x,y)
+        #  for pixel direction is top to bottom must flip
+        temp = pymin
+        pymin = self.height - pymax
+        pymax = self.height - temp
+        pixnx = pxmax - pxmin
+        pixny = pymax - pymin
+        yxratio = float(pixny)/float(pixnx)
         if yxratio>1.0 :
             height = int(maxsize)
             width = math.ceil(height/yxratio)
         else :
             width = int(maxsize)
             height = math.ceil(width*yxratio)
-        print('yxratio=',yxratio,' height=',height, ' width=',width)
         xmin = self.xmin + self.xinc*pxmin
-#       for pixel direction is top to bottom
-        ymin = self.ymax - self.yinc*pymax
-        print('xmin=',xmin,' ymin=',ymin)
-        xinc = self.xinc*(nx/float(width))
-        yinc = self.yinc*(ny/float(height))
-        print('xinc=',xinc,' yinc=',yinc)
-        xmax = xmin + xinc*float(nx)
-        ymax = ymin + yinc*float(ny)
-        print('xmax=',xmax,' ymax=',ymax)
+        ymin = self.ymin + self.yinc*pymin
+        xinc = self.xinc*(pixnx/float(width))
+        yinc = self.yinc*(pixny/float(height))
+        xmax = xmin + xinc*float(pixnx)
+        ymax = ymin + yinc*float(pixny)
         self.xmin = xmin
         self.xmax = xmax
         self.ymin = ymin
@@ -79,8 +78,6 @@ class CurrentValues() :
         self.width = width
         self.xinc = xinc
         self.yinc = yinc
-        self.show()
-
 
 class ImageDisplay(RawImageWidget,QWidget) :
     def __init__(self,width,height,parent=None, **kargs):
@@ -241,7 +238,7 @@ class Viewer(QWidget) :
         self.imageDisplay.display(self.pixarray)
         self.imageDisplay.show()
         end = time.time()
-        timediff = str(round(end-begin))
+        timediff = str(round(end-begin,1))
         self.timeText.setText(timediff)
         self.statusText.setText('image generated')
         self.repaint()
@@ -258,7 +255,6 @@ class Viewer(QWidget) :
         self.currentValues = CurrentValues()
 
     def clientReleaseEvent(self,pressPosition,releasePosition) :
-        print('clientReleaseEvent')
         xmin = pressPosition.x()
         ymin = pressPosition.y()
         xmax = releasePosition.x()
@@ -266,8 +262,7 @@ class Viewer(QWidget) :
         if xmin==xmax and ymin>=ymax : return
         if xmin>=xmax or ymin>=ymax :
             self.statusText.setText('illegal mouse move')
-            return 
-        print('calling update xmin=',xmin,' xmax=',xmax,' ymin=',ymin,' ymax=',ymax)
+            return
         self.currentValues.update(xmin,xmax,ymin,ymax) 
         self.generateImage()
 
