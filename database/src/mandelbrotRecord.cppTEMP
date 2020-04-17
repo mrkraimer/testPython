@@ -1,0 +1,101 @@
+/*
+ * Copyright information and license terms for this software can be
+ * found in the file LICENSE that is included with the distribution
+ */
+
+/**
+ * @author mrk
+ * @date 2013.04.02
+ */
+
+#include <pv/pvDatabase.h>
+#include <pv/standardField.h>
+
+#define epicsExportSharedSymbols
+#include "pv/mandelbrotRecord.h"
+
+using namespace epics::pvData;
+using namespace epics::pvDatabase;
+using std::tr1::static_pointer_cast;
+using std::string;
+
+namespace epics { namespace testPython {
+
+
+MandelbrotRecordPtr MandelbrotRecord::create(
+    string const & recordName)
+{
+    StandardFieldPtr standardField = getStandardField();
+    FieldCreatePtr fieldCreate = getFieldCreate();
+    PVDataCreatePtr pvDataCreate = getPVDataCreate();
+    StructureConstPtr  topStructure = fieldCreate->createFieldBuilder()->
+        add("timeStamp",standardField->timeStamp()) ->
+        addNestedStructure("argument")->
+            add("xmin",pvDouble)->
+            add("xinc",pvDouble)->
+            add("ymin",pvDouble)->
+            add("yinc",pvDouble)->
+            add("widtn",pvInt)->
+            add("height",pvString)->
+            endNested()->
+        addNestedStructure("result") ->
+            addArray("value",pvUByte) ->
+            endNested()->
+        createStructure();
+    PVStructurePtr pvStructure = pvDataCreate->createPVStructure(topStructure);
+
+    MandelbrotRecordPtr pvRecord(
+        new MandelbrotRecord(recordName,pvStructure));
+    pvRecord->initPVRecord();
+    return pvRecord;
+}
+
+MandelbrotRecord::MandelbrotRecord(
+    string const & recordName,
+    PVStructurePtr const & pvStructure)
+: PVRecord(recordName,pvStructure)
+{
+
+}
+
+uint8_t MandelbrotRecord::calcIntensity(double x,double y)
+{
+    return 255;
+}
+
+void MandelbrotRecord::createImage()
+{
+    PVStructurePtr pvArgument = getPVStructure()->getSubField<PVStructure>("argument");
+    double xmin = pvArgument->getSubField<PVDouble>("xmin")->get();
+    double xinc = pvArgument->getSubField<PVDouble>("xinc")->get();
+    double ymin = pvArgument->getSubField<PVDouble>("ymin")->get();
+    double yinc = pvArgument->getSubField<PVDouble>("yinc")->get();
+    int height = pvArgument->getSubField<PVDouble>("height")->get();
+    int width = pvArgument->getSubField<PVDouble>("width")->get();
+    size_t num = 6;
+    epics::pvData::shared_vector<uint8_t> value(num,0);
+
+
+    PVUByteArrayPtr pvValue= getPVStructure()->getSubField<PVUByteArray>("result.value");
+    pvValue->putFrom(freeze(value));
+}
+
+void MandelbrotRecord::process()
+{
+    createImage();
+#ifdef XXX
+    PVStructurePtr pvArgument = getPVStructure()->getSubField<PVStructure>("argument");
+    double xmin = pvArgument->getSubField<PVDouble>("xmin")->get();
+    double xinc = pvArgument->getSubField<PVDouble>("xinc")->get();
+    double ymin = pvArgument->getSubField<PVDouble>("ymin")->get();
+    double yinc = pvArgument->getSubField<PVDouble>("yinc")->get();
+    int height = pvArgument->getSubField<PVDouble>("height")->get();
+    int width = pvArgument->getSubField<PVDouble>("width")->get();
+    epics::pvData::shared_vector<uint8_t> value = createImage(xmin,xinc,ymin,yinc,height,width);
+    PVUByteArrayPtr pvValue= getPVStructure()->getSubField<PVUByteArray>("result.value");
+    pvValue->putFrom(freeze(value));
+#endif
+    
+}
+
+}}

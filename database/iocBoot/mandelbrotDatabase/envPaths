@@ -1,0 +1,4 @@
+epicsEnvSet("IOC","exampleDatabase")
+epicsEnvSet("TOP","/home/epics7/modules/testPython/database")
+epicsEnvSet("PVA","/home/epics7/modules")
+epicsEnvSet("EPICS_BASE","/home/epics7/epics-base")

@@ -1,0 +1,8 @@
+include "base.dbd"
+include "addRecordRegister.dbd"
+include "removeRecordRegister.dbd"
+include "traceRecordRegister.dbd"
+include "mandelbrotRecordRegister.dbd"
+include "PVAServerRegister.dbd"
+include "registerChannelProviderLocal.dbd"
+include "qsrv.dbd"

@@ -116,53 +116,11 @@ class ImageDisplay(RawImageWidget,QWidget) :
 
     def clientReleaseEvent(self,clientCallback) :
         self.clientCallback = clientCallback
-
-
-class Mandelbrot() :
-    def __init__(self,currentValues,parent=None):
-        self.pixeltype = currentValues.pixeltype
-        self.pixelmax = currentValues.pixelmax
-        self.xmin = currentValues.xmin
-        self.xmax = currentValues.xmax
-        self.ymin = currentValues.ymin
-        self.ymax = currentValues.ymax
-        self.height = currentValues.height
-        self.width = currentValues.width
-        self.xinc = currentValues.xinc
-        self.yinc = currentValues.yinc
-        self.pixarray = np.full((self.width,self.height,3),self.pixelmax,dtype=self.pixeltype)
-        
-    def calcIntensity(self,x,y) :
-        c = complex(x,y)
-        z = complex(0.0,0.0)
-        i = 0
-        while abs(z) < 2 and i < self.pixelmax:
-            z = z**2 + c
-            i += 1
-        # Color scheme is that of Julia sets
-        color = (i % 8 * 32, i % 16 * 16, i % 32 * 8)
-        return color
-
-    def calcRow(self,pixy,y):
-        for i in range(self.width) :
-            pixx = i
-            x = self.xmin + i*self.xinc
-            color = self.calcIntensity(x,y)
-            self.pixarray[pixx][pixy][0] = color[0]
-            self.pixarray[pixx][pixy][1] = color[1]
-            self.pixarray[pixx][pixy][2] = color[2]
-
-    def calc(self):
-        for i in range(self.height) :
-            pixy = i
-            y = self.ymin + i*self.yinc
-            self.calcRow(pixy,y)
-        return self.pixarray
-
         
 class Viewer(QWidget) :
-    def __init__(self,parent=None):
+    def __init__(self,mandelbrot,parent=None):
         super(QWidget, self).__init__(parent)
+        self.mandelbrot = mandelbrot
         self.isClosed = False
         self.setWindowTitle("Viewer")
         self.currentValues = CurrentValues()
@@ -222,13 +180,15 @@ class Viewer(QWidget) :
         self.statusText.setStyleSheet("background-color:white")
 
     def generateImage(self) :
-        self.mandelbrot = Mandelbrot(self.currentValues)
         self.timeText.setText("0")
         self.repaint()
         begin = time.time()
         self.statusText.setText('calculating image')
         self.repaint()
-        self.pixarray = self.mandelbrot.calc()
+        arg = (self.currentValues.xmin,self.currentValues.xinc,\
+              self.currentValues.ymin,self.currentValues.yinc,\
+              self.currentValues.width,self.currentValues.height)
+        self.pixarray = self.mandelbrot.createImage(arg)
         self.statusText.setText('generating image')
         self.repaint()
         if self.imageDisplay!= None :
@@ -265,8 +225,3 @@ class Viewer(QWidget) :
             return
         self.currentValues.update(xmin,xmax,ymin,ymax) 
         self.generateImage()
-
-if __name__ == '__main__':
-    app = QApplication(list())
-    viewer = Viewer()
-    sys.exit(app.exec_())
