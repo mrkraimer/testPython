@@ -88,12 +88,12 @@ void MandelbrotRecord::createImage()
     int width = pvArgument->getSubField<PVInt>("width")->get();
     size_t num = width*height*3;
     epics::pvData::shared_vector<uint8_t> value(num,255);
-    for(int indy=0; indy<height; ++indy)
+    for(int indx=0; indx<width; ++indx)
     {
-        double y = ymin + indy*yinc;
-        for(int indx=0; indx<width; ++indx)
+        double x = xmin + indx*xinc;
+        for(int indy=0; indy<height; ++indy)
         {
-             double x = xmin + indx*xinc;
+             double y = ymin + indy*yinc;
              int  intensity = calcIntensity(x,y);
              int ind = indx*height*3 +indy*3;
              // Color scheme is that of Julia sets
