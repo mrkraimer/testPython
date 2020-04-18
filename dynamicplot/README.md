@@ -1,4 +1,4 @@
-# testPython/dynamicplot 2020.04.08
+# testPython/dynamicplot 2020.04.18
 
 This is code that produces dynamic image plots.
 Dynamically means that the viewer shows the curve growing as the number of points increases.
@@ -41,16 +41,17 @@ Clicking **clear** erases the current status.
 
 ### Starting example database.
 
-Start an IOC running the example database
+Start an IOC running the database provided by testPython
 For example I start it as follows
 
     mrk> pwd
-    /home/epics7/modules/exampleCPP/database/iocBoot/exampleDatabase
-    mrk> ./../bin/linux-x86_64/exampleDatabase st.cmd
+    /home/epics7/modules/testPython/database/iocBoot/mandelbrotDatabase
+    mrk> ../../bin/linux-x86_64/mandelbrotDatabase st.cmd 
+
 
 One of the records is one to add new records.
 
-    mrk> pvinfo PVRaddRecord
+    mrk> pvinfo TPYaddRecord
     structure
         structure argument
             string recordName
@@ -167,7 +168,7 @@ The default is 'dynamicRecord'.
 An environment variable 'DYNAMIC_RECORDNAME' overrides the default.
 2) **getAddRecordName**
 This gets the name of a record that adds new records in the same PVDatabase.
-The default is 'PVRaddRecord'.
+The default is 'TPYaddRecord'.
 An environment variable 'ADD_RECORDNAME' overrides the default.
 3) **DynamicRecordData**
 This describes the data in a dynamicRecord.

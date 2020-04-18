@@ -10,7 +10,7 @@ def getDynamicRecordName() :
 
 def getAddRecordName() :
     name = os.getenv('ADD_RECORDNAME')
-    if name== None : return(str('PVRaddRecord'))
+    if name== None : return(str('TPYaddRecord'))
     return str(name)
 
 class DynamicRecordData(object) :
