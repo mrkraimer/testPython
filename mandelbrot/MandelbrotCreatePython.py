@@ -23,14 +23,14 @@ class MandelbrotCreatePython :
         width = int(arg[4])
         height = int(arg[5])
         pixarray = np.full((width,height,3),255,dtype="uint8")
-        for i in range(height) :
-            y = ymin + i*yinc
-            for j in range(width) :
-                x = xmin + j*xinc
+        for i in range(width) :
+            x = xmin + i*xinc
+            for j in range(height) :
+                y = ymin + j*yinc
                 color = self.calcIntensity(x,y)
-                pixarray[j][i][0] = color[0]
-                pixarray[j][i][1] = color[1]
-                pixarray[j][i][2] = color[2]
+                pixarray[i][j][0] = color[0]
+                pixarray[i][j][1] = color[1]
+                pixarray[i][j][2] = color[2]
         return pixarray
 
             

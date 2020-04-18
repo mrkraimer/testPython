@@ -59,11 +59,11 @@ MandelbrotRecord::MandelbrotRecord(
 
 }
 
-void MandelbrotRecord::calcIntensity(double x,double y,uint8_t color[])
+int MandelbrotRecord::calcIntensity(double x,double y)
 {
     double c[2] = {x,y};
     double z[2] = {0.0,0.0};
-    uint8_t i =0;
+    int i =0;
     for(int j=0; j<255; ++j)
     {
         double absz = std::sqrt(z[0]*z[0] + z[1]*z[1]);
@@ -74,10 +74,7 @@ void MandelbrotRecord::calcIntensity(double x,double y,uint8_t color[])
         z[0] = xz;
         z[1] = yz;
     }
-    // Color scheme is that of Julia sets
-    color[0] = i % 8 * 32;
-    color[1] = i % 16 * 16;
-    color[2] = i % 32 * 8;
+    return i;
 }
 
 void MandelbrotRecord::createImage()
@@ -91,18 +88,18 @@ void MandelbrotRecord::createImage()
     int width = pvArgument->getSubField<PVInt>("width")->get();
     size_t num = width*height*3;
     epics::pvData::shared_vector<uint8_t> value(num,255);
-    uint8_t color[3] = {0,0,0};
-    for(int i=0; i<height; ++i)
+    for(int indy=0; indy<height; ++indy)
     {
-        double y = ymin + i*yinc;
-        for(int j=0; j<height; ++j)
+        double y = ymin + indy*yinc;
+        for(int indx=0; indx<width; ++indx)
         {
-             double x = xmin + j*xinc;
-             calcIntensity(x,y,color);
-             int ind = i*width +j*height;
-             value[ind] = color[0];
-             value[ind+1] = color[1];
-             value[ind+2] = color[2];
+             double x = xmin + indx*xinc;
+             int  intensity = calcIntensity(x,y);
+             int ind = indx*height*3 +indy*3;
+             // Color scheme is that of Julia sets
+             value[ind] = intensity % 8 * 32;
+             value[ind+1] = intensity % 16 * 16;
+             value[ind+2] = intensity % 32 * 8;
         }
     }
     PVUByteArrayPtr pvValue= getPVStructure()->getSubField<PVUByteArray>("result.value");

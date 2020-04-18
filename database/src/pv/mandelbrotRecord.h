@@ -47,7 +47,7 @@ public:
     virtual void process();
     virtual ~MandelbrotRecord() {}
     virtual bool init() {return false;}
-    void calcIntensity(double x,double y,uint8_t color[]);
+    int calcIntensity(double x,double y);
     void createImage();
 private:
     MandelbrotRecord(std::string const & recordName,
