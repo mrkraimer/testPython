@@ -1,14 +1,26 @@
-# testPython
+# testPython 2020.04.18
 
-This contains code for testing pvaPy and p4p
+This contains example python code as well as code for testing pvaPy and p4p
 
-## testpath
+## database 
+
+This is a database used by some of the python examples, e. g. **plot2dcurves** and **mandelbrot** both use it.
+
+##plot2dcurves##
+
+This has it's own **README.md**.
+
+## mandelbrot
+
+This has it's own **README.md**.
+
+## setpathPVAPY
 
 This is an example of setting the path to **pvaPy**.
 Edit this file to specify where you have built pvaPy.
 Then use it to create your **PYTHONPATH**.
 
-## database for examples
+## database for some test examples
 
 The examples assume the a database containing 50000 calc records is running.
 
