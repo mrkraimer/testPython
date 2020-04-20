@@ -17,7 +17,6 @@ class InitialValues() :
     xmin = float(-2.5)
     xmax = float(1.0)
     ymin = float(-1.0)
-#    ymin = float(-.1)
     ymax = float(1.0)
     # convert from x,y to pixel (width,height)
     yxratio = (ymax-ymin)/(xmax-xmin)
@@ -29,6 +28,7 @@ class InitialValues() :
         height = math.ceil(width*yxratio)
     xinc = (xmax-xmin)/float(width)
     yinc = (ymax-ymin)/float(height)
+    nz = 3
 
 class CurrentValues() :
     def __init__(self,parent=None):
@@ -43,11 +43,13 @@ class CurrentValues() :
         self.width = ini.width
         self.xinc = ini.xinc
         self.yinc = ini.yinc
+        self.nz = ini.nz
     def show(self) :
         print('self.xmin=',self.xmin,' self.xmax=',self.xmax)
         print('self.ymin=',self.ymin,' self.ymax=',self.ymax)
         print('self.height=',self.height,' self.width=',self.width)
         print('self.xinc=',self.xinc,' self.yinc=',self.yinc)
+        print('self.nz=',self.nz)
 
     def update(self,pxmin,pxmax,pymin,pymax) :
         # convert from pixel(x,y) to (x,y)
@@ -80,21 +82,35 @@ class CurrentValues() :
         self.yinc = yinc
 
 class ImageDisplay(RawImageWidget,QWidget) :
-    def __init__(self,width,height,parent=None, **kargs):
+    def __init__(self,parent=None, **kargs):
         RawImageWidget.__init__(self, parent=parent,scaled=False)
         super(QWidget, self).__init__(parent)
         self.setWindowTitle("image")
-        self.width = width
-        self.height = height
+        self.width = 0
+        self.height = 0
         self.rubberBand = QRubberBand(QRubberBand.Rectangle,self)
         self.mousePressPosition = QPoint(0,0)
         self.mouseReleasePosition = QPoint(0,0)
         self.clientCallback = None
         self.mousePressed = False
+        self.okToClose = False
+        self.isHidden = True
 
-    def display(self,pixarray) :
-        self.setGeometry(QRect(10, 300,self.width,self.height))
+    def closeEvent(self,event) :
+        if not self.okToClose :
+            self.hide()
+            self.isHidden = True
+            return
+
+    def display(self,pixarray,width,height) :
+        if self.width!=width or self.height!=height :
+            self.width = width
+            self.height = height
+            self.setGeometry(QRect(10, 300,self.width,self.height))
         self.setImage(np.flip(pixarray,1))
+        if self.isHidden :
+            self.isHidden = False
+            self.show()
 
     def mousePressEvent(self,event) :
         self.mousePressPosition = QPoint(event.pos())
@@ -124,7 +140,8 @@ class Viewer(QWidget) :
         self.isClosed = False
         self.setWindowTitle("Viewer")
         self.currentValues = CurrentValues()
-        self.imageDisplay = None
+        self.imageDisplay = ImageDisplay()
+        self.imageDisplay.clientReleaseEvent(self.clientReleaseEvent)
 # first row
         self.startButton = QPushButton('start')
         self.startButton.setEnabled(True)
@@ -134,6 +151,10 @@ class Viewer(QWidget) :
         self.resetButton.setEnabled(True)
         self.resetButton.clicked.connect(self.resetEvent)
         self.resetButton.setFixedWidth(40)
+        self.colorModeButton = QPushButton('color')
+        self.colorModeButton.setEnabled(True)
+        self.colorModeButton.clicked.connect(self.colorModeEvent)
+        self.colorModeButton.setFixedWidth(40)
         timeLabel = QLabel("time:")
         timeLabel.setFixedWidth(50)
         self.timeText = QLabel()
@@ -151,6 +172,7 @@ class Viewer(QWidget) :
         box.setContentsMargins(0,0,0,0);
         box.addWidget(self.startButton)
         box.addWidget(self.resetButton)
+        box.addWidget(self.colorModeButton)
         box.addWidget(timeLabel)
         box.addWidget(self.timeText)
         box.addWidget(self.clearButton)
@@ -169,12 +191,24 @@ class Viewer(QWidget) :
         self.setGeometry(QRect(10, 20, 800, 60))
         self.show()
 
+    def closeEvent(self, event) :
+        self.imageDisplay.okToClose = True
+        self.imageDisplay.close()
+
     def startEvent(self) :
         self.start()
 
     def resetEvent(self) :
         self.reset()
 
+    def colorModeEvent(self) :
+        if self.currentValues.nz==3 :
+            self.colorModeButton.setText('mono')
+            self.currentValues.nz = 1;
+        else :
+            self.colorModeButton.setText('color')
+            self.currentValues.nz = 3;
+            
     def clearEvent(self) :
         self.statusText.setText('')
         self.statusText.setStyleSheet("background-color:white")
@@ -187,16 +221,12 @@ class Viewer(QWidget) :
         self.repaint()
         arg = (self.currentValues.xmin,self.currentValues.xinc,\
               self.currentValues.ymin,self.currentValues.yinc,\
-              self.currentValues.width,self.currentValues.height)
+              self.currentValues.width,self.currentValues.height,\
+              self.currentValues.nz)
         self.pixarray = self.mandelbrot.createImage(arg)
         self.statusText.setText('generating image')
         self.repaint()
-        if self.imageDisplay!= None :
-            self.imageDisplay.close()
-        self.imageDisplay = ImageDisplay(self.currentValues.width,self.currentValues.height)
-        self.imageDisplay.clientReleaseEvent(self.clientReleaseEvent)
-        self.imageDisplay.display(self.pixarray)
-        self.imageDisplay.show()
+        self.imageDisplay.display(self.pixarray,self.currentValues.width,self.currentValues.height)
         end = time.time()
         timediff = str(round(end-begin,1))
         self.timeText.setText(timediff)

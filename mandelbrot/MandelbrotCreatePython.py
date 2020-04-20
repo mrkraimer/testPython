@@ -11,9 +11,7 @@ class MandelbrotCreatePython :
         while abs(z) < 2 and i < 255 :
             z = z**2 + c
             i += 1
-        # Color scheme is that of Julia sets
-        color = (i % 8 * 32, i % 16 * 16, i % 32 * 8)
-        return color
+        return i
 
     def createImage(self,arg) :
         xmin = float(arg[0])
@@ -22,15 +20,25 @@ class MandelbrotCreatePython :
         yinc = float(arg[3])
         width = int(arg[4])
         height = int(arg[5])
-        pixarray = np.full((width,height,3),255,dtype="uint8")
+        nz = int(3)
+        if len(arg)==7 : nz = int(arg[6])
+        if nz==1 :
+            pixarray = np.full((width,height),255,dtype="uint8")
+        else :
+            pixarray = np.full((width,height,nz),255,dtype="uint8")
         for i in range(width) :
             x = xmin + i*xinc
             for j in range(height) :
                 y = ymin + j*yinc
-                color = self.calcIntensity(x,y)
-                pixarray[i][j][0] = color[0]
-                pixarray[i][j][1] = color[1]
-                pixarray[i][j][2] = color[2]
+                intensity = self.calcIntensity(x,y)
+                if nz == 1 :
+                    # Color scheme is grayscale
+                    pixarray[i][j] = 256 - intensity
+                else :
+                    # Color scheme is that of Julia sets
+                    pixarray[i][j][0] = intensity % 8 * 32
+                    pixarray[i][j][1] = intensity % 16 * 16
+                    pixarray[i][j][2] = intensity % 32 * 8
         return pixarray
 
             

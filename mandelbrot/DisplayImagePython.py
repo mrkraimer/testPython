@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from MandelbrotCreatePython import MandelbrotCreatePython
 from PyQt5.QtWidgets import QApplication
 from DisplayImage import Viewer

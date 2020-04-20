@@ -19,6 +19,7 @@ using namespace epics::pvData;
 using namespace epics::pvDatabase;
 using std::tr1::static_pointer_cast;
 using std::string;
+using std::cout;
 
 namespace epics { namespace testPython {
 
@@ -38,12 +39,14 @@ MandelbrotRecordPtr MandelbrotRecord::create(
             add("yinc",pvDouble)->
             add("width",pvInt)->
             add("height",pvInt)->
+            add("nz",pvInt)->
             endNested()->
         addNestedStructure("result") ->
             addArray("value",pvUByte) ->
             endNested()->
         createStructure();
     PVStructurePtr pvStructure = pvDataCreate->createPVStructure(topStructure);
+    pvStructure->getSubField<PVInt>("argument.nz")->put(3);
 
     MandelbrotRecordPtr pvRecord(
         new MandelbrotRecord(recordName,pvStructure));
@@ -86,21 +89,28 @@ void MandelbrotRecord::createImage()
     double yinc = pvArgument->getSubField<PVDouble>("yinc")->get();
     int height = pvArgument->getSubField<PVInt>("height")->get();
     int width = pvArgument->getSubField<PVInt>("width")->get();
-    size_t num = width*height*3;
+    int nz = pvArgument->getSubField<PVInt>("nz")->get();
+    size_t num = width*height*nz;
     epics::pvData::shared_vector<uint8_t> value(num,255);
-    for(int indx=0; indx<width; ++indx)
+    for(int indy=0; indy<height; ++indy)
     {
-        double x = xmin + indx*xinc;
-        for(int indy=0; indy<height; ++indy)
+        double y = ymin + indy*yinc;
+        for(int indx=0; indx<width; ++indx)
         {
-             double y = ymin + indy*yinc;
+             int indpix = indy*width*nz + indx*nz;
+             double x = xmin + indx*xinc;
              int  intensity = calcIntensity(x,y);
-             int ind = indx*height*3 +indy*3;
-             // Color scheme is that of Julia sets
-             value[ind] = intensity % 8 * 32;
-             value[ind+1] = intensity % 16 * 16;
-             value[ind+2] = intensity % 32 * 8;
+             if(nz==1) {
+                // Color scheme is grayscale
+                value[indpix] = 256 - intensity;
+             } else {
+                 // Color scheme is that of Julia sets
+                 value[indpix] = intensity % 8 * 32;
+                 value[indpix+1] = intensity % 16 * 16;
+                 value[indpix+2] = intensity % 32 * 8;
+             }
         }
+        
     }
     PVUByteArrayPtr pvValue= getPVStructure()->getSubField<PVUByteArray>("result.value");
     pvValue->putFrom(freeze(value));
