@@ -70,8 +70,8 @@ class CurrentValues() :
         ymin = self.ymin + self.yinc*pymin
         xinc = self.xinc*(pixnx/float(width))
         yinc = self.yinc*(pixny/float(height))
-        xmax = xmin + xinc*float(pixnx)
-        ymax = ymin + yinc*float(pixny)
+        xmax = xmin + self.xinc*float(pixnx)
+        ymax = ymin + self.yinc*float(pixny)
         self.xmin = xmin
         self.xmax = xmax
         self.ymin = ymin
@@ -80,6 +80,7 @@ class CurrentValues() :
         self.width = width
         self.xinc = xinc
         self.yinc = yinc
+
 
 class ImageDisplay(RawImageWidget,QWidget) :
     def __init__(self,parent=None, **kargs):
@@ -111,6 +112,7 @@ class ImageDisplay(RawImageWidget,QWidget) :
         if self.isHidden :
             self.isHidden = False
             self.show()
+        self.repaint()
 
     def mousePressEvent(self,event) :
         self.mousePressPosition = QPoint(event.pos())
@@ -155,6 +157,10 @@ class Viewer(QWidget) :
         self.colorModeButton.setEnabled(True)
         self.colorModeButton.clicked.connect(self.colorModeEvent)
         self.colorModeButton.setFixedWidth(40)
+        self.zoomButton = QPushButton('zoom')
+        self.zoomButton.setEnabled(True)
+        self.zoomButton.clicked.connect(self.zoomEvent)
+        self.zoomButton.setFixedWidth(40)
         timeLabel = QLabel("time:")
         timeLabel.setFixedWidth(50)
         self.timeText = QLabel()
@@ -173,6 +179,7 @@ class Viewer(QWidget) :
         box.addWidget(self.startButton)
         box.addWidget(self.resetButton)
         box.addWidget(self.colorModeButton)
+        box.addWidget(self.zoomButton)
         box.addWidget(timeLabel)
         box.addWidget(self.timeText)
         box.addWidget(self.clearButton)
@@ -208,6 +215,52 @@ class Viewer(QWidget) :
         else :
             self.colorModeButton.setText('color')
             self.currentValues.nz = 3;
+
+    def zoomEvent(self) :
+        startxmin = self.currentValues.xmin
+        startxmax = self.currentValues.xmax
+        startxinc = self.currentValues.xinc
+        startymin = self.currentValues.ymin
+        startymax = self.currentValues.ymax
+        startyinc = self.currentValues.yinc
+        width = self.currentValues.width
+        height = self.currentValues.height
+        xmin = startxmin
+        xmax = startxmax
+        xinc = startxinc
+        ymin = startymin
+        ymax = startymax
+        yinc = startyinc
+        rangex = (xmax-xmin)
+        rangey = (ymax-ymin)
+        nimages = 60
+        ratio = .9
+        rate = 60
+        finalrangex = rangex*ratio
+        delX = (finalrangex/float(nimages))/2.0
+        finalrangey = rangey*ratio
+        delY = (finalrangey/float(nimages))/2.0
+        for i in range(nimages) :
+            xmin = xmin + delX
+            xmax = xmax - delX
+            xinc = (xmax-xmin)/float(width)
+            ymin = ymin + delY
+            ymax = ymax - delY
+            yinc = (ymax-ymin)/float(height)
+            self.currentValues.xmin = xmin
+            self.currentValues.xmax = xmax
+            self.currentValues.xinc = xinc
+            self.currentValues.ymin = ymin
+            self.currentValues.ymax = ymax
+            self.currentValues.yinc = yinc
+            self.generateImage()
+            time.sleep(1.0/float(rate))
+        self.currentValues.xmin = startxmin
+        self.currentValues.xmax = startxmax
+        self.currentValues.xinc = startxinc
+        self.currentValues.ymin = startymin
+        self.currentValues.ymax = startymax
+        self.currentValues.yinc = startyinc
             
     def clearEvent(self) :
         self.statusText.setText('')
@@ -237,12 +290,12 @@ class Viewer(QWidget) :
         self.startButton.setEnabled(False)
         self.resetButton.setEnabled(False)
         self.generateImage()
-       
         self.startButton.setEnabled(True)
         self.resetButton.setEnabled(True)
 
     def reset(self) :
         self.currentValues = CurrentValues()
+        self.generateImage()
 
     def clientReleaseEvent(self,pressPosition,releasePosition) :
         xmin = pressPosition.x()
