@@ -234,12 +234,12 @@ class Viewer(QWidget) :
         rangex = (xmax-xmin)
         rangey = (ymax-ymin)
         nimages = 60
-        ratio = .9
-        rate = 60
+        ratio = .2
+        rate = 100
         finalrangex = rangex*ratio
-        delX = (finalrangex/float(nimages))/2.0
+        delX = ((rangex-finalrangex)/float(nimages))/2.0
         finalrangey = rangey*ratio
-        delY = (finalrangey/float(nimages))/2.0
+        delY = ((rangey-finalrangey)/float(nimages))/2.0
         for i in range(nimages) :
             xmin = xmin + delX
             xmax = xmax - delX
