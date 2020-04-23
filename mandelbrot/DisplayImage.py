@@ -169,11 +169,6 @@ class Viewer(QWidget) :
         self.zoomButton.clicked.connect(self.zoomEvent)
         self.zoomButton.setFixedWidth(40)
         self.zoomActive = False
-        self.stopZoomButton = QPushButton('stopZoom')
-        self.stopZoomButton.setEnabled(True)
-        self.stopZoomButton.clicked.connect(self.stopZoomEvent)
-        self.stopZoomButton.setFixedWidth(80)
-        self.stopZoom = False
         self.clearButton = QPushButton('clear')
         self.clearButton.setEnabled(True)
         self.clearButton.clicked.connect(self.clearEvent)
@@ -189,7 +184,6 @@ class Viewer(QWidget) :
         box.addWidget(self.timeText)
         box.addWidget(self.colorModeButton)
         box.addWidget(self.zoomButton)
-        box.addWidget(self.stopZoomButton)
         box.addWidget(self.clearButton)
         statusLabel = QLabel("  status:")
         statusLabel.setFixedWidth(50)
@@ -307,10 +301,6 @@ class Viewer(QWidget) :
     def clearEvent(self) :
         self.statusText.setText('')
         self.statusText.setStyleSheet("background-color:white")
-            
-    def stopZoomEvent(self) :
-        print('stopZoomEvent')
-        self.stopZoom = True
 
     def nimagesEvent(self) :
         try:
@@ -349,7 +339,6 @@ class Viewer(QWidget) :
             self.currentValues.nz = 3;
 
     def zoomEvent(self) :
-        self.stopZoom = False
         self.zoomActive = True
         startxmin = self.currentValues.xmin
         startxmax = self.currentValues.xmax
@@ -370,13 +359,12 @@ class Viewer(QWidget) :
         nimages = self.nimages
         ratio = self.ratio
         rate = self.rate
-        print('nimages=',nimages,' ratio=',ratio,' rate=',rate)
         finalrangex = rangex*ratio
         delX = ((rangex-finalrangex)/float(nimages))/2.0
         finalrangey = rangey*ratio
         delY = ((rangey-finalrangey)/float(nimages))/2.0
+        delayPerImage = 1.0/float(rate)
         for i in range(nimages) :
-            if self.stopZoom : break
             xmin = xmin + delX
             xmax = xmax - delX
             xinc = (xmax-xmin)/float(width)
@@ -389,8 +377,12 @@ class Viewer(QWidget) :
             self.currentValues.ymin = ymin
             self.currentValues.ymax = ymax
             self.currentValues.yinc = yinc
+            begin = time.time()
             self.generateImage()
-            time.sleep(1.0/float(rate))
+            end = time.time()
+            timediff = end-begin
+            delay = delayPerImage - timediff
+            if delay>0.0 : time.sleep(delay)
         self.currentValues.xmin = startxmin
         self.currentValues.xmax = startxmax
         self.currentValues.xinc = startxinc
