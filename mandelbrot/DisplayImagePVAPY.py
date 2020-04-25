@@ -5,15 +5,26 @@ from DisplayImage import Viewer
 import sys
 from pvaccess import *
 
-class MandelbrotCreate :
+class MandelbrotCreate() :
    def __init__(self):
-      self.channel = Channel("TPYmandelbrotRecord")
-      self.channel.setConnectionCallback(self.connectioncallback)
-      self.isConnected = False
+       self.channel = Channel("TPYmandelbrotRecord")
+       self.isConnected = False
+       self.callClient = False
 
-   def connectioncallback(self,arg) :
-       print('connectioncallback arg=',arg)
+   def start(self) :
+       self.channel.setConnectionCallback(self.connectionCallback)
+
+   def addClientConnectionCallback(self,clientConnectionCallback) :
+       print('addClientConnectionCallback')
+       self.clientConnectionCallback = clientConnectionCallback
+       print('self.clientConnectionCallback=',self.clientConnectionCallback)
+       self.clientConnectionCallback.connectionCallback(self.isConnected)
+       self.callClient = True
+      
+   def connectionCallback(self,arg) :
+       print('connectionCallback arg=',arg)
        self.isConnected = arg
+       if self.callClient : self.clientConnectionCallback.connectionCallback(arg)
 
    def checkConnected(self) :
        return self.isConnected
@@ -49,4 +60,5 @@ if __name__ == '__main__':
     app = QApplication(list())
     mandelbrotCreate = MandelbrotCreate()
     viewer = Viewer(mandelbrotCreate)
+    mandelbrotCreate.start()
     sys.exit(app.exec_())

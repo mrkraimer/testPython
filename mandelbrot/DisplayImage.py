@@ -303,13 +303,19 @@ class Viewer(QWidget) :
         self.setLayout(layout)
         self.setGeometry(QRect(10, 20, 800, 100))
         self.show()
-            
+        self.mandelbrot.addClientConnectionCallback(self)
+
+    def connectionCallback(self,arg) :
+        if arg==True :
+            self.startButton.setStyleSheet("background-color:green")
+        else :
+            self.startButton.setStyleSheet("background-color:red")
+
     def clearEvent(self) :
         self.statusText.setText('')
         self.statusText.setStyleSheet("background-color:white")
             
     def stopZoomEvent(self) :
-        print('stopZoomEvent')
         self.stopZoom = True
 
 
@@ -352,26 +358,19 @@ class Viewer(QWidget) :
     def zoomEvent(self) :
         self.stopZoom = False
         self.zoomActive = True
-        startxmin = self.currentValues.xmin
-        startxmax = self.currentValues.xmax
-        startxinc = self.currentValues.xinc
-        startymin = self.currentValues.ymin
-        startymax = self.currentValues.ymax
-        startyinc = self.currentValues.yinc
+        xmin = self.currentValues.xmin
+        xmax = self.currentValues.xmax
+        xinc = self.currentValues.xinc
+        ymin = self.currentValues.ymin
+        ymax = self.currentValues.ymax
+        yinc = self.currentValues.yinc
         width = self.currentValues.width
         height = self.currentValues.height
-        xmin = startxmin
-        xmax = startxmax
-        xinc = startxinc
-        ymin = startymin
-        ymax = startymax
-        yinc = startyinc
         rangex = (xmax-xmin)
         rangey = (ymax-ymin)
         nimages = self.nimages
         ratio = self.ratio
         rate = self.rate
-        print('nimages=',nimages,' ratio=',ratio,' rate=',rate)
         finalrangex = rangex*ratio
         delX = ((rangex-finalrangex)/float(nimages))/2.0
         finalrangey = rangey*ratio
@@ -397,34 +396,24 @@ class Viewer(QWidget) :
             timediff = end-begin
             delay = delayPerImage - timediff
             if delay>0.0 : time.sleep(delay)
-        self.currentValues.xmin = startxmin
-        self.currentValues.xmax = startxmax
-        self.currentValues.xinc = startxinc
-        self.currentValues.ymin = startymin
-        self.currentValues.ymax = startymax
-        self.currentValues.yinc = startyinc
         self.zoomActive = False
 
 
     def generateImage(self) :
         isConnected = self.mandelbrot.checkConnected()
         if isConnected :
-            self.startButton.setStyleSheet("background-color:green")
-            self.statusText.setText('calculating image')
+            self.statusText.setText('generating image')
         else :
-            self.startButton.setStyleSheet("background-color:red")
-            self.statusText.setText('calculating image even though not connected')
-        self.repaint()
+            self.statusText.setText('generating image even though not connected')
+        QApplication.processEvents()
         arg = (self.currentValues.xmin,self.currentValues.xinc,\
               self.currentValues.ymin,self.currentValues.yinc,\
               self.currentValues.width,self.currentValues.height,\
               self.currentValues.nz)
         self.pixarray = self.mandelbrot.createImage(arg)
-        self.statusText.setText('generating image')
-        self.repaint()
+        QApplication.processEvents()
         self.imageDisplay.display(self.pixarray,self.currentValues.width,self.currentValues.height)
-        self.statusText.setText('image generated')
-        self.repaint()
+        QApplication.processEvents()
         
     def start(self) :
         self.timeText.setText("0")
