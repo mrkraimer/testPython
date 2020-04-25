@@ -6,6 +6,18 @@ import sys
 from pvaccess import *
 
 class MandelbrotCreate :
+   def __init__(self):
+      self.channel = Channel("TPYmandelbrotRecord")
+      self.channel.setConnectionCallback(self.connectioncallback)
+      self.isConnected = False
+
+   def connectioncallback(self,arg) :
+       print('connectioncallback arg=',arg)
+       self.isConnected = arg
+
+   def checkConnected(self) :
+       return self.isConnected
+
    def createImage(self,arg) :
         xmin = arg[0]
         xinc = arg[1]

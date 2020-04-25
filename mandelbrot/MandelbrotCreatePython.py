@@ -13,6 +13,9 @@ class MandelbrotCreatePython :
             i += 1
         return i
 
+    def checkConnected(self) :
+        return True
+
     def createImage(self,arg) :
         xmin = float(arg[0])
         xinc = float(arg[1])

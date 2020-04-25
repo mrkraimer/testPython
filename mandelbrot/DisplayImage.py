@@ -114,7 +114,6 @@ class ImageDisplay(RawImageWidget,QWidget) :
         if self.isHidden :
             self.isHidden = False
             self.show()
-        self.repaint()
         QApplication.processEvents()
 
     def mousePressEvent(self,event) :
@@ -408,7 +407,13 @@ class Viewer(QWidget) :
 
 
     def generateImage(self) :
-        self.statusText.setText('calculating image')
+        isConnected = self.mandelbrot.checkConnected()
+        if isConnected :
+            self.startButton.setStyleSheet("background-color:green")
+            self.statusText.setText('calculating image')
+        else :
+            self.startButton.setStyleSheet("background-color:red")
+            self.statusText.setText('calculating image even though not connected')
         self.repaint()
         arg = (self.currentValues.xmin,self.currentValues.xinc,\
               self.currentValues.ymin,self.currentValues.yinc,\
