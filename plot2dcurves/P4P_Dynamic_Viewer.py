@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from Dynamic_Viewer import Dynamic_Viewer
-from Dynamic_Common  import Dynamic_Channel_Provider,getDynamicRecordName,DynamicRecordData
+from Dynamic_Common  import getDynamicRecordName,DynamicRecordData
 from p4p.client.thread import Context
 import sys
 import time
@@ -9,11 +9,10 @@ from threading import Event
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QObject,pyqtSignal
 
-class P4PProvider(QObject,Dynamic_Channel_Provider) :
+class P4PProvider(QObject) :
     callbacksignal = pyqtSignal()
     def __init__(self):
         QObject.__init__(self)
-        Dynamic_Channel_Provider.__init__(self)
         self.callbacksignal.connect(self.mycallback)
         self.callbackDoneEvent = Event()
         self.firstCallback = True

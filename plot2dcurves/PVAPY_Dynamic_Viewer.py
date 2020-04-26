@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from Dynamic_Viewer import Dynamic_Viewer
-from Dynamic_Common  import Dynamic_Channel_Provider,getDynamicRecordName,DynamicRecordData
+from Dynamic_Common  import getDynamicRecordName,DynamicRecordData
 from pvaccess import *
 from threading import Event
 from PyQt5.QtWidgets import QApplication
@@ -9,12 +9,11 @@ from PyQt5.QtCore import QObject,pyqtSignal
 import numpy as np
 import sys
 
-class PVAPYProvider(QObject,Dynamic_Channel_Provider) :
+class PVAPYProvider(QObject) :
     monitorCallbacksignal = pyqtSignal()
     connectCallbacksignal = pyqtSignal()
     def __init__(self):
         QObject.__init__(self)
-        Dynamic_Channel_Provider.__init__(self)
         self.monitordata = None
         self.connectdata = None
         self.firstStart = True

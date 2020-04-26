@@ -4,8 +4,8 @@ import numpy as np
 import os
 
 def getDynamicRecordName() :
-    name = os.getenv('DYNAMIC_RECORDNAME')
-    if name== None : return(str('dynamicRecord'))
+    name = os.getenv('PLOT2DCURVE_RECORDNAME')
+    if name== None : return(str('TPY_2dcurve'))
     return str(name)
 
 def getAddRecordName() :
@@ -45,23 +45,3 @@ class DynamicRecordData(object) :
         self.ymin = ymin
         self.ymax = ymax
 
-class Dynamic_Channel_Provider(object) :
-    '''
-    Base class for monitoring an NTNDArray channel from an areaDetector IOC.
-    The methods are called by NTNDA_Viewer.
-    '''
-
-    def __init__(self) :
-        pass
-    def start(self) :
-        ''' called to start monitoring.'''
-        raise Exception('derived class must implement NTNDA_Channel_Provider.start')
-    def stop(self) :
-        ''' called to stop monitoring.'''
-        raise Exception('derived class must implement NTNDA_Channel_Provider.stop')
-    def done(self) :
-        ''' called when NTNDA_Viewer is done.'''
-        pass
-    def callback(self,arg) :
-        ''' must call NTNDA_Viewer.callback(arg).'''
-        raise Exception('derived class must implement NTNDA_Channel_Provider.callback')
