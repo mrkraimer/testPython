@@ -1,9 +1,14 @@
 # MandelbrotCreatePython.py
-#from PyQt5.QtCore import QObject
+
 import numpy as np
 
 class MandelbrotCreatePython :
 
+    def addClientConnectionCallback(self,clientConnectionCallback) :
+        clientConnectionCallback.connectionCallback(True)
+    def checkConnected(self) :
+        return True
+    
     def calcIntensity(self,x,y) :
         c = complex(x,y)
         z = complex(0.0,0.0)
@@ -12,9 +17,6 @@ class MandelbrotCreatePython :
             z = z**2 + c
             i += 1
         return i
-
-    def checkConnected(self) :
-        return True
 
     def createImage(self,arg) :
         xmin = float(arg[0])
