@@ -6,10 +6,11 @@ import sys
 from pvaccess import *
 
 class MandelbrotCreate() :
-   def __init__(self):
-       self.channel = Channel("TPYmandelbrotRecord")
+   def __init__(self,channelName):
+       self.channelName = channelName
+       self.channel = Channel(self.channelName)
        self.isConnected = False
-       self.callClient = False
+       self.clientConnectionCallback = None
 
    def start(self) :
        self.channel.setConnectionCallback(self.connectionCallback)
@@ -19,12 +20,12 @@ class MandelbrotCreate() :
        self.clientConnectionCallback = clientConnectionCallback
        print('self.clientConnectionCallback=',self.clientConnectionCallback)
        self.clientConnectionCallback.connectionCallback(self.isConnected)
-       self.callClient = True
       
    def connectionCallback(self,arg) :
        print('connectionCallback arg=',arg)
        self.isConnected = arg
-       if self.callClient : self.clientConnectionCallback.connectionCallback(arg)
+       if self.clientConnectionCallback!=None : 
+           self.clientConnectionCallback.connectionCallback(arg)
 
    def checkConnected(self) :
        return self.isConnected
@@ -37,7 +38,6 @@ class MandelbrotCreate() :
         width = arg[4]
         height =arg[5]
         nz = arg[6]
-        chan = Channel("TPYmandelbrotRecord")
         argxmin = 'argument.xmin=' + str(xmin)
         argxinc = 'argument.xinc=' + str(xinc)
         argymin = 'argument.ymin=' + str(ymin)
@@ -46,7 +46,7 @@ class MandelbrotCreate() :
         argheight = 'argument.height=' + str(height)
         argnz = 'argument.nz=' + str(nz)
         args = [argxmin,argxinc,argymin,argyinc,argwidth,argheight,argnz]
-        result = chan.parsePutGet(args,"putField(argument)getField(result)",True)
+        result = self.channel.parsePutGet(args,"putField(argument)getField(result)",True)
         val =  result['result.value']
         if nz==3 :
             image = np.reshape(val,(height,width,3))
@@ -58,7 +58,11 @@ class MandelbrotCreate() :
         
 if __name__ == '__main__':
     app = QApplication(list())
-    mandelbrotCreate = MandelbrotCreate()
+    channelName = "TPYmandelbrotRecord"
+    nargs = len(sys.argv)
+    if nargs>=2 :
+        channelName = sys.argv[1]
+    mandelbrotCreate = MandelbrotCreate(channelName)
     viewer = Viewer(mandelbrotCreate)
     mandelbrotCreate.start()
     sys.exit(app.exec_())

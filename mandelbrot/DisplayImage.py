@@ -410,7 +410,11 @@ class Viewer(QWidget) :
               self.currentValues.ymin,self.currentValues.yinc,\
               self.currentValues.width,self.currentValues.height,\
               self.currentValues.nz)
-        self.pixarray = self.mandelbrot.createImage(arg)
+        try :
+            self.pixarray = self.mandelbrot.createImage(arg)
+        except Exception as error:
+            self.statusText.setText(str(error))
+            return
         QApplication.processEvents()
         self.imageDisplay.display(self.pixarray,self.currentValues.width,self.currentValues.height)
         QApplication.processEvents()
