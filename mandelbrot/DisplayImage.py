@@ -17,9 +17,9 @@ class InitialValues() :
     pixeltype = "uint8"
     pixelmax = 256
     xmin = float(-2.5)
-    xmax = float(1.0)
-    ymin = float(-1.0)
-    ymax = float(1.0)
+    xmax = float(1.00)
+    ymin = float(-1.25)
+    ymax = float(1.25)
     # convert from x,y to pixel (width,height)
     yxratio = (ymax-ymin)/(xmax-xmin)
     if yxratio>1.0 :
