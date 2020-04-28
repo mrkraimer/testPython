@@ -1,5 +1,9 @@
 # database
 
+**ATTENTION** Before make You must edit **RELEASE.local**
+so that **EPICS7_DIR** links to your EPICS7 release.
+
+
 This creates an IOC database that is used by some of the Python examples.
 In particular **mandelbrot** and **plot2dcurves**.
 When the IOC is started it has the following PVRecords:

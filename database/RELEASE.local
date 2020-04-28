@@ -1,0 +1,16 @@
+# This is a an  example RELEASE.local file for use with epics 7 releases.
+# Copy this file to configure/RELEASE.local.
+# Change the first line and also EPICS_BASE if using different version of base.
+# type make at top level
+
+EPICS7_DIR=/home/epics7/base-7.0.3.1
+EPICS_BASE=${EPICS7_DIR}
+MODULES=${EPICS7_DIR}/modules
+PVDATABASE=${MODULES}/pvDatabaseCPP
+PVACLIENT=${MODULES}/pvaClientCPP
+PVA2PVA=${MODULES}/pva2pva
+PVACCESS=${MODULES}/pvAccessCPP
+NORMATIVETYPES=${MODULES}/normativeTypesCPP
+PVDATA=${MODULES}/pvDataCPP
+TEMPLATE_TOP=$(EPICS_BASE)/templates/makeBaseApp/top
+
