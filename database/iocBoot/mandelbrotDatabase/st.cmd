@@ -4,9 +4,9 @@ cd ${TOP}
 
 ## Register all support components
 dbLoadDatabase("dbd/mandelbrotDatabase.dbd")
-mandelbrotDatabase_registerRecordDeviceDriver(pdbbase
+mandelbrotDatabase_registerRecordDeviceDriver(pdbbase)
+dbLoadRecords("db/dbCounter.db","name=TPYcounter01")
 
-cd ${TOP}/iocBoot/${IOC}
 iocInit()
 
 addRecordCreate TPYaddRecord
