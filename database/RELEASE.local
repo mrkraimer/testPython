@@ -1,8 +1,5 @@
-# This is a an  example RELEASE.local file for use with epics 7 releases.
-# Copy this file to configure/RELEASE.local.
-# Change the first line and also EPICS_BASE if using different version of base.
-# type make at top level
-
+#Makefile.local
+# The definition of EPICS7_DIR must be changed to give the location where You built EPICS7
 EPICS7_DIR=/home/epics7/base-7.0.3.1
 EPICS_BASE=${EPICS7_DIR}
 MODULES=${EPICS7_DIR}/modules
