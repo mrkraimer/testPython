@@ -2,8 +2,6 @@ TOP=..
 
 include $(TOP)/configure/CONFIG
 
-#mandelbrotDatabaseSRC = $(TOP)/src
-
 EPICS_BASE_PVA_CORE_LIBS = pvDatabase pvaClient pvAccess pvAccessCA nt pvData ca Com
 
 INC += pv/mandelbrotRecord.h
