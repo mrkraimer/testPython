@@ -1,18 +1,12 @@
 # Dynamic_Viewer.py
-from Dynamic_Common import getDynamicRecordName
-import sys,time,signal
-signal.signal(signal.SIGINT, signal.SIG_DFL)
-import numpy as np
 from pyqtgraph.widgets.RawImageWidget import RawImageWidget
-from PyQt5.QtWidgets import QWidget,QLabel,QLineEdit,QSlider
+from PyQt5.QtWidgets import QWidget,QLabel,QLineEdit
 from PyQt5.QtWidgets import QPushButton,QHBoxLayout,QGridLayout
-from PyQt5.QtWidgets import QRubberBand
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import *
+from PyQt5.QtCore import QRect
 
-import ctypes
-import ctypes.util
-import os
+import sys,time
+import numpy as np
 
 size = int(600)
     

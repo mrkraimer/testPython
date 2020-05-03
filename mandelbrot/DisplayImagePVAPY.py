@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QApplication
 import numpy as np
 from DisplayImage import Viewer
 import sys
-from pvaccess import *
+from pvaccess import Channel
 
 class MandelbrotCreate() :
    def __init__(self,channelName):

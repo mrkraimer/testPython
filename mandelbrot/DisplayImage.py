@@ -1,10 +1,10 @@
+# DisplayImage.py
 from pyqtgraph.widgets.RawImageWidget import RawImageWidget
 from PyQt5.QtWidgets import QWidget,QLabel,QLineEdit,QSlider
 from PyQt5.QtWidgets import QPushButton,QHBoxLayout,QVBoxLayout,QGridLayout,QGroupBox
 from PyQt5.QtWidgets import QRubberBand
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QWidget
-#from PyQt5.QtCore import *
 from PyQt5.QtCore import QObject,QPoint,QRect,QSize
 
 import sys,time

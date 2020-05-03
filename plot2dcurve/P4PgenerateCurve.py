@@ -1,5 +1,5 @@
 #!/usr/bin/env pythonpyt
-from GenerateCurve import generateCurve,getCurveNames
+from GenerateCurve import generateCurve
 from Dynamic_Common import getDynamicRecordName,DynamicRecordData
 from p4p.client.thread import Context
 import numpy as np

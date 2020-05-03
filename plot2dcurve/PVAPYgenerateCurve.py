@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from GenerateCurve import generateCurve,getCurveNames
+from GenerateCurve import generateCurve
 from Dynamic_Common import getDynamicRecordName,DynamicRecordData
 import numpy as np
 from pvaccess import *
