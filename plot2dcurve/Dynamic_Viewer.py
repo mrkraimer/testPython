@@ -1,5 +1,4 @@
 # Dynamic_Viewer.py
-from pyqtgraph.widgets.RawImageWidget import RawImageWidget
 from PyQt5.QtWidgets import QWidget,QLabel,QLineEdit
 from PyQt5.QtWidgets import QPushButton,QHBoxLayout,QGridLayout
 from PyQt5.QtWidgets import QApplication
@@ -7,25 +6,11 @@ from PyQt5.QtCore import QRect
 
 import sys,time
 import numpy as np
+sys.path.append('../numpyImage/')
+from numpyImage import NumpyImage
+
 
 size = int(600)
-    
-
-class Image_Display(RawImageWidget) :
-    def __init__(self,parent=None, **kargs):
-        RawImageWidget.__init__(self, parent=parent,scaled=False)
-        super(QWidget, self).__init__(parent)
-        self.setWindowTitle("image")
-        self.okToClose = False
-        self.setGeometry(QRect(10, 300,size, size))
-
-    def closeEvent(self,event) :
-        if not self.okToClose :
-            self.hide()
-            return
-
-    def display(self,image,pixelLevels) :
-        self.setImage(image,levels=pixelLevels)
   
 class Dynamic_Viewer(QWidget) :
     def __init__(self,data_Provider, providerName,parent=None):
@@ -33,7 +18,7 @@ class Dynamic_Viewer(QWidget) :
         self.isClosed = False
         self.provider = data_Provider
         self.setWindowTitle(providerName +"_Data_Viewer")
-        self.imageDisplay = Image_Display()
+        self.imageDisplay = NumpyImage("image")
 # first row
         self.startButton = QPushButton('start')
         self.startButton.setEnabled(True)
@@ -150,13 +135,11 @@ class Dynamic_Viewer(QWidget) :
             self.statusText.setText('x and y have different lengths')
             return
         npts = len(x)
+        if npts==0 : return
         self.nptsText.setText(str(npts))
         self.imageNameText.setText(str(value.name))
+        QApplication.processEvents()
         pixarray = np.full((size,size),255,dtype="uint8")
-        pixelLevels = (int(0),int(128))
-        if len(x)==0 :
-            self.imageDisplay.show()
-            return
         xmin = value.xmin
         xmax = value.xmax
         ymin = value.ymin
@@ -170,17 +153,17 @@ class Dynamic_Viewer(QWidget) :
             xnow = (x[i]-xmin)*scale
             if xnow<0 : xnow =0
             if xnow>= size : xnow = xnow -1
-            ynow = (ymax - y[i])*scale
+            ynow = (y[i]-ymin)*scale
             if ynow<0 : ynow =0
             if ynow>= size : ynow = ynow -1
-            pixarray[int(xnow)][int(ynow)] = 0
-        self.imageDisplay.display(pixarray,pixelLevels)
-        self.imageDisplay.show()
+            pixarray[int(ynow)][int(xnow)] = 0
+        self.imageDisplay.display(pixarray)
         self.nImages = self.nImages + 1
         self.timenow = time.time()
         timediff = self.timenow - self.lasttime
         if(timediff>1) :
             self.imageRateText.setText(str(round(self.nImages/timediff)))
+            QApplication.processEvents()
             self.lasttime = self.timenow 
             self.nImages = 0
 

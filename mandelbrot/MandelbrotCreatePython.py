@@ -28,13 +28,13 @@ class MandelbrotCreatePython :
         nz = int(3)
         if len(arg)==7 : nz = int(arg[6])
         if nz==1 :
-            pixarray = np.full((width,height),255,dtype="uint8")
+            pixarray = np.full((height,width),255,dtype="uint8")
         else :
-            pixarray = np.full((width,height,nz),255,dtype="uint8")
-        for i in range(width) :
-            x = xmin + i*xinc
-            for j in range(height) :
-                y = ymin + j*yinc
+            pixarray = np.full((height,width,nz),255,dtype="uint8")
+        for i in range(height) :
+            y = ymin + i*yinc
+            for j in range(width) :
+                x = xmin + j*xinc
                 intensity = self.calcIntensity(x,y)
                 if nz == 1 :
                     # Color scheme is grayscale

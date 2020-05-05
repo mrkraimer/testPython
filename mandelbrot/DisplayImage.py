@@ -1,5 +1,4 @@
 # DisplayImage.py
-from pyqtgraph.widgets.RawImageWidget import RawImageWidget
 from PyQt5.QtWidgets import QWidget,QLabel,QLineEdit,QSlider
 from PyQt5.QtWidgets import QPushButton,QHBoxLayout,QVBoxLayout,QGridLayout,QGroupBox
 from PyQt5.QtWidgets import QRubberBand
@@ -10,6 +9,8 @@ from PyQt5.QtCore import QObject,QPoint,QRect,QSize
 import sys,time
 import numpy as np
 import math
+sys.path.append('../numpyImage/')
+from numpyImage import NumpyImage
 
 maxsize = 600
 
@@ -54,8 +55,6 @@ class CurrentValues() :
         print('self.nz=',self.nz)
 
     def update(self,pxmin,pxmax,pymin,pymax) :
-        # convert from pixel(x,y) to (x,y)
-        #  for pixel direction is top to bottom must flip
         temp = pymin
         pymin = self.height - pymax
         pymax = self.height - temp
@@ -82,60 +81,6 @@ class CurrentValues() :
         self.width = width
         self.xinc = xinc
         self.yinc = yinc
-
-
-class ImageDisplay(RawImageWidget,QWidget) :
-    def __init__(self,parent=None, **kargs):
-        RawImageWidget.__init__(self, parent=parent,scaled=False)
-        super(QWidget, self).__init__(parent)
-        self.setWindowTitle("image")
-        self.width = 0
-        self.height = 0
-        self.rubberBand = QRubberBand(QRubberBand.Rectangle,self)
-        self.mousePressPosition = QPoint(0,0)
-        self.mouseReleasePosition = QPoint(0,0)
-        self.clientCallback = None
-        self.mousePressed = False
-        self.okToClose = False
-        self.isHidden = True
-
-    def closeEvent(self,event) :
-        if not self.okToClose :
-            self.hide()
-            self.isHidden = True
-            return
-
-    def display(self,pixarray,width,height) :
-        if self.width!=width or self.height!=height :
-            self.width = width
-            self.height = height
-            self.setGeometry(QRect(10, 300,self.width,self.height))
-        self.setImage(np.flip(pixarray,1))
-        if self.isHidden :
-            self.isHidden = False
-            self.show()
-        QApplication.processEvents()
-
-    def mousePressEvent(self,event) :
-        self.mousePressPosition = QPoint(event.pos())
-        self.rubberBand.setGeometry(QRect(self.mousePressPosition,QSize()))
-        self.rubberBand.show()
-        self.mousePressed = True
-
-    def mouseMoveEvent(self,event) :
-        if not self.mousePressed : return
-        self.rubberBand.setGeometry(QRect(self.mousePressPosition,event.pos()).normalized())
-
-    def mouseReleaseEvent(self,event) :
-        if not self.mousePressed : return
-        self.mouseReleasePosition = QPoint(event.pos())
-        if not self.clientCallback==None : 
-            self.clientCallback(self.mousePressPosition,self.mouseReleasePosition)
-        self.rubberBand.hide()
-        self.mousePressed = False
-
-    def clientReleaseEvent(self,clientCallback) :
-        self.clientCallback = clientCallback
         
 class Viewer(QWidget) :
     def __init__(self,mandelbrot,parent=None):
@@ -144,7 +89,7 @@ class Viewer(QWidget) :
         self.isClosed = False
         self.setWindowTitle("Viewer")
         self.currentValues = CurrentValues()
-        self.imageDisplay = ImageDisplay()
+        self.imageDisplay = NumpyImage("image")
         self.imageDisplay.clientReleaseEvent(self.clientReleaseEvent)
 # first row
         self.startButton = QPushButton('start')
@@ -415,8 +360,8 @@ class Viewer(QWidget) :
         except Exception as error:
             self.statusText.setText(str(error))
             return
-        QApplication.processEvents()
-        self.imageDisplay.display(self.pixarray,self.currentValues.width,self.currentValues.height)
+        self.imageDisplay.display(self.pixarray)
+        self.updateXYtext()
         QApplication.processEvents()
         
     def start(self) :
@@ -440,7 +385,6 @@ class Viewer(QWidget) :
     def reset(self) :
         self.currentValues = CurrentValues()
         self.start()
-        self.updateXYtext()
 
     def clientReleaseEvent(self,pressPosition,releasePosition) :
         if self.zoomActive: return
@@ -452,8 +396,7 @@ class Viewer(QWidget) :
         if xmin>=xmax or ymin>=ymax :
             self.statusText.setText('illegal mouse move')
             return
-        self.currentValues.update(xmin,xmax,ymin,ymax) 
+        self.currentValues.update(xmin,xmax,ymin,ymax)
         self.start()
-        self.updateXYtext()
 
 

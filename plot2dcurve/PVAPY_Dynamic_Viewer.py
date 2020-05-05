@@ -93,11 +93,11 @@ class PVAPYProvider(QObject) :
             try:
                 arg = dict()
                 arg['value'] = self.monitordata
-                self.monitordata = None
-                self.viewerCallback(arg)
+                self.viewerCallback(arg)    
             except Exception as error:
                 arg["exception"] = repr(error)
                 self.viewerCallback(arg)
+            self.monitordata = None
         self.callbackDoneEvent.set()
 
 if __name__ == '__main__':

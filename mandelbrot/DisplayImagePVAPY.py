@@ -50,10 +50,8 @@ class MandelbrotCreate() :
         val =  result['result.value']
         if nz==3 :
             image = np.reshape(val,(height,width,3))
-            image = np.transpose(image,(1,0,2))
         else :
             image = np.reshape(val,(height,width))
-            image = np.transpose(image,(1,0))
         return image
         
 if __name__ == '__main__':
