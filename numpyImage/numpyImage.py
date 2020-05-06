@@ -15,32 +15,28 @@ import sys,time
 import numpy as np
 import math
 
-class NotImplementedException:
-    pass
-
-gray_color_table = [qRgb(i, i, i) for i in range(256)]
-
-def toQImage(im):
-    if im is None:
+def toQImage(image):
+    gray_color_table = [qRgb(i, i, i) for i in range(256)]
+    if image is None:
         return QImage()
 
-    if im.dtype == np.uint8:
-        mv = memoryview(im.data)
+    if image.dtype==np.uint8 or image.dtype==np.int8:
+        mv = memoryview(image.data)
         data = mv.tobytes()
-        if len(im.shape) == 2:
-            qim = QImage(data, im.shape[1], im.shape[0], im.strides[0], QImage.Format_Indexed8)
-            qim.setColorTable(gray_color_table)
-            return  qim
+        if len(image.shape) == 2:
+            qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_Indexed8)
+            qimage.setColorTable(gray_color_table)
+            return  qimage
 
-        elif len(im.shape) == 3:
-            if im.shape[2] == 3:
-                qim = QImage(data, im.shape[1], im.shape[0], im.strides[0], QImage.Format_RGB888)
-                return qim
-            elif im.shape[2] == 4:
-                qim = QImage(data, im.shape[1], im.shape[0], im.strides[0], QImage.Format_ARGB32);
-                return qim
+        elif len(image.shape) == 3:
+            if image.shape[2] == 3:
+                qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_RGB888)
+                return qimage
+            elif image.shape[2] == 4:
+                qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_ARGB32);
+                return qimage
 
-    raise NotImplementedException
+    raise Exception('illegal dtype')
 
 class Worker(QThread):
     signal = pyqtSignal()
@@ -59,6 +55,10 @@ class Worker(QThread):
         self.start()
 
     def run(self):
+        if self.exiting :
+           self.signal.emit()
+           self.caller.imageDoneEvent.set()
+           return
         qimage = toQImage(self.image)
         painter = QPainter(self.caller)
         painter.drawImage(0,0,qimage)
@@ -87,8 +87,10 @@ class NumpyImage(QWidget) :
         self.mousePressed = False
         self.okToClose = False
         self.isHidden = True
+        self.isClosed = False
 
     def waitForDone(self) :
+        if self.isClosed : return
         result = self.imageDoneEvent.wait(1.0)
         if not result : print('waitForDone timeout')
 
@@ -116,6 +118,7 @@ class NumpyImage(QWidget) :
             self.hide()
             self.isHidden = True
             return
+        self.isClosed = True
 
     def mousePressEvent(self,event) :
         self.mousePressed = True
