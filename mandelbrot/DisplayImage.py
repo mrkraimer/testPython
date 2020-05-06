@@ -263,7 +263,6 @@ class Viewer(QWidget) :
     def stopZoomEvent(self) :
         self.stopZoom = True
 
-
     def nimagesEvent(self) :
         try:
             self.nimages = int(self.nimagesText.text())
