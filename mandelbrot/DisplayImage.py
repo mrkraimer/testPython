@@ -29,8 +29,6 @@ class InitialValues() :
     else :
         width = int(maxsize)
         height = math.ceil(width*yxratio)
-    xinc = (xmax-xmin)/float(width)
-    yinc = (ymax-ymin)/float(height)
     nz = 3
 
 class CurrentValues() :
@@ -44,43 +42,49 @@ class CurrentValues() :
         self.ymax = ini.ymax
         self.height = ini.height
         self.width = ini.width
-        self.xinc = ini.xinc
-        self.yinc = ini.yinc
         self.nz = ini.nz
     def show(self) :
         print('self.xmin=',self.xmin,' self.xmax=',self.xmax)
         print('self.ymin=',self.ymin,' self.ymax=',self.ymax)
         print('self.height=',self.height,' self.width=',self.width)
-        print('self.xinc=',self.xinc,' self.yinc=',self.yinc)
         print('self.nz=',self.nz)
 
-    def update(self,pxmin,pxmax,pymin,pymax) :
-        temp = pymin
-        pymin = self.height - pymax
-        pymax = self.height - temp
-        pixnx = pxmax - pxmin
-        pixny = pymax - pymin
-        yxratio = float(pixny)/float(pixnx)
+    def update(self,imageSize,mouseLocation) :
+        xsize = imageSize[0]
+        ysize = imageSize[1]
+        xlow = mouseLocation[0]
+        xhigh = mouseLocation[1]
+        ylow = mouseLocation[2]
+        yhigh = mouseLocation[3]
+#        print('update xsize=',xsize,' ysize=',ysize)
+#        print('update xlow=',xlow,' xhigh=',xhigh,' ylow=',ylow,' yhigh=',yhigh)
+        nx = xhigh - xlow
+        ny = yhigh - ylow
+        yxratio = float(ny)/float(nx)
         if yxratio>1.0 :
             height = int(maxsize)
             width = math.ceil(height/yxratio)
         else :
             width = int(maxsize)
             height = math.ceil(width*yxratio)
-        xmin = self.xmin + self.xinc*pxmin
-        ymin = self.ymin + self.yinc*pymin
-        xinc = self.xinc*(pixnx/float(width))
-        yinc = self.yinc*(pixny/float(height))
-        xmax = xmin + self.xinc*float(pixnx)
-        ymax = ymin + self.yinc*float(pixny)
+        xminPre = self.xmin
+        xmaxPre = self.xmax
+        widthPre = self.width
+        xincPre = (xmaxPre-xminPre)/widthPre
+        xmin = xminPre + xincPre*(xlow)
+        xmax = xmaxPre - xincPre*(xsize-xhigh)
+        yminPre = self.ymin
+        ymaxPre = self.ymax
+        heightPre = self.height
+        yincPre = (ymaxPre-yminPre)/heightPre
+        ymin = yminPre + yincPre*(ylow)
+        ymax = ymaxPre - yincPre*(ysize-yhigh)
         self.xmin = xmin
         self.xmax = xmax
         self.ymin = ymin
         self.ymax = ymax
         self.height = height
         self.width = width
-        self.xinc = xinc
-        self.yinc = yinc
         
 class Viewer(QWidget) :
     def __init__(self,mandelbrot,parent=None):
@@ -304,10 +308,10 @@ class Viewer(QWidget) :
         self.zoomActive = True
         xmin = self.currentValues.xmin
         xmax = self.currentValues.xmax
-        xinc = self.currentValues.xinc
+#        xinc = self.currentValues.xinc
         ymin = self.currentValues.ymin
         ymax = self.currentValues.ymax
-        yinc = self.currentValues.yinc
+#        yinc = self.currentValues.yinc
         width = self.currentValues.width
         height = self.currentValues.height
         rangex = (xmax-xmin)
@@ -324,16 +328,16 @@ class Viewer(QWidget) :
             if self.stopZoom : break
             xmin = xmin + delX
             xmax = xmax - delX
-            xinc = (xmax-xmin)/float(width)
+#            xinc = (xmax-xmin)/float(width)
             ymin = ymin + delY
             ymax = ymax - delY
-            yinc = (ymax-ymin)/float(height)
+#            yinc = (ymax-ymin)/float(height)
             self.currentValues.xmin = xmin
             self.currentValues.xmax = xmax
-            self.currentValues.xinc = xinc
+#            self.currentValues.xinc = xinc
             self.currentValues.ymin = ymin
             self.currentValues.ymax = ymax
-            self.currentValues.yinc = yinc
+#            self.currentValues.yinc = yinc
             begin = time.time()
             self.generateImage()
             end = time.time()
@@ -350,8 +354,8 @@ class Viewer(QWidget) :
         else :
             self.statusText.setText('generating image even though not connected')
         QApplication.processEvents()
-        arg = (self.currentValues.xmin,self.currentValues.xinc,\
-              self.currentValues.ymin,self.currentValues.yinc,\
+        arg = (self.currentValues.xmin,self.currentValues.xmax,\
+              self.currentValues.ymin,self.currentValues.ymax,\
               self.currentValues.width,self.currentValues.height,\
               self.currentValues.nz)
         try :
@@ -385,17 +389,18 @@ class Viewer(QWidget) :
         self.currentValues = CurrentValues()
         self.start()
 
-    def clientReleaseEvent(self,pressPosition,releasePosition) :
+    def clientReleaseEvent(self,imageSize,mouseLocation) :
         if self.zoomActive: return
-        xmin = pressPosition.x()
-        ymin = pressPosition.y()
-        xmax = releasePosition.x()
-        ymax = releasePosition.y()
-        if xmin==xmax and ymin>=ymax : return
-        if xmin>=xmax or ymin>=ymax :
-            self.statusText.setText('illegal mouse move')
-            return
-        self.currentValues.update(xmin,xmax,ymin,ymax)
+#        print('imageSize=',imageSize)
+#        print('mouseLocation=',mouseLocation)
+#        print('before update')
+#        self.currentValues.show()
+        try :
+            self.currentValues.update(imageSize,mouseLocation)
+        except Exception as error:
+            self.statusText.setText(str(error))
+#        print('after update')
+#        self.currentValues.show()
         self.start()
 
 

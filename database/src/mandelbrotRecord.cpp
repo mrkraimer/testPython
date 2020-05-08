@@ -34,9 +34,9 @@ MandelbrotRecordPtr MandelbrotRecord::create(
         add("timeStamp",standardField->timeStamp()) ->
         addNestedStructure("argument")->
             add("xmin",pvDouble)->
-            add("xinc",pvDouble)->
+            add("xmax",pvDouble)->
             add("ymin",pvDouble)->
-            add("yinc",pvDouble)->
+            add("ymax",pvDouble)->
             add("width",pvInt)->
             add("height",pvInt)->
             add("nz",pvInt)->
@@ -84,11 +84,13 @@ void MandelbrotRecord::createImage()
 {
     PVStructurePtr pvArgument = getPVStructure()->getSubField<PVStructure>("argument");
     double xmin = pvArgument->getSubField<PVDouble>("xmin")->get();
-    double xinc = pvArgument->getSubField<PVDouble>("xinc")->get();
+    double xmax = pvArgument->getSubField<PVDouble>("xmax")->get();
     double ymin = pvArgument->getSubField<PVDouble>("ymin")->get();
-    double yinc = pvArgument->getSubField<PVDouble>("yinc")->get();
+    double ymax = pvArgument->getSubField<PVDouble>("ymax")->get();
     int height = pvArgument->getSubField<PVInt>("height")->get();
     int width = pvArgument->getSubField<PVInt>("width")->get();
+    double xinc = (xmax-xmin)/width;
+    double yinc = (ymax-ymin)/height;
     int nz = pvArgument->getSubField<PVInt>("nz")->get();
     size_t num = width*height*nz;
     epics::pvData::shared_vector<uint8_t> value(num,255);

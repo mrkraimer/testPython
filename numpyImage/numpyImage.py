@@ -136,7 +136,20 @@ class NumpyImage(QWidget) :
         self.rubberBand.hide()
         self.mousePressed = False
         if not self.clientCallback==None : 
-            self.clientCallback(self.mousePressPosition,self.mouseReleasePosition)
+            imageGeometry = self.geometry().getRect()
+            xsize = imageGeometry[2]
+            ysize = imageGeometry[3]
+            xmin = self.mousePressPosition.x()
+            xmax = self.mouseReleasePosition.x()
+            if xmin>xmax : xmax,xmin = xmin,xmax
+            if xmin<0 : xmin = 0
+            if xmax>xsize : xmax = xsize
+            ymin = self.height - self.mouseReleasePosition.y()
+            ymax = self.height - self.mousePressPosition.y()
+            if ymin>ymax : ymax,ymin = ymin,ymax
+            if ymin<0 : ymin = 0
+            if ymax>ysize : ymax = ysize
+            self.clientCallback((xsize,ysize),(xmin,xmax,ymin,ymax))
 
     def clientReleaseEvent(self,clientCallback) :
         self.clientCallback = clientCallback

@@ -20,11 +20,13 @@ class MandelbrotCreatePython :
 
     def createImage(self,arg) :
         xmin = float(arg[0])
-        xinc = float(arg[1])
+        xmax = float(arg[1])
         ymin = float(arg[2])
-        yinc = float(arg[3])
+        ymax = float(arg[3])
         width = int(arg[4])
         height = int(arg[5])
+        xinc = (xmax-xmin)/width
+        yinc = (ymax-ymin)/height
         nz = int(3)
         if len(arg)==7 : nz = int(arg[6])
         if nz==1 :
