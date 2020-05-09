@@ -88,18 +88,21 @@ class NumpyImage(QWidget) :
         self.okToClose = False
         self.isHidden = True
         self.isClosed = False
+        self.isActive = False
 
     def waitForDone(self) :
         if self.isClosed : return
-        result = self.imageDoneEvent.wait(1.0)
+        result = self.imageDoneEvent.wait(3.0)
         if not result : print('waitForDone timeout')
 
     def threadDone(self) :
         self.imageDoneEvent.set()
+        self.isActive = False
 
     def display(self,pixarray) :
         self.waitForDone()
         self.imageDoneEvent.clear()
+        self.isActive = True
         height = pixarray.shape[0]
         width = pixarray.shape[1]
         if self.width!=width or self.height!=height :
@@ -121,6 +124,8 @@ class NumpyImage(QWidget) :
         self.isClosed = True
 
     def mousePressEvent(self,event) :
+        if self.isActive : return
+        if self.clientCallback==None : return
         self.mousePressed = True
         self.mousePressPosition = QPoint(event.pos())
         self.rubberBand.setGeometry(QRect(self.mousePressPosition,QSize()))
@@ -134,22 +139,21 @@ class NumpyImage(QWidget) :
         if not self.mousePressed : return
         self.mouseReleasePosition = QPoint(event.pos())
         self.rubberBand.hide()
-        self.mousePressed = False
-        if not self.clientCallback==None : 
-            imageGeometry = self.geometry().getRect()
-            xsize = imageGeometry[2]
-            ysize = imageGeometry[3]
-            xmin = self.mousePressPosition.x()
-            xmax = self.mouseReleasePosition.x()
-            if xmin>xmax : xmax,xmin = xmin,xmax
-            if xmin<0 : xmin = 0
-            if xmax>xsize : xmax = xsize
-            ymin = self.height - self.mouseReleasePosition.y()
-            ymax = self.height - self.mousePressPosition.y()
-            if ymin>ymax : ymax,ymin = ymin,ymax
-            if ymin<0 : ymin = 0
-            if ymax>ysize : ymax = ysize
-            self.clientCallback((xsize,ysize),(xmin,xmax,ymin,ymax))
+        self.mousePressed = False 
+        imageGeometry = self.geometry().getRect()
+        xsize = imageGeometry[2]
+        ysize = imageGeometry[3]
+        xmin = self.mousePressPosition.x()
+        xmax = self.mouseReleasePosition.x()
+        if xmin>xmax : xmax,xmin = xmin,xmax
+        if xmin<0 : xmin = 0
+        if xmax>xsize : xmax = xsize
+        ymin = self.height - self.mouseReleasePosition.y()
+        ymax = self.height - self.mousePressPosition.y()
+        if ymin>ymax : ymax,ymin = ymin,ymax
+        if ymin<0 : ymin = 0
+        if ymax>ysize : ymax = ysize
+        self.clientCallback((xsize,ysize),(xmin,xmax,ymin,ymax))
 
     def clientReleaseEvent(self,clientCallback) :
         self.clientCallback = clientCallback

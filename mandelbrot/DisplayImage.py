@@ -25,10 +25,10 @@ class InitialValues() :
     yxratio = (ymax-ymin)/(xmax-xmin)
     if yxratio>1.0 :
         height = int(maxsize)
-        width = math.ceil(height*yxratio)
+        width = int(math.ceil(height*yxratio))
     else :
         width = int(maxsize)
-        height = math.ceil(width*yxratio)
+        height = int(math.ceil(width*yxratio))
     nz = 3
 
 class CurrentValues() :
@@ -63,10 +63,10 @@ class CurrentValues() :
         yxratio = float(ny)/float(nx)
         if yxratio>1.0 :
             height = int(maxsize)
-            width = math.ceil(height/yxratio)
+            width = int(math.ceil(height/yxratio))
         else :
             width = int(maxsize)
-            height = math.ceil(width*yxratio)
+            height = int(math.ceil(width*yxratio))
         xminPre = self.xmin
         xmaxPre = self.xmax
         widthPre = self.width
