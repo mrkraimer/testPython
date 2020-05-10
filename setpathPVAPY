@@ -1,1 +1,1 @@
-export PYTHONPATH=$PYTHONPATH:/home/epicsv4/masterCPP/pvaPy/lib/python/linux-x86_64
+export PYTHONPATH=$PYTHONPATH:/home/epics7/modules/pvaPy/lib/python/3.8/linux-x86_64

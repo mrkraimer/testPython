@@ -61,7 +61,12 @@ class CurrentValues() :
         nx = xhigh - xlow
         ny = yhigh - ylow
         yxratio = float(ny)/float(nx)
+#        print('nx=',nx,' ny=',ny,' yxratio=',yxratio)
+        if yxratio>1.0 : 
+#            print('raising exception',flush=True)
+            raise Exception('height gt width')
         if yxratio>1.0 :
+#            print('yxratio=',yxratio,flush=True)
             height = int(maxsize)
             width = int(math.ceil(height/yxratio))
         else :
@@ -394,13 +399,19 @@ class Viewer(QWidget) :
 #        print('imageSize=',imageSize)
 #        print('mouseLocation=',mouseLocation)
 #        print('before update')
-#        self.currentValues.show()
+        self.currentValues.show()
+        success = True
         try :
             self.currentValues.update(imageSize,mouseLocation)
         except Exception as error:
+            print('catching exception=',error)
+            success = False
             self.statusText.setText(str(error))
-#        print('after update')
-#        self.currentValues.show()
-        self.start()
+ #       print('after update')
+        self.currentValues.show()
+        QApplication.processEvents()
+        if success :
+#            print('calling start',flush=True)
+            self.start()
 
 

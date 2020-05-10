@@ -48,6 +48,7 @@ class MandelbrotCreate() :
         args = [argxmin,argxmax,argymin,argymax,argwidth,argheight,argnz]
         result = self.channel.parsePutGet(args,"putField(argument)getField(result)",True)
         val =  result['result.value']
+        val = np.array(val,dtype='uint8')
         if nz==3 :
             image = np.reshape(val,(height,width,3))
         else :
