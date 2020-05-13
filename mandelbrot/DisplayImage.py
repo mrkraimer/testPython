@@ -98,7 +98,7 @@ class Viewer(QWidget) :
         self.isClosed = False
         self.setWindowTitle("Viewer")
         self.currentValues = CurrentValues()
-        self.imageDisplay = NumpyImage("image")
+        self.imageDisplay = NumpyImage(windowTitle='mandelbrot')
         self.imageDisplay.clientReleaseEvent(self.clientReleaseEvent)
 # first row
         self.startButton = QPushButton('start')

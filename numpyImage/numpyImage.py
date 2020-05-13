@@ -20,7 +20,7 @@ def toQImage(image):
     if image is None:
         return QImage()
 
-    if image.dtype==np.uint8 or image.dtype==np.int8:
+    if image.dtype==np.uint8 or image.dtype==np.int8 :
         mv = memoryview(image.data)
         data = mv.tobytes()
         if len(image.shape) == 2:
@@ -35,7 +35,22 @@ def toQImage(image):
             elif image.shape[2] == 4:
                 qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_ARGB32);
                 return qimage
-
+                
+    if image.dtype==np.uint16 or image.dtype==np.int16 :
+        # QImage::Format_RGB16
+        raise Exception('int16 not yet implemented')
+    if image.dtype==np.uint32 or image.dtype==np.int32 :
+        # QImage::Format_ARGB32
+        raise Exception('int32 not yet implemented')
+    if image.dtype==np.uint64 or image.dtype==np.int64 :
+        # QImage::Format_RGBA64
+        raise Exception('int64 not yet implemented')
+    if image.dtype==np.float32 :
+        # ???
+        raise Exception('float32 not yet implemented')
+    if image.dtype==np.float64 :
+        # ???
+        raise Exception('float64 not yet implemented')
     raise Exception('illegal dtype')
 
 class Worker(QThread):
@@ -71,9 +86,10 @@ class Worker(QThread):
 
 
 class NumpyImage(QWidget) :
-    def __init__(self,windowTitle,parent=None):
+    def __init__(self,windowTitle='no title',flipy= True,parent=None):
         super(QWidget, self).__init__(parent)
         self.setWindowTitle(windowTitle)
+        self.flipy = flipy
         self.thread = Worker()
         self.thread.signal.connect(self.threadDone)
         self.imageDoneEvent = Event()
@@ -109,7 +125,10 @@ class NumpyImage(QWidget) :
             self.width = width
             self.height = height
             self.setGeometry(QRect(10, 300,self.width,self.height))
-        self.image = np.flip(pixarray,0)
+        if self.flipy :
+            self.image = np.flip(pixarray,0)
+        else :
+            self.image = pixarray
         self.update()
         QApplication.processEvents()
         if self.isHidden :
@@ -148,8 +167,12 @@ class NumpyImage(QWidget) :
         if xmin>xmax : xmax,xmin = xmin,xmax
         if xmin<0 : xmin = 0
         if xmax>xsize : xmax = xsize
-        ymin = self.height - self.mouseReleasePosition.y()
-        ymax = self.height - self.mousePressPosition.y()
+        if self.flipy :
+            ymin = self.height - self.mouseReleasePosition.y()
+            ymax = self.height - self.mousePressPosition.y()
+        else :
+            ymin = self.mousePressPosition.y()
+            ymax = self.mouseReleasePosition.y()
         if ymin>ymax : ymax,ymin = ymin,ymax
         if ymin<0 : ymin = 0
         if ymax>ysize : ymax = ysize
