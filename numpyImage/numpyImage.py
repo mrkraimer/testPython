@@ -15,17 +15,31 @@ import sys,time
 import numpy as np
 import math
 
-def toQImage(image):
+def toQImage(image,pixelLevels) :
     gray_color_table = [qRgb(i, i, i) for i in range(256)]
     if image is None:
         return QImage()
-
+        
+    if len(pixelLevels)==0 :
+        colorTable = gray_color_table
+    elif  len(pixelLevels)!=2 :
+        raise Exception('pixelLevels must of the form (int,int)')
+    else :
+        indmin = int(pixelLevels[0])
+        indmax = int(pixelLevels[1])
+#        if type(indmin)!=type(int) or type(indmax)!=type(int) :
+#            raise Exception('pixelLevels must of the form (int,int)')
+        n = indmax -indmin +1
+        colorTable = np.empty(n, dtype=np.uint32)
+        for ind in range(n) :
+            val = indmin + ind
+            colorTable[ind] = qRgb(val,val,val)
     if image.dtype==np.uint8 or image.dtype==np.int8 :
         mv = memoryview(image.data)
         data = mv.tobytes()
         if len(image.shape) == 2:
             qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_Indexed8)
-            qimage.setColorTable(gray_color_table)
+            qimage.setColorTable(colorTable)
             return  qimage
 
         elif len(image.shape) == 3:
@@ -60,13 +74,15 @@ class Worker(QThread):
         self.exiting = False
         self.image = None
         self.caller = None
+        self.pixelLevels = []
     def __del__(self):    
         self.exiting = True
         self.wait()
         
-    def render(self,image,caller):    
+    def render(self,image,pixelLevels,caller):    
         self.image = image
         self.caller = caller
+        self.pixelLevels = pixelLevels
         self.start()
 
     def run(self):
@@ -74,7 +90,7 @@ class Worker(QThread):
            self.signal.emit()
            self.caller.imageDoneEvent.set()
            return
-        qimage = toQImage(self.image)
+        qimage = toQImage(self.image,self.pixelLevels)
         painter = QPainter(self.caller)
         painter.drawImage(0,0,qimage)
         while True :
@@ -115,7 +131,7 @@ class NumpyImage(QWidget) :
         self.imageDoneEvent.set()
         self.isActive = False
 
-    def display(self,pixarray) :
+    def display(self,pixarray,pixelLevels=[]) :
         self.waitForDone()
         self.imageDoneEvent.clear()
         self.isActive = True
@@ -129,6 +145,7 @@ class NumpyImage(QWidget) :
             self.image = np.flip(pixarray,0)
         else :
             self.image = pixarray
+        self.pixelLevels = pixelLevels;
         self.update()
         QApplication.processEvents()
         if self.isHidden :
@@ -183,7 +200,7 @@ class NumpyImage(QWidget) :
 
     def paintEvent(self, ev):
         if self.mousePressed : return
-        self.thread.render(self.image,self)
+        self.thread.render(self.image,self.pixelLevels,self)
         self.thread.wait()
         
         
