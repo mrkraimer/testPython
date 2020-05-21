@@ -54,15 +54,14 @@ class NTNDA_Channel_Provider(object) :
 def imageDictCreate() :
     return {"image" : None , "dtype" : "" , "nx" : 0 , "ny" : 0 ,  "nz" : 0 }
 
-
 class ImageControl(QWidget) :
 
     def __init__(self,statusText,parent=None, **kargs):
         super(QWidget, self).__init__(parent)
         self.isClosed = False
         self.statusText = statusText
-        self.imageDisplay = NumpyImage(windowTitle='2d plot',flipy=False)
-        self.imageDisplay.clientReleaseEvent(self.clientReleaseEvent)
+        self.imageDisplay = NumpyImage(windowTitle='2d plot',flipy=False,maxsize=800)
+        self.imageDisplay.setZoomCallback(self.zoomEvent)
         self.imageDict = imageDictCreate()
         self.pixelLevels = (int(0),int(255))
         self.npixelLevels = 255
@@ -70,12 +69,6 @@ class ImageControl(QWidget) :
         self.low = 0
         self.high = self.npixelLevels
         self.maximum = self.npixelLevels
-        # following are for zoom image
-        self.isZoomImage = False
-        self.xlow = 0
-        self.ylow = 0
-        self.numx = 0
-        self.numy = 0
 # first row
         minimumLabel = QLabel("minimum")
         minimumLabel.setFixedWidth(100)
@@ -87,7 +80,7 @@ class ImageControl(QWidget) :
         highLabel.setFixedWidth(100)
         maximumLabel = QLabel("maximum")
         maximumLabel.setFixedWidth(80)
-        zoomLabel = QLabel('||    zoom        (xlow,ylow,numx.numy)')
+        zoomLabel = QLabel('||    zoom        (xmin,xmax,ymin,ymax)')
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0);
         box.addWidget(minimumLabel)
@@ -122,10 +115,8 @@ class ImageControl(QWidget) :
         self.resetButton.setFixedWidth(40)
         self.resetButton.setEnabled(True)
         self.resetButton.clicked.connect(self.resetEvent)
-        self.zoomText = QLineEdit()
-        self.zoomText.setEnabled(True)
-        self.zoomText.setFixedWidth(180)
-        self.zoomText.editingFinished.connect(self.zoomTextEvent)
+        self.zoomText =  QLabel('')
+        self.zoomText.setFixedWidth(220)
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0);
         box.addWidget(self.minimumText)
@@ -178,112 +169,17 @@ class ImageControl(QWidget) :
         self.show()
 
     def resetEvent(self) :
-        self.xlow = 0
-        self.ylow = 0
-        self.numx = self.imageDict["nx"]
-        self.numy = self.imageDict["ny"]
-        zoom = '(0,0,' + str(self.numx) + ',' + str(self.numy) + ')'
-        self.zoomText.setText(zoom)
-        self.isZoomImage = False
-        self.imageDisplay.display(self.imageDict["image"],pixelLevels=self.pixelLevels)
+        print('resetEvent 1')
+        if self.imageDict['nx']==0 : return
+        print('resetEvent 2')
+        self.zoomText.setText('')
+        self.imageDisplay.resetZoom()
+        print('resetEvent 3')
+        self.display()
 
-    def clientReleaseEvent(self,imageSize,mouseLocation) :
-        qrect = self.imageDisplay.geometry()
-        height = qrect.height()
-        width = qrect.width()
-        xmin = pressPosition.x()
-        ymin = pressPosition.y()
-        xmax = releasePosition.x()
-        ymax = releasePosition.y()
-        if xmin==xmax and ymin>=ymax : return
-        if xmin>=xmax or ymin>=ymax :
-            self.statusText.setText('illegal mouse move')
-            return
-        if self.isZoomImage : 
-            xstart = self.xlow
-            ystart = self.ylow
-            sizex = self.numx
-            sizey = self.numy
-        else :
-            xstart = 0
-            ystart = 0
-            sizex = self.imageDict["nx"]
-            sizey = self.imageDict["ny"]
-        if (sizex/sizey)>1.0 :
-            yfact = sizex/sizey
-            xfact = 1.0
-        elif (sizey/sizex)>1.0 :
-            yfact = 1.0
-            xfact = sizey/sizex
-        else :
-            yfact = 1.0
-            xfact = 1.0
-        ratiox = (sizex/width)*xfact
-        ratioy = (sizey/height)*yfact
-        xlow = int(xmin*ratiox) + self.xlow
-        ylow = int(ymin*ratioy) + self.ylow
-        numx = int((xmax-xmin)*ratiox)
-        numy = int((ymax-ymin)*ratioy)       
-        zoom = '(' + str(xlow) + ',' + str(ylow) + ',' + str(numx) + ',' + str(numy) + ')'
-        self.zoomText.setText(zoom)
-        self.zoomTextEvent()
-
-    def zoomTextEvent(self) :
-        try :
-            text = self.zoomText.text()
-            ind = text.find('(')
-            if ind<0 : raise Exception('does not start with (')
-            text = text[(ind+1):]
-            ind = text.find(')')
-            if ind<0 : raise Exception('does not end with )')
-            text = text[:-1]
-            split = text.split(',')
-            if len(split)!=4 : raise Exception('not four values')
-            xlow = split[0]
-            if not xlow.isdigit() : raise Exception('xlow is not a positive integer')
-            xlow = int(xlow)
-            ylow = split[1]
-            if not ylow.isdigit() : raise Exception('ylow is not a positive integer')
-            ylow = int(ylow)
-            numx = split[2]
-            if not numx.isdigit() : raise Exception('numx is not a positive integer')
-            numx = int(numx)
-            if numx<1 : raise Exception('numx must be at least 1')
-            numy = split[3]
-            if not numy.isdigit() : raise Exception('numy is not a positive integer')
-            numy = int(numy)
-            if numy<1 : raise Exception('numy must be at least 1')
-            sizex = xlow + numx
-            if sizex>self.imageDict["nx"] : raise Exception('xlow + numx gt nx')
-            sizey = ylow + numy
-            if sizey>self.imageDict["ny"] : raise Exception('ylow + numy gt ny')
-        except Exception as error:
-            self.statusText.setText(str(error))
-            self.statusText.setStyleSheet("background-color:red")
-            return
-        self.xlow = xlow
-        self.ylow = ylow
-        self.numx = numx
-        self.numy = numy
-        self.isZoomImage = True
-        self.displayZoom()
-
-    def displayZoom(self) :
-        fromimage = self.imageDict["image"]
-        if self.imageDict["nz"]==1 :
-            image = np.empty((self.numx,self.numy),dtype=self.imageDict["dtype"])
-            for indx in range(0,self.numx) :
-                for indy in range(0,self.numy) :
-                    image[indx][indy] = fromimage[indx+self.xlow][indy+self.ylow]
-        elif self.imageDict["nz"]==3 :
-            image = np.empty((self.numx,self.numy,3),dtype=self.imageDict["dtype"])
-            for indx in range(0,self.numx) :
-                for indy in range(0,self.numy) :
-                    for indz in range(0,3) :
-                        image[indx][indy][indz] = fromimage[indx+self.xlow][indy+self.ylow][indz]
-        else : raise Exception('ndim not 2 or 3')
-        self.imageDisplay.display(image,pixelLevels=self.pixelLevels)
-        self.imageDisplay.show()
+    def zoomEvent(self,zoomData) :
+        self.zoomText.setText(str(zoomData))
+        self.display()
 
     def minimumEvent(self) :
         try:
@@ -296,8 +192,7 @@ class ImageControl(QWidget) :
             self.lowText.setText(str(self.low))
             self.pixelLevels = (self.low,self.high)
             self.lowSlider.setValue(0)
-            if self.isZoomImage : self.displayZoom()
-            else :self.imageDisplay.display(self.imageDict["image"],pixelLevels=self.pixelLevels)
+            self.imageDisplay.display(self.imageDict["image"],pixelLevels=self.pixelLevels)
         except Exception as error:
             self.minimumText.setText(str(error))
 
@@ -312,8 +207,7 @@ class ImageControl(QWidget) :
             self.highText.setText(str(self.high))
             self.pixelLevels = (self.low,self.high)
             self.highSlider.setValue(self.npixelLevels)
-            if self.isZoomImage : self.displayZoom()
-            else :self.imageDisplay.display(self.imageDict["image"],pixelLevels=self.pixelLevels)
+            self.imageDisplay.display(self.imageDict["image"],pixelLevels=self.pixelLevels)
         except Exception as error:
             self.maximumText.setText(str(error))
 
@@ -329,8 +223,7 @@ class ImageControl(QWidget) :
         self.low= value
         self.lowText.setText(str(round(self.low)))
         self.pixelLevels = (self.low,self.high)
-        if self.isZoomImage : self.displayZoom()
-        else :self.imageDisplay.display(self.imageDict["image"],pixelLevels=self.pixelLevels)
+        self.imageDisplay.display(self.imageDict["image"],pixelLevels=self.pixelLevels)
         
     def highSliderValueChange(self) :
         pixelRatio = float(self.highSlider.value())/float(self.npixelLevels)
@@ -344,8 +237,7 @@ class ImageControl(QWidget) :
         self.high = value
         self.highText.setText(str(round(self.high)))
         self.pixelLevels = (self.low,self.high)
-        if self.isZoomImage : self.displayZoom()
-        else :self.imageDisplay.display(self.imageDict["image"],pixelLevels=self.pixelLevels)
+        self.imageDisplay.display(self.imageDict["image"],pixelLevels=self.pixelLevels)
 
     def newImage(self,imageDict):
         if self.isClosed : return
@@ -389,15 +281,9 @@ class ImageControl(QWidget) :
             self.highText.setText(str(self.high))
             self.lowSlider.setValue(0)
             self.highSlider.setValue(self.npixelLevels)
-            zoom = '(0,0,' + str(self.imageDict["nx"]) + ',' + str(self.imageDict["ny"]) + ')'
-            self.zoomText.setText(zoom)
-            self.isZoomImage = False
 
     def display(self) :
         if self.isClosed : return
-        if self.isZoomImage :
-            self.displayZoom()
-            return
         self.imageDisplay.display(self.imageDict["image"],pixelLevels=self.pixelLevels)
         self.imageDisplay.show()
           
@@ -535,10 +421,6 @@ class NTNDA_Viewer(QWidget) :
         self.findLibrary = FindLibrary()
         self.subscription = None
         self.lasttime = time.time() -2
-        self.maxsize = 800
-        self.minsize = 16
-        self.width = self.maxsize
-        self.height = self.maxsize
         self.arg = None
         self.show()
         self.imageControl.show()
@@ -747,15 +629,9 @@ class NTNDA_Viewer(QWidget) :
         else :
                 raise Exception('ndim not 2 or 3')
                 
-        maximum = max(nx,ny)
-        if maximum>self.maxsize :
-             compress = math.ceil(float(maximum)/self.maxsize)
-             image = image[::compress,::compress]
         if dtype!=self.imageDict["dtype"] :
             self.imageDict["dtype"] = dtype
             self.dtypeText.setText(str(self.imageDict["dtype"]))
-        if ny <self.minsize or nx<self.minsize :
-            raise Exception('ny <',self.minsize,' or nx<',self.minsize)
         if nx!=self.imageDict["nx"] :
             self.imageDict["nx"] = nx
             self.nxText.setText(str(self.imageDict["nx"]))
@@ -765,20 +641,5 @@ class NTNDA_Viewer(QWidget) :
         if nz!=self.imageDict["nz"] :
             self.imageDict["nz"] = nz
             self.nzText.setText(str(self.imageDict["nz"]))
-        width = nx
-        height = ny
-        if width==height :
-            if width>self.maxsize : width = self.maxsize
-            if height>self.maxsize : height = self.maxsize
-        elif width<height :
-            ratio = width/height
-            if height>self.maxsize : height = self.maxsize
-            width = height*ratio
-        else :
-            ratio = height/width
-            if width>self.maxsize : width = self.maxsize
-            height = width*ratio
-        self.width = width
-        self.height = height
         self.imageDict["image"] = image
 

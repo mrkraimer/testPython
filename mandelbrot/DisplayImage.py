@@ -59,6 +59,12 @@ class CurrentValues() :
 #        print('update xsize=',xsize,' ysize=',ysize)
 #        print('update xlow=',xlow,' xhigh=',xhigh,' ylow=',ylow,' yhigh=',yhigh)
         nx = xhigh - xlow
+        excess = nx - int(nx/4)*4
+        print('excess=',excess)
+        xhigh = xhigh - excess
+        print('xlow=',xlow,' xhigh=',xhigh)
+        if xhigh<=xlow :
+            raise Exception('width bad')
         ny = yhigh - ylow
         yxratio = float(ny)/float(nx)
 #        print('nx=',nx,' ny=',ny,' yxratio=',yxratio)
@@ -99,7 +105,7 @@ class Viewer(QWidget) :
         self.setWindowTitle("Viewer")
         self.currentValues = CurrentValues()
         self.imageDisplay = NumpyImage(windowTitle='mandelbrot')
-        self.imageDisplay.clientReleaseEvent(self.clientReleaseEvent)
+        self.imageDisplay.setZoomCallback(self.zoomEvent,clientZoom=True)
 # first row
         self.startButton = QPushButton('start')
         self.startButton.setEnabled(True)
@@ -120,7 +126,7 @@ class Viewer(QWidget) :
         self.colorModeButton.setFixedWidth(40)
         self.zoomButton = QPushButton('zoom')
         self.zoomButton.setEnabled(True)
-        self.zoomButton.clicked.connect(self.zoomEvent)
+        self.zoomButton.clicked.connect(self.zoomStartEvent)
         self.zoomButton.setFixedWidth(40)
         self.zoomActive = False
         self.stopZoomButton = QPushButton('stopZoom')
@@ -308,7 +314,7 @@ class Viewer(QWidget) :
             self.colorModeButton.setText('color')
             self.currentValues.nz = 3;
 
-    def zoomEvent(self) :
+    def zoomStartEvent(self) :
         self.stopZoom = False
         self.zoomActive = True
         xmin = self.currentValues.xmin
@@ -394,7 +400,7 @@ class Viewer(QWidget) :
         self.currentValues = CurrentValues()
         self.start()
 
-    def clientReleaseEvent(self,imageSize,mouseLocation) :
+    def zoomEvent(self,imageSize,mouseLocation) :
         if self.zoomActive: return
 #        print('imageSize=',imageSize)
 #        print('mouseLocation=',mouseLocation)
