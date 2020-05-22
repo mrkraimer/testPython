@@ -170,25 +170,7 @@ class NumpyImageZoom() :
         
 
     def createZoomImage(self,image) :
-        imageny = image.shape[0]
-        imagenx = image.shape[1]
-        ndim = len(image.shape)
-        nz = int(1)
-        if ndim==3 : nz = int(image.shape[2])
-        dtype = image.dtype
-        ny = int(self.ymax - self.ymin)
-        nx = int(self.xmax - self.xmin)
-        if ndim==2 :
-           zoomImage = np.empty([ny,nx],dtype=image.dtype)
-        else :
-           zoomImage = np.empty([ny,nx,nz],dtype=image.dtype)
-        for indy in range(ny) :
-            for indx in range(nx) :
-                if nz == 1:
-                    zoomImage[indy][indx] = image[indy+self.ymin][indx+self.xmin]
-                else :
-                   for indz in range(nz) :
-                       zoomImage[indy][indx][indz] = image[int(indy+self.ymin)][int(indx+self.xmin)][indz]
+        zoomImage = image[self.ymin:self.ymax,self.xmin:self.xmax]
         self.zoomImage = zoomImage
         return self.zoomImage
     
