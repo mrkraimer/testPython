@@ -134,14 +134,17 @@ class NumpyImageZoom() :
         self.ymax = ymax
         
     def newZoom(self,xsize,ysize,xmin,xmax,ymin,ymax) :
-        xmin = int(xmin/self.scale)
-        xmax = int(xmax/self.scale)
-        ymin = int(ymin/self.scale)
-        ymax = int(ymax/self.scale)
+        xmin = self.xmin + int(xmin/self.scale)
+        xmax = float(xsize - xmax)/self.scale
+        xmax = self.xmax - int(xmax)
+        ymin = self.ymin + int(ymin/self.scale)
+        ymax = float(ysize - ymax)/self.scale
+        ymax = self.ymax - int(ymax)
         nx = xmax -xmin
         excess = nx - int(nx/4)*4
-        xmax = xmax + excess
-        if xmax<xmin : return False
+        if excess!=0 : 
+            xmax = int(xmax - excess)
+        if xmax<=xmin : return False
         if ymax<=ymin : return False
         self.xmin = xmin
         self.xmax = xmax
@@ -324,12 +327,6 @@ class NumpyImage(QWidget) :
         if ymin>ymax : ymax,ymin = ymin,ymax
         if ymin<0 : ymin = 0
         if ymax>ysize : ymax = ysize
-        nx = xmax -xmin
-        excess = nx - int(nx/4)*4
-        if excess!=0 : 
-            print('isZoom excess=',excess)
-            nx = int(nx - excess)
-            xmax = int(xmax - excess)
         if ymin>=ymax :
             print('ymin>=ymax')
             return
