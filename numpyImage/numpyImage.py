@@ -15,6 +15,16 @@ from PyQt5.QtGui import QPixmap, QPainter,QImage,qRgb
 import sys,time
 import numpy as np
 import math
+
+def compute32bitExcess(nx,dtype) :
+    div = 0
+    if dtype==np.uint8 or dtype==np.int8 :
+        div = 4
+    elif dtype==np.uint16 or dtype==np.int16 :
+        div = 2
+    else : return 0
+    excess = nx - int(nx/div)*div
+    return excess
             
 def toQImage(image,pixelLevels) :
     gray_color_table = [qRgb(i, i, i) for i in range(256)]
@@ -128,12 +138,13 @@ class NumpyImageZoom() :
         self.ymax = 0
         self.scale = 1.0
         self.zoomImage = None
+        self.dtype = None
         
     def setSize(self,xmax,ymax) :
         self.xmax = xmax
         self.ymax = ymax
         
-    def newZoom(self,xsize,ysize,xmin,xmax,ymin,ymax) :
+    def newZoom(self,xsize,ysize,xmin,xmax,ymin,ymax,dtype) :
         xmin = self.xmin + int(xmin/self.scale)
         xmax = float(xsize - xmax)/self.scale
         xmax = self.xmax - int(xmax)
@@ -141,8 +152,9 @@ class NumpyImageZoom() :
         ymax = float(ysize - ymax)/self.scale
         ymax = self.ymax - int(ymax)
         nx = xmax -xmin
-        excess = nx - int(nx/4)*4
+        excess = compute32bitExcess(nx,dtype)
         if excess!=0 : 
+            print('excess=',excess)
             xmax = int(xmax - excess)
         if xmax<=xmin : return False
         if ymax<=ymin : return False
@@ -215,9 +227,9 @@ class NumpyImage(QWidget) :
         self.isActive = True
         ny = pixarray.shape[0]
         nx = pixarray.shape[1]
-        excess = nx - int(nx/4)*4
+        excess = compute32bitExcess(nx,pixarray.dtype)
         if excess!= 0 :
-            raise Exception('invalid width')
+            raise Exception('width is not on a 32bit boundry')
         if self.flipy :
             self.image = np.flip(pixarray,0)
         else :
@@ -236,7 +248,7 @@ class NumpyImage(QWidget) :
                     self.image = self.imageZoom.compressImage(self.image,compress)
                     ny = self.image.shape[0]
                     nx = self.image.shape[1]
-                    excess = nx - int(nx/4)*4
+                    excess = compute32bitExcess(nx,self.image.dtype)
                     if excess!=0 : print('excess=',excess)
         maximum = max(ny,nx)
         if maximum<int(float(self.maxsize/2)) :
@@ -318,7 +330,7 @@ class NumpyImage(QWidget) :
         if self.imageZoom==None :
             self.clientZoomCallback((xsize,ysize),(xmin,xmax,ymin,ymax))
             return
-        if self.imageZoom.newZoom(xsize,ysize,xmin,xmax,ymin,ymax) :
+        if self.imageZoom.newZoom(xsize,ysize,xmin,xmax,ymin,ymax,self.image.dtype) :
             self.clientZoomCallback(self.imageZoom.getData())
 
 
