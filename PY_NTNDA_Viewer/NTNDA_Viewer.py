@@ -169,12 +169,9 @@ class ImageControl(QWidget) :
         self.show()
 
     def resetEvent(self) :
-        print('resetEvent 1')
         if self.imageDict['nx']==0 : return
-        print('resetEvent 2')
         self.zoomText.setText('')
         self.imageDisplay.resetZoom()
-        print('resetEvent 3')
         self.display()
 
     def zoomEvent(self,zoomData) :
