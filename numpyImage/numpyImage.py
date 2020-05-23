@@ -155,7 +155,7 @@ class NumpyImageZoom() :
         excess = compute32bitExcess(nx,dtype)
         if excess!=0 : 
             print('excess=',excess)
-            xmax = int(xmax - excess)
+            xmax = int(xmax - excess)  
         if xmax<=xmin : return False
         if ymax<=ymin : return False
         self.xmin = xmin
@@ -169,8 +169,7 @@ class NumpyImageZoom() :
         return (self.xmin,self.xmax,self.ymin,self.ymax)
         
     def scaleImage(self,image,scale) :
-        delta = float(scale)
-        self.scale = self.scale*delta
+        self.scale = scale
         
     def compressImage(self,image,compress) :
         self.image = image[::compress,::compress]
@@ -234,12 +233,18 @@ class NumpyImage(QWidget) :
             self.image = np.flip(pixarray,0)
         else :
             self.image = pixarray
-        geometrySet = False
         if self.imageZoom!=None :
             if self.imageZoom.isZoom: 
                 self.image = self.imageZoom.createZoomImage(self.image)
                 ny = self.image.shape[0]
                 nx = self.image.shape[1]
+                maximum = max(ny,nx)
+                if maximum<int(float(self.maxsize/2)) :
+                     scale = math.ceil(float(self.maxsize/2)/maximum)
+                     self.thread.scale = scale
+                     self.imageZoom.scaleImage(self.image,scale)
+                     nx = int(nx*scale)
+                     ny = int(ny*scale)
             else :
                 self.imageZoom.setSize(nx,ny)
                 maximum = max(ny,nx)
@@ -250,21 +255,10 @@ class NumpyImage(QWidget) :
                     nx = self.image.shape[1]
                     excess = compute32bitExcess(nx,self.image.dtype)
                     if excess!=0 : print('excess=',excess)
-        maximum = max(ny,nx)
-        if maximum<int(float(self.maxsize/2)) :
-             scale = math.ceil(float(self.maxsize/2)/maximum)
-             self.thread.scale = scale
-             if self.imageZoom!=None :
-                 self.imageZoom.scaleImage(self.image,scale) 
-             self.setGeometry(QRect(10, 300,nx*scale,ny*scale))
-             geometrySet = True
-             self.nx = int(nx*scale)
-             self.ny = int(ny*scale)
-        if not geometrySet :
-            if self.ny!=ny or self.nx!=nx :
-                self.ny = ny
-                self.nx = nx     
-            self.setGeometry(QRect(10, 300,self.nx,self.ny))
+        if self.ny!=ny or self.nx!=nx :
+            self.ny = ny
+            self.nx = nx     
+        self.setGeometry(QRect(10, 300,self.nx,self.ny))
         self.pixelLevels = pixelLevels;
         self.update()
         if self.isHidden :
@@ -321,12 +315,8 @@ class NumpyImage(QWidget) :
         if ymin>ymax : ymax,ymin = ymin,ymax
         if ymin<0 : ymin = 0
         if ymax>ysize : ymax = ysize
-        if ymin>=ymax :
-            print('ymin>=ymax')
-            return
-        if xmin>=xmax :
-            print('xmin>=xmax')
-            return
+        if ymin>=ymax : return
+        if xmin>=xmax : return
         if self.imageZoom==None :
             self.clientZoomCallback((xsize,ysize),(xmin,xmax,ymin,ymax))
             return
