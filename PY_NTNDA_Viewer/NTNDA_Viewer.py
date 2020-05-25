@@ -447,24 +447,26 @@ class NTNDA_Viewer(QWidget) :
             self.statusText.setText(str(error))
 
     def start(self) :
+        self.isStarted = True
         self.provider.start()
         self.channelNameText.setEnabled(False)
-        self.isStarted = True
         self.startButton.setEnabled(False)
         self.stopButton.setEnabled(True)
         self.channelNameText.setEnabled(False)
 
     def stop(self) :
+        self.isStarted = False
         self.provider.stop()
         self.startButton.setEnabled(True)
         self.stopButton.setEnabled(False)
         self.channelNameLabel.setStyleSheet("background-color:gray")
         self.channelNameText.setEnabled(True)
         self.channel = None
-        self.isStarted = False
+        
 
     def callback(self,arg):
         if self.isClosed : return
+        if not self.isStarted : return
         if len(arg)==1 :
             value = arg.get("exception")
             if value!=None :
