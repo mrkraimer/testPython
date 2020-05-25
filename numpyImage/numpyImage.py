@@ -24,6 +24,8 @@ def compute32bitExcess(nx,dtype) :
         div = 2
     else : return 0
     excess = nx - int(nx/div)*div
+    if excess<0 or excess>3 :
+        print('compute32bitExcess nx=',int(nx),' div=',div)
     return excess
             
 def toQImage(image,pixelLevels) :
@@ -153,9 +155,7 @@ class NumpyImageZoom() :
         ymax = self.ymax - int(ymax)
         nx = xmax -xmin
         excess = compute32bitExcess(nx,dtype)
-        if excess!=0 : 
-            print('excess=',excess)
-            xmax = int(xmax - excess)  
+        if excess!=0 :  xmax = int(xmax - excess)  
         if xmax<=xmin : return False
         if ymax<=ymin : return False
         self.xmin = xmin
@@ -176,7 +176,6 @@ class NumpyImageZoom() :
         ny = self.image.shape[0]
         nx = self.image.shape[1]     
         delta = 1.0/float(compress)
-        self.scale = self.scale*delta
         return self.image                
         
 
@@ -261,6 +260,7 @@ class NumpyImage(QWidget) :
         self.setGeometry(QRect(10, 300,self.nx,self.ny))
         self.pixelLevels = pixelLevels;
         self.update()
+        QApplication.processEvents()
         if self.isHidden :
             self.isHidden = False
             self.show()
@@ -282,7 +282,7 @@ class NumpyImage(QWidget) :
         self.isClosed = True
 
     def mousePressEvent(self,event) :
-        if self.isActive : return
+#        if self.isActive : return
         if self.clientZoomCallback==None : return
         self.mousePressed = True
         self.mousePressPosition = QPoint(event.pos())
