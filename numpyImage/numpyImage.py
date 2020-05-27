@@ -33,7 +33,7 @@ def toQImage(image,pixelLevels) :
         return QImage()
     mv = memoryview(image.data)
     data = mv.tobytes()       
-    if image.dtype==np.uint8 or image.dtype==np.int8 :
+    if image.dtype==np.uint8 :
         if len(image.shape) == 2:
             qimage = QImage(data, image.shape[1], image.shape[0],QImage.Format_Grayscale8 )
             return  qimage
@@ -42,7 +42,7 @@ def toQImage(image,pixelLevels) :
                 qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_RGB888)
                 return qimage
         raise Exception('nz must have length 3') 
-    if image.dtype==np.uint16 or image.dtype==np.int16 :
+    if image.dtype==np.uint16 :
         if len(image.shape) == 2:
             qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_Grayscale16)
             return  qimage
@@ -52,7 +52,7 @@ def toQImage(image,pixelLevels) :
                 qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_RGB16)
                 return qimage
         raise Exception('nz must have length 3') 
-    if image.dtype==np.uint32 or image.dtype==np.int32 :
+    if image.dtype==np.uint32 :
         if len(image.shape) == 2:
             qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_Grayscale16)
             return  qimage

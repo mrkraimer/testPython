@@ -595,6 +595,20 @@ class NTNDA_Viewer(QWidget) :
         nx = 0
         nz = 1
         dtype = data.dtype
+        if dtype==np.uint8 :
+            pass
+        elif dtype==np.int8 :
+            data = data.astype(np.uint8) 
+        elif dtype==np.uint16 :
+            pass
+        elif dtype==np.int16 :
+            data = data.astype(np.uint16)
+        elif dtype==np.uint32 :
+            pass
+        elif dtype==np.int32 :
+            data = data.astype(np.uint32)
+        else :
+            data=data.astype(np.uint32)
         ndim = len(dimArray)
         if ndim!=2 and ndim!=3 :
             raise Exception('ndim not 2 or 3')
