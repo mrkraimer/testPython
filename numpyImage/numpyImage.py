@@ -29,54 +29,39 @@ def compute32bitExcess(nx,dtype) :
     return excess
             
 def toQImage(image,pixelLevels) :
-    gray_color_table = [qRgb(i, i, i) for i in range(256)]
     if image is None:
         return QImage()
-        
-    if len(pixelLevels)==0 :
-        colorTable = gray_color_table
-    elif  len(pixelLevels)!=2 :
-        raise Exception('pixelLevels must of the form (int,int)')
-    else :
-        indmin = int(pixelLevels[0])
-        indmax = int(pixelLevels[1])
-        n = indmax -indmin +1
-        colorTable = np.empty(n, dtype=np.uint32)
-        for ind in range(n) :
-            val = indmin + ind
-            colorTable[ind] = qRgb(val,val,val)
+    mv = memoryview(image.data)
+    data = mv.tobytes()       
     if image.dtype==np.uint8 or image.dtype==np.int8 :
-        mv = memoryview(image.data)
-        data = mv.tobytes()
         if len(image.shape) == 2:
-            qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_Indexed8)
-            qimage.setColorTable(colorTable)
+            qimage = QImage(data, image.shape[1], image.shape[0],QImage.Format_Grayscale8 )
             return  qimage
-
         elif len(image.shape) == 3:
             if image.shape[2] == 3:
                 qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_RGB888)
                 return qimage
-            elif image.shape[2] == 4:
-                qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_ARGB32);
-                return qimage
-                
+        raise Exception('nz must have length 3') 
     if image.dtype==np.uint16 or image.dtype==np.int16 :
-        # QImage::Format_RGB16
-        raise Exception('int16 not yet implemented')
+        if len(image.shape) == 2:
+            qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_Grayscale16)
+            return  qimage
+
+        elif len(image.shape) == 3:
+            if image.shape[2] == 3:
+                qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_RGB16)
+                return qimage
+        raise Exception('nz must have length 3') 
     if image.dtype==np.uint32 or image.dtype==np.int32 :
-        # QImage::Format_ARGB32
-        raise Exception('int32 not yet implemented')
-    if image.dtype==np.uint64 or image.dtype==np.int64 :
-        # QImage::Format_RGBA64
-        raise Exception('int64 not yet implemented')
-    if image.dtype==np.float32 :
-        # ???
-        raise Exception('float32 not yet implemented')
-    if image.dtype==np.float64 :
-        # ???
-        raise Exception('float64 not yet implemented')
-    raise Exception('illegal dtype')
+        if len(image.shape) == 2:
+            qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_Grayscale16)
+            return  qimage
+        elif len(image.shape) == 3:
+            if image.shape[2] == 3:
+                qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_ARGB32)
+                return qimage
+        raise Exception('nz must have length 3') 
+    raise Exception('illegal dtype'+str(image.dtype))
 
 class Worker(QThread):
     signal = pyqtSignal()
@@ -129,8 +114,7 @@ class NumpyImageZoom() :
         self.xmax = 0
         self.ymin = 0
         self.ymax = 0
-        self.scale = 1.0
-        self.zoomImage = None       
+        self.scale = 1.0     
         
     def reset(self) :
         self.isZoom = False
@@ -139,12 +123,11 @@ class NumpyImageZoom() :
         self.ymin = 0
         self.ymax = 0
         self.scale = 1.0
-        self.zoomImage = None
         self.dtype = None
         
-    def setSize(self,xmax,ymax) :
-        self.xmax = xmax
+    def setSize(self,ymax,xmax) :
         self.ymax = ymax
+        self.xmax = xmax
         
     def newZoom(self,xsize,ysize,xmin,xmax,ymin,ymax,dtype) :
         xmin = self.xmin + int(xmin/self.scale)
@@ -168,21 +151,18 @@ class NumpyImageZoom() :
     def getData(self) :
         return (self.xmin,self.xmax,self.ymin,self.ymax)
         
-    def scaleImage(self,image,scale) :
+    def scaleImage(self,scale) :
         self.scale = scale
         
     def compressImage(self,image,compress) :
-        self.image = image[::compress,::compress]
-        ny = self.image.shape[0]
-        nx = self.image.shape[1]     
-        delta = 1.0/float(compress)
-        return self.image                
+        image = image[::compress,::compress]
+        self.ymax = image.shape[0]
+        self.xmax = image.shape[1]
+        return image                
         
 
     def createZoomImage(self,image) :
-        zoomImage = image[self.ymin:self.ymax,self.xmin:self.xmax]
-        self.zoomImage = zoomImage
-        return self.zoomImage
+        return image[self.ymin:self.ymax,self.xmin:self.xmax]
     
         
 class NumpyImage(QWidget) :
@@ -241,19 +221,22 @@ class NumpyImage(QWidget) :
                 if maximum<int(float(self.maxsize/2)) :
                      scale = math.ceil(float(self.maxsize/2)/maximum)
                      self.thread.scale = scale
-                     self.imageZoom.scaleImage(self.image,scale)
+                     self.imageZoom.scaleImage(scale)
                      nx = int(nx*scale)
                      ny = int(ny*scale)
             else :
-                self.imageZoom.setSize(nx,ny)
-                maximum = max(ny,nx)
-                if maximum>self.maxsize :
-                    compress = math.ceil(float(maximum)/self.maxsize)
-                    self.image = self.imageZoom.compressImage(self.image,compress)
-                    ny = self.image.shape[0]
-                    nx = self.image.shape[1]
-                    excess = compute32bitExcess(nx,self.image.dtype)
-                    if excess!=0 : print('excess=',excess)
+                self.imageZoom.setSize(ny,nx)         
+        maximum = max(ny,nx)
+        if maximum>self.maxsize :
+            compress = math.ceil(float(maximum)/self.maxsize)
+            if self.imageZoom!=None :
+                self.image = self.imageZoom.compressImage(self.image,compress)
+            else :
+                self.image = image[::compress,::compress]
+            ny = self.image.shape[0]
+            nx = self.image.shape[1]
+            excess = compute32bitExcess(nx,self.image.dtype)
+            if excess!=0 : print('excess=',excess)
         if self.ny!=ny or self.nx!=nx :
             self.ny = ny
             self.nx = nx     
