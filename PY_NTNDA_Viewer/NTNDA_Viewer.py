@@ -26,32 +26,6 @@ import ctypes.util
 import os
 import math
 
-class NTNDA_Channel_Provider(object) :
-    '''
-    Base class for monitoring an NTNDArray channel from an areaDetector IOC.
-    The methods are called by NTNDA_Viewer.
-    '''
-
-    def __init__(self) :
-        self.channelName = None
-    def setChannelName(self,channelName) :
-        self.channelName = channelName
-    def getChannelName(self) :
-        return self.channelName
-    def start(self) :
-        ''' called to start monitoring.'''
-        raise Exception('derived class must implement NTNDA_Channel_Provider.start')
-    def stop(self) :
-        ''' called to stop monitoring.'''
-        raise Exception('derived class must implement NTNDA_Channel_Provider.stop')
-    def done(self) :
-        ''' called when NTNDA_Viewer is done.'''
-        pass
-    def callback(self,arg) :
-        ''' must call NTNDA_Viewer.callback(arg).'''
-        raise Exception('derived class must implement NTNDA_Channel_Provider.callback')
-
-
 def imageDictCreate() :
     return {"image" : None , "dtype" : "" , "nx" : 0 , "ny" : 0 ,  "nz" : 0 }
 

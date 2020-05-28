@@ -9,23 +9,29 @@ author Marty Kraimer
     original development started 2019.12
 '''
 
-from NTNDA_Viewer import NTNDA_Viewer,NTNDA_Channel_Provider
+from NTNDA_Viewer import NTNDA_Viewer
 from p4p.client.thread import Context
 import sys
 from threading import Event
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QObject,pyqtSignal
 
-class P4PProvider(QObject,NTNDA_Channel_Provider) :
+class P4PProvider(QObject) :
     callbacksignal = pyqtSignal()
     def __init__(self):
         QObject.__init__(self)
-        NTNDA_Channel_Provider.__init__(self)
         self.callbacksignal.connect(self.mycallback)
         self.callbackDoneEvent = Event()
         self.firstCallback = True
         self.isClosed = True
+        self.channelName = '13SIM1:Pva1:Image'
+
+    def setChannelName(self,channelName) :
+        self.channelName = channelName
         
+    def getChannelName(self) :
+        return self.channelName
+                
     def start(self) :
         self.ctxt = Context('pva')
         self.firstCallback = True
@@ -83,11 +89,10 @@ class P4PProvider(QObject,NTNDA_Channel_Provider) :
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     p4pProvider = P4PProvider()
-    channelName = ""
     nargs = len(sys.argv)
     if nargs>=2 :
         channelName = sys.argv[1]
-    p4pProvider.setChannelName(channelName)
+        p4pProvider.setChannelName(channelName)
     viewer = NTNDA_Viewer(p4pProvider,"P4P")
     sys.exit(app.exec_())
 
