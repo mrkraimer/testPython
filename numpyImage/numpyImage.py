@@ -67,13 +67,9 @@ class Worker(QThread):
     signal = pyqtSignal()
     def __init__(self):
         QThread.__init__(self)
-        self.exiting = False
         self.image = None
         self.caller = None
         self.scale = int(0)
-    def __del__(self):    
-        self.exiting = True
-        self.wait()
         
     def render(self,image,caller):    
         self.image = image
@@ -81,10 +77,6 @@ class Worker(QThread):
         self.start()
 
     def run(self):
-        if self.exiting :
-           self.signal.emit()
-           self.caller.imageDoneEvent.set()
-           return
         qimage = toQImage(self.image)
         if self.scale!=0 :
             scale = int(self.scale)
@@ -261,7 +253,7 @@ class NumpyImage(QWidget) :
         self.isClosed = True
 
     def mousePressEvent(self,event) :
-#        if self.isActive : return
+        if self.isActive : return
         if self.clientZoomCallback==None : return
         self.mousePressed = True
         self.mousePressPosition = QPoint(event.pos())

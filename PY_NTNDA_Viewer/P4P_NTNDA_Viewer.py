@@ -44,8 +44,6 @@ class P4PProvider(QObject) :
     def stop(self) :
         self.isClosed = True
         self.ctxt.close()
-    def done(self) :
-        pass
     def callback(self,arg) :
         self.NTNDA_Viewer.callback(arg)
     def p4pcallback(self,arg) :

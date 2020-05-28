@@ -205,7 +205,6 @@ class NTNDA_Viewer(QWidget) :
     def closeEvent(self, event) :
         if self.isStarted : self.stop()
         self.isClosed = True
-        self.provider.done()
         self.imageDisplay.okToClose = True
         self.imageDisplay.close()
 

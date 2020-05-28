@@ -50,8 +50,7 @@ class PVAPYProvider(QObject) :
               'field(value,dimension,codec,compressedSize,uncompressedSize)')
     def stop(self) :
         self.channel.stopMonitor()
-    def done(self) :
-        pass
+   
     def pvapycallback(self,arg) :
         self.struct = arg;
         self.callbacksignal.emit()
