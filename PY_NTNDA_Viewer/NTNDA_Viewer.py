@@ -14,7 +14,8 @@ signal.signal(signal.SIGINT, signal.SIG_DFL)
 import numpy as np
 from PyQt5.QtWidgets import QWidget,QLabel,QLineEdit,QSlider
 from PyQt5.QtWidgets import QPushButton,QHBoxLayout,QGridLayout
-from PyQt5.QtWidgets import QRubberBand
+from PyQt5.QtWidgets import QApplication
+
 from PyQt5.QtCore import *
 
 sys.path.append('../numpyImage/')
@@ -54,236 +55,7 @@ class NTNDA_Channel_Provider(object) :
 def imageDictCreate() :
     return {"image" : None , "dtype" : "" , "nx" : 0 , "ny" : 0 ,  "nz" : 0 }
 
-class ImageControl(QWidget) :
 
-    def __init__(self,statusText,parent=None, **kargs):
-        super(QWidget, self).__init__(parent)
-        self.isClosed = False
-        self.statusText = statusText
-        self.imageDisplay = NumpyImage(windowTitle='2d plot',flipy=False,maxsize=800)
-        self.imageDisplay.setZoomCallback(self.zoomEvent)
-        self.imageDict = imageDictCreate()
-        self.pixelLevels = (int(0),int(255))
-        self.npixelLevels = 255
-        self.minimum = 0;
-        self.low = 0
-        self.high = self.npixelLevels
-        self.maximum = self.npixelLevels
-# first row
-        minimumLabel = QLabel("minimum")
-        minimumLabel.setFixedWidth(100)
-        lowLabel = QLabel("low")
-        lowLabel.setFixedWidth(90)
-        titleLabel = QLabel("pixel intensity")
-        titleLabel.setFixedWidth(110)
-        highLabel = QLabel("high")
-        highLabel.setFixedWidth(100)
-        maximumLabel = QLabel("maximum")
-        maximumLabel.setFixedWidth(80)
-        zoomLabel = QLabel('||    zoom        (xmin,xmax,ymin,ymax)')
-        box = QHBoxLayout()
-        box.setContentsMargins(0,0,0,0);
-        box.addWidget(minimumLabel)
-        box.addWidget(lowLabel);
-        box.addWidget(titleLabel);
-        box.addWidget(highLabel);
-        box.addWidget(maximumLabel)
-        box.addWidget(zoomLabel)
-        wid =  QWidget()
-        wid.setLayout(box)
-        self.firstRow = wid
-#second row
-        self.minimumText = QLineEdit()
-        self.minimumText.setText('')
-        self.minimumText.setEnabled(True)
-        self.minimumText.setFixedWidth(100)
-        self.minimumText.editingFinished.connect(self.minimumEvent)
-        self.lowText = QLabel('')
-        self.lowText.setFixedWidth(100)
-        spaceLabel = QLabel('')
-        spaceLabel.setFixedWidth(100)
-        self.highText = QLabel('')
-        self.highText.setFixedWidth(100)
-        self.maximumText = QLineEdit()
-        self.maximumText.setFixedWidth(80)
-        self.maximumText.editingFinished.connect(self.maximumEvent)
-        self.maximumText.setEnabled(True)
-        self.maximumText.setText('')
-        dividerLabel = QLabel('||')
-        dividerLabel.setFixedWidth(20)
-        self.resetButton = QPushButton('reset')
-        self.resetButton.setFixedWidth(40)
-        self.resetButton.setEnabled(True)
-        self.resetButton.clicked.connect(self.resetEvent)
-        self.zoomText =  QLabel('')
-        self.zoomText.setFixedWidth(220)
-        box = QHBoxLayout()
-        box.setContentsMargins(0,0,0,0);
-        box.addWidget(self.minimumText)
-        box.addWidget(self.lowText)
-        box.addWidget(spaceLabel)
-        box.addWidget(self.highText)
-        box.addWidget(self.maximumText)
-        box.addWidget(dividerLabel)
-        box.addWidget(self.resetButton)
-        box.addWidget(self.zoomText)
-        wid =  QWidget()
-        wid.setLayout(box)
-        self.secondRow = wid
-#third row
-        self.lowSlider = QSlider(Qt.Horizontal)
-        self.lowSlider.setContentsMargins(0,0,0,0);
-        self.lowSlider.setMinimum(0)
-        self.lowSlider.setMaximum(self.npixelLevels)
-        self.lowSlider.setValue(0)
-        self.lowSlider.setTickPosition(QSlider.TicksBelow)
-        self.lowSlider.setTickInterval(10)
-        self.lowSlider.setFixedWidth(256)
-        self.highSlider = QSlider(Qt.Horizontal)
-        self.highSlider.setContentsMargins(0,0,0,0);
-        self.highSlider.setMinimum(0)
-        self.highSlider.setMaximum(self.npixelLevels)
-        self.highSlider.setValue(self.npixelLevels)
-        self.highSlider.setTickPosition(QSlider.TicksBelow)
-        self.highSlider.setTickInterval(10)
-        self.highSlider.setFixedWidth(256)
-        box = QHBoxLayout()
-        box.addStretch(0)
-        box.setSpacing(0);
-        box.setContentsMargins(0,0,0,0);
-        box.setGeometry(QRect(0, 0, 500, 20))
-        box.addWidget(self.lowSlider)
-        box.addWidget(self.highSlider)
-        wid =  QWidget()
-        wid.setLayout(box)
-        self.thirdRow = wid
-#create window
-        layout = QGridLayout()
-        layout.setSpacing(0);
-        layout.addWidget(self.firstRow,0,0,alignment=Qt.AlignLeft)
-        layout.addWidget(self.secondRow,1,0,alignment=Qt.AlignLeft)
-        layout.addWidget(self.thirdRow,2,0,alignment=Qt.AlignLeft)
-        self.setLayout(layout)
-        self.lowSlider.valueChanged.connect(self.lowSliderValueChange)
-        self.highSlider.valueChanged.connect(self.highSliderValueChange)
-        self.show()
-
-    def resetEvent(self) :
-        if self.imageDict['nx']==0 : return
-        self.zoomText.setText('')
-        self.imageDisplay.resetZoom()
-        self.display()
-
-    def zoomEvent(self,zoomData) :
-        self.zoomText.setText(str(zoomData))
-        self.display()
-
-    def minimumEvent(self) :
-        try:
-            minimum = float(self.minimumText.text())
-            if minimum>self.maximum :
-                minimum = self.maximum
-                self.minimumText.setText(str(minimum))
-            self.minimum = minimum
-            self.low = minimum
-            self.lowText.setText(str(self.low))
-            self.pixelLevels = (self.low,self.high)
-            self.lowSlider.setValue(0)
-            self.imageDisplay.display(self.imageDict["image"],pixelLevels=self.pixelLevels)
-        except Exception as error:
-            self.minimumText.setText(str(error))
-
-    def maximumEvent(self) :
-        try:
-            maximum = float(self.maximumText.text())
-            if maximum<self.minimum :
-                maximum = self.minimum
-                self.maximumText.setText(str(maximum))
-            self.maximum = maximum
-            self.high = maximum
-            self.highText.setText(str(self.high))
-            self.pixelLevels = (self.low,self.high)
-            self.highSlider.setValue(self.npixelLevels)
-            self.imageDisplay.display(self.imageDict["image"],pixelLevels=self.pixelLevels)
-        except Exception as error:
-            self.maximumText.setText(str(error))
-
-    def lowSliderValueChange(self) :
-        pixelRatio = float(self.lowSlider.value())/float(self.npixelLevels)
-        valueRange = float(self.maximum) - float(self.minimum)
-        value = pixelRatio*valueRange + self.minimum
-        if value>self.maximum : value = self.maximum
-        if value>self.high :
-            self.high = value
-            self.highText.setText(str(round(self.high)))
-            self.highSlider.setValue(self.high)
-        self.low= value
-        self.lowText.setText(str(round(self.low)))
-        self.pixelLevels = (self.low,self.high)
-        self.imageDisplay.display(self.imageDict["image"],pixelLevels=self.pixelLevels)
-        
-    def highSliderValueChange(self) :
-        pixelRatio = float(self.highSlider.value())/float(self.npixelLevels)
-        valueRange = float(self.maximum) - float(self.minimum)
-        value = pixelRatio*valueRange + self.minimum
-        if value<self.minimum : value = self.minimum
-        if value<self.low :
-            self.low = value
-            self.lowText.setText(str(round(self.low)))
-            self.lowSlider.setValue(self.low)
-        self.high = value
-        self.highText.setText(str(round(self.high)))
-        self.pixelLevels = (self.low,self.high)
-        self.imageDisplay.display(self.imageDict["image"],pixelLevels=self.pixelLevels)
-
-    def newImage(self,imageDict):
-        if self.isClosed : return
-        self.imageDict["image"] = imageDict["image"]
-        self.imageDict["nx"] = imageDict["nx"]
-        self.imageDict["ny"] = imageDict["ny"]
-        self.imageDict["nz"] = imageDict["nz"]
-        if not str(imageDict["dtype"])==str(self.imageDict["dtype"]) :
-            self.imageDict["dtype"] = imageDict["dtype"]
-            dtype = self.imageDict["dtype"]
-            if dtype==str("int8") :
-                self.pixelLevels = (int(-128),int(127))
-            elif dtype==str("uint8") :
-                self.pixelLevels = (int(0),int(255))
-            elif dtype==str("int16") :
-                self.pixelLevels = (int(-32768),int(32767))
-            elif dtype==str("uint16") :
-                self.pixelLevels = (int(0),int(65536))
-            elif dtype==str("int32") :
-                self.pixelLevels = (int(-2147483648),int(2147483647))
-            elif dtype==str("uint32") :
-                self.pixelLevels = (int(0),int(4294967296))
-            elif dtype==str("int64") :
-                self.pixelLevels = (int(-9223372036854775808),int(9223372036854775807))
-            elif dtype==str("uint64") :
-                self.pixelLevels = (int(0),int(18446744073709551615))
-            elif dtype==str("float32") :
-                self.pixelLevels = (float(0.0),float(1.0))
-            elif dtype==str("float64") :
-                self.pixelLevels = (float(0.0),float(1.0))
-            else :
-                raise Exception('unknown dtype' + dtype)
-                return
-            self.minimum = self.pixelLevels[0]
-            self.minimumText.setText(str(self.minimum))
-            self.low = self.minimum
-            self.lowText.setText(str(self.low))
-            self.maximum  = self.pixelLevels[1]
-            self.maximumText.setText(str(self.maximum))
-            self.high = self.maximum
-            self.highText.setText(str(self.high))
-            self.lowSlider.setValue(0)
-            self.highSlider.setValue(self.npixelLevels)
-
-    def display(self) :
-        if self.isClosed : return
-        self.imageDisplay.display(self.imageDict["image"],pixelLevels=self.pixelLevels)
-        self.imageDisplay.show()
-          
 class FindLibrary(object) :
     def __init__(self, parent=None):
         self.save = dict()
@@ -307,128 +79,164 @@ class NTNDA_Viewer(QWidget) :
         self.provider.NTNDA_Viewer = self
         self.setWindowTitle(providerName + "_NTNDA_Viewer")
         self.imageDict = imageDictCreate()
+        self.imageDisplay = NumpyImage(windowTitle='image',flipy=False,maxsize=800)
+        self.imageDisplay.setZoomCallback(self.zoomEvent)
 # first row
+        box = QHBoxLayout()
+        box.setContentsMargins(0,0,0,0)
         self.startButton = QPushButton('start')
         self.startButton.setEnabled(True)
         self.startButton.clicked.connect(self.startEvent)
         self.startButton.setFixedWidth(40)
         self.isStarted = False
+        box.addWidget(self.startButton)
         self.stopButton = QPushButton('stop')
         self.stopButton.setEnabled(False)
         self.stopButton.clicked.connect(self.stopEvent)
         self.stopButton.setFixedWidth(40)
+        box.addWidget(self.stopButton)
+        imageRateLabel = QLabel("imageRate:")
+        box.addWidget(imageRateLabel)
+        self.imageRateText = QLabel()
+        self.imageRateText.setFixedWidth(40)
+        box.addWidget(self.imageRateText) 
         if len(self.provider.getChannelName())<1 :
             name = os.getenv('EPICS_NTNDA_VIEWER_CHANNELNAME')
             if name!= None : self.provider.setChannelName(name)
+           
         self.nImages = 0
-        self.imageRateText = QLabel()
-        self.imageRateText.setFixedWidth(40)
         self.channelNameLabel = QLabel("channelName:")
+        box.addWidget(self.channelNameLabel)
         self.channelNameText = QLineEdit()
         self.channelNameText.setEnabled(True)
         self.channelNameText.setText(self.provider.getChannelName())
         self.channelNameText.editingFinished.connect(self.channelNameEvent)
-        box = QHBoxLayout()
-        box.setContentsMargins(0,0,0,0);
-        box.addWidget(self.startButton)
-        box.addWidget(self.stopButton)
-        imageRateLabel = QLabel("imageRate:")
-        box.addWidget(imageRateLabel)
-        box.addWidget(self.imageRateText)
-        box.addWidget(self.channelNameLabel)
         box.addWidget(self.channelNameText)
         wid =  QWidget()
         wid.setLayout(box)
         self.firstRow = wid
 # second row
-        self.nxText = QLabel()
-        self.nxText.setFixedWidth(50)
-        self.nyText = QLabel()
-        self.nyText.setFixedWidth(50)
-        self.nzText = QLabel()
-        self.nzText.setFixedWidth(20)
+        box = QHBoxLayout()
+        box.setContentsMargins(0,0,0,0)
+        nxLabel = QLabel('nx: ')
+        box.addWidget(nxLabel)
+        self.nxText = QLabel('     ')
+        box.addWidget(self.nxText)
+        nyLabel = QLabel('ny: ')
+        box.addWidget(nyLabel)
+        self.nyText = QLabel('     ')
+        box.addWidget(self.nyText)
+        nzLabel = QLabel('nz: ')
+        box.addWidget(nzLabel)
+        self.nzText = QLabel('   ')
+        box.addWidget(self.nzText)
         self.dtype = None
-        self.dtypeText = QLabel()
-        self.dtypeText.setFixedWidth(50)
-        self.codecName = ''
-        self.codecNameText = QLabel()
-        self.codecNameText.setFixedWidth(40)
-
-        self.compressRatioText = QLabel()
-        self.compressRatioText.setFixedWidth(40)
+        dtypeLabel = QLabel('dtype: ')
+        box.addWidget(dtypeLabel)
+        self.dtypeText = QLabel('      ')
+        box.addWidget(self.dtypeText)
         self.compressRatio = round(1.0)
-        self.compressRatioText.setText(str(self.compressRatio))
+        compressRatioLabel = QLabel('compressRatio:')
+        box.addWidget(compressRatioLabel)
+        self.compressRatioText = QLabel('1    ')
+        box.addWidget(self.compressRatioText)
+        self.codecName = ''
+        codecNameLabel = QLabel('codec:')
+        box.addWidget(codecNameLabel)
+        self.codecNameText = QLabel('none   ')
+        box.addWidget(self.codecNameText)
         self.clearButton = QPushButton('clear')
         self.clearButton.setEnabled(True)
         self.clearButton.clicked.connect(self.clearEvent)
-        self.clearButton.setFixedWidth(40)
-        self.statusText = QLineEdit()
-        self.statusText.setText('nothing done so far')
-        self.statusText.setFixedWidth(200)
-        box = QHBoxLayout()
-        box.setContentsMargins(0,0,0,0);
-        nxLabel = QLabel("nx:")
-        nxLabel.setFixedWidth(20)
-        self.nxText.setText('0')
-        box.addWidget(nxLabel)
-        box.addWidget(self.nxText)
-        nyLabel = QLabel("ny:")
-        nyLabel.setFixedWidth(20)
-        self.nyText.setText('0')
-        box.addWidget(nyLabel)
-        box.addWidget(self.nyText)
-        nzLabel = QLabel("nz:")
-        nzLabel.setFixedWidth(20)
-        self.nzText.setText('0')
-        box.addWidget(nzLabel)
-        box.addWidget(self.nzText)
-        dtypeLabel = QLabel("dtype:")
-        box.addWidget(dtypeLabel)
-        box.addWidget(self.dtypeText)
-        codecNameLabel = QLabel("codec:")
-        box.addWidget(codecNameLabel)
-        box.addWidget(self.codecNameText)
-        self.codecNameText.setText("none")
-        compressRatioLabel = QLabel("compressRatio:")
-        box.addWidget(compressRatioLabel)
-        box.addWidget(self.compressRatioText)
         box.addWidget(self.clearButton)
-        statusLabel = QLabel("  status:")
-        statusLabel.setFixedWidth(50)
-        box.addWidget(statusLabel)
+        self.statusText = QLineEdit()
+        self.statusText.setText('nothing done so far                    ')
+        self.statusText.setFixedWidth(400)
         box.addWidget(self.statusText)
         wid =  QWidget()
         wid.setLayout(box)
         self.secondRow = wid
 # third row
-        self.imageControl = ImageControl(self.statusText)
         box = QHBoxLayout()
-        box.setContentsMargins(0,0,0,0);
-        box.addWidget(self.imageControl)
+        box.setContentsMargins(0,0,0,0)
+        zoomLabel = QLabel('zoom ')
+        zoomLabel.setFixedWidth(40)
+        box.addWidget(zoomLabel)
+        self.resetButton = QPushButton('reset')
+        self.resetButton.setFixedWidth(40)
+        box.addWidget(self.resetButton)
+        self.resetButton.setEnabled(True)
+        self.resetButton.clicked.connect(self.resetEvent)
+        zoomCordLabel = QLabel(' (xmin,xmax,ymin,ymax) = ')
+        box.addWidget(zoomCordLabel)
+        self.zoomText =  QLabel('')
+        self.zoomText.setFixedWidth(600)
+        box.addWidget(self.zoomText,alignment=Qt.AlignLeft)
         wid =  QWidget()
         wid.setLayout(box)
         self.thirdRow = wid
+#fourth row
+        box = QHBoxLayout()
+        box.setContentsMargins(0,0,0,0)
+        dataMinLabel = QLabel('dataMin: ')
+        dataMinLabel.setFixedWidth(80)
+        box.addWidget(dataMinLabel)
+        self.dataMinText = QLabel('          ')
+        self.dataMinText.setFixedWidth(100)
+        box.addWidget(self.dataMinText)
+        dataMaxLabel = QLabel('dataMax: ')
+        dataMaxLabel.setFixedWidth(80)
+        box.addWidget(dataMaxLabel)
+        self.dataMaxText = QLabel('          ')
+        self.dataMaxText.setFixedWidth(100)
+        box.addWidget(self.dataMaxText)
+        wid =  QWidget()
+        wid.setLayout(box)
+        self.fourthRow = wid
 # initialize
         layout = QGridLayout()
         layout.setVerticalSpacing(0);
         layout.addWidget(self.firstRow,0,0)
         layout.addWidget(self.secondRow,1,0)
         layout.addWidget(self.thirdRow,2,0)
+        layout.addWidget(self.fourthRow,3,0)
         self.setLayout(layout)
         self.findLibrary = FindLibrary()
         self.subscription = None
         self.lasttime = time.time() -2
         self.arg = None
         self.show()
-        self.imageControl.show()
+        
+    def resetEvent(self) :
+        if self.imageDict['nx']==0 : return
+        self.zoomText.setText('')
+        self.imageDisplay.resetZoom()
+        self.display()
+
+    def zoomEvent(self,zoomData) :
+        self.zoomText.setText(str(zoomData))
+        self.display()
+
+    def newImage(self,imageDict):
+        if self.isClosed : return
+        self.imageDict["image"] = imageDict["image"]
+        self.imageDict["nx"] = imageDict["nx"]
+        self.imageDict["ny"] = imageDict["ny"]
+        self.imageDict["nz"] = imageDict["nz"]
+        if not str(imageDict["dtype"])==str(self.imageDict["dtype"]) :
+            self.imageDict["dtype"] = imageDict["dtype"]
+            dtype = self.imageDict["dtype"]
+            
+
+    def display(self) :
+        if self.isClosed : return
+        self.imageDisplay.display(self.imageDict["image"])
+        self.imageDisplay.show()     
 
     def closeEvent(self, event) :
         if self.isStarted : self.stop()
         self.isClosed = True
-        self.imageControl.isClosed = True
         self.provider.done()
-        self.imageControl.imageDisplay.okToClose = True
-        self.imageControl.imageDisplay.close()
 
     def startEvent(self) :
         self.start()
@@ -515,8 +323,8 @@ class NTNDA_Viewer(QWidget) :
             if codecNameLength != 0 : 
                 data = self.decompress(data,codec,compressed,uncompressed)
             self.dataToImage(data,dimArray)
-            self.imageControl.newImage(self.imageDict)
-            self.imageControl.display()
+            self.newImage(self.imageDict)
+            self.display()
         except Exception as error:
             self.statusText.setText(str(error))
         self.nImages = self.nImages + 1
@@ -591,6 +399,7 @@ class NTNDA_Viewer(QWidget) :
         return data
 
     def dataToImage(self,data,dimArray) :
+#        print('dataToImage min=',min(data),' max=',max(data))
         ny = 0
         nx = 0
         nz = 1
@@ -608,7 +417,12 @@ class NTNDA_Viewer(QWidget) :
         elif dtype==np.int32 :
             data = data.astype(np.uint32)
         else :
-            data=data.astype(np.uint32)
+            data=data.astype(np.uint32) 
+        dataMin = int(np.min(data))
+        dataMax = int(np.max(data))
+        self.dataMinText.setText(str(dataMin))
+        self.dataMaxText.setText(str(dataMax))
+        QApplication.processEvents()
         ndim = len(dimArray)
         if ndim!=2 and ndim!=3 :
             raise Exception('ndim not 2 or 3')

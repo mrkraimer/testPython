@@ -28,7 +28,7 @@ def compute32bitExcess(nx,dtype) :
         print('compute32bitExcess nx=',int(nx),' div=',div)
     return excess
             
-def toQImage(image,pixelLevels) :
+def toQImage(image) :
     if image is None:
         return QImage()
     mv = memoryview(image.data)
@@ -58,7 +58,7 @@ def toQImage(image,pixelLevels) :
             return  qimage
         elif len(image.shape) == 3:
             if image.shape[2] == 3:
-                qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_ARGB32)
+                qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_RGB32)
                 return qimage
         raise Exception('nz must have length 3') 
     raise Exception('illegal dtype'+str(image.dtype))
@@ -70,16 +70,14 @@ class Worker(QThread):
         self.exiting = False
         self.image = None
         self.caller = None
-        self.pixelLevels = []
         self.scale = int(0)
     def __del__(self):    
         self.exiting = True
         self.wait()
         
-    def render(self,image,pixelLevels,caller):    
+    def render(self,image,caller):    
         self.image = image
         self.caller = caller
-        self.pixelLevels = pixelLevels
         self.start()
 
     def run(self):
@@ -87,7 +85,7 @@ class Worker(QThread):
            self.signal.emit()
            self.caller.imageDoneEvent.set()
            return
-        qimage = toQImage(self.image,self.pixelLevels)
+        qimage = toQImage(self.image)
         if self.scale!=0 :
             scale = int(self.scale)
             numx = self.image.shape[1]
@@ -102,7 +100,6 @@ class Worker(QThread):
         while True :
             if painter.end() : break
         self.image = None
-        self.pixelLevels = []
         self.scale = int(0)
         self.signal.emit()
         self.caller.imageDoneEvent.set()
@@ -199,7 +196,7 @@ class NumpyImage(QWidget) :
         self.nx = 0
         self.ny = 0
             
-    def display(self,pixarray,pixelLevels=[]) :
+    def display(self,pixarray) :
         self.waitForDone()
         self.imageDoneEvent.clear()
         self.isActive = True
@@ -241,7 +238,6 @@ class NumpyImage(QWidget) :
             self.ny = ny
             self.nx = nx     
         self.setGeometry(QRect(10, 300,self.nx,self.ny))
-        self.pixelLevels = pixelLevels;
         self.update()
         QApplication.processEvents()
         if self.isHidden :
@@ -309,7 +305,7 @@ class NumpyImage(QWidget) :
 
     def paintEvent(self, ev):
         if self.mousePressed : return
-        self.thread.render(self.image,self.pixelLevels,self)
+        self.thread.render(self.image,self)
         self.thread.wait()
         
         
