@@ -9,7 +9,7 @@ author Marty Kraimer
     original development started 2019.12
 '''
 
-from NTNDA_Viewer import NTNDA_Viewer,NTNDA_Channel_Provider
+from NTNDA_Viewer import NTNDA_Viewer
 from pvaccess import *
 import sys
 from threading import Event
@@ -29,14 +29,20 @@ class GetChannel(object) :
         self.save.update({channelName : channel})
         return channel
 
-class PVAPYProvider(QObject,NTNDA_Channel_Provider) :
+class PVAPYProvider(QObject) :
     callbacksignal = pyqtSignal()
     def __init__(self):
         QObject.__init__(self)
-        NTNDA_Channel_Provider.__init__(self)
         self.getChannel = GetChannel()
         self.callbacksignal.connect(self.mycallback)
         self.callbackDoneEvent = Event()
+        self.channelName = '13SIM1:Pva1:Image'
+        
+    def setChannelName(self,channelName) :
+        self.channelName = channelName
+        
+    def getChannelName(self) :
+        return self.channelName
 
     def start(self) :
         self.channel = self.getChannel.get(self.getChannelName())
@@ -93,11 +99,10 @@ class PVAPYProvider(QObject,NTNDA_Channel_Provider) :
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     PVAPYProvider = PVAPYProvider()
-    channelName = ""
     nargs = len(sys.argv)
     if nargs>=2 :
         channelName = sys.argv[1]
-    PVAPYProvider.setChannelName(channelName)
+        PVAPYProvider.setChannelName(channelName)
     viewer = NTNDA_Viewer(PVAPYProvider,"PVAPY")
     sys.exit(app.exec_())
 
