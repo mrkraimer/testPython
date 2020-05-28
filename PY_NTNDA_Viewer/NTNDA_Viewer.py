@@ -190,6 +190,9 @@ class NTNDA_Viewer(QWidget) :
         self.dataMaxText = QLabel('          ')
         self.dataMaxText.setFixedWidth(100)
         box.addWidget(self.dataMaxText)
+        junkLabel =  QLabel('')
+        junkLabel.setFixedWidth(500)
+        box.addWidget(junkLabel)
         wid =  QWidget()
         wid.setLayout(box)
         self.fourthRow = wid
@@ -237,6 +240,8 @@ class NTNDA_Viewer(QWidget) :
         if self.isStarted : self.stop()
         self.isClosed = True
         self.provider.done()
+        self.imageDisplay.okToClose = True
+        self.imageDisplay.close()
 
     def startEvent(self) :
         self.start()
