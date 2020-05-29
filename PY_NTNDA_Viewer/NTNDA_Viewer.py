@@ -199,8 +199,10 @@ class NTNDA_Viewer(QWidget) :
 
     def display(self) :
         if self.isClosed : return
-        self.imageDisplay.display(self.imageDict["image"])
-        self.imageDisplay.show()     
+        result = self.imageDisplay.display(self.imageDict["image"])
+        if result==False : 
+            print('display after result=',result,flush=True)
+            return
 
     def closeEvent(self, event) :
         if self.isStarted : self.stop()
@@ -369,7 +371,6 @@ class NTNDA_Viewer(QWidget) :
         return data
 
     def dataToImage(self,data,dimArray) :
-#        print('dataToImage min=',min(data),' max=',max(data))
         ny = 0
         nx = 0
         nz = 1

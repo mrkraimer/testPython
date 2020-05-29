@@ -1,18 +1,9 @@
 # DisplayImage.py
-from PyQt5.QtWidgets import QWidget,QLabel,QLineEdit,QSlider
-from PyQt5.QtWidgets import QPushButton,QHBoxLayout,QVBoxLayout,QGridLayout,QGroupBox
-from PyQt5.QtWidgets import QRubberBand
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget,QRubberBand,QApplication
 from PyQt5.QtCore import QPoint,QRect,QSize,QPointF
 from PyQt5.QtCore import QThread
-from PyQt5.QtCore import pyqtSignal
 from threading import Event
-from PyQt5.QtCore import Qt
-
-from PyQt5.QtGui import QPixmap, QPainter,QImage,qRgb
-
-import sys,time
+from PyQt5.QtGui import QPainter,QImage
 import numpy as np
 import math
 
@@ -64,7 +55,6 @@ def toQImage(image) :
     raise Exception('illegal dtype'+str(image.dtype))
 
 class Worker(QThread):
-    signal = pyqtSignal()
     def __init__(self):
         QThread.__init__(self)
         self.image = None
@@ -93,7 +83,6 @@ class Worker(QThread):
             if painter.end() : break
         self.image = None
         self.scale = int(0)
-        self.signal.emit()
         self.caller.imageDoneEvent.set()
         
 class NumpyImageZoom() :
@@ -149,7 +138,6 @@ class NumpyImageZoom() :
         self.xmax = image.shape[1]
         return image                
         
-
     def createZoomImage(self,image) :
         return image[self.ymin:self.ymax,self.xmin:self.xmax]
     
@@ -161,7 +149,6 @@ class NumpyImage(QWidget) :
         self.maxsize = int(maxsize)
         self.flipy = flipy
         self.thread = Worker()
-        self.thread.signal.connect(self.threadDone)
         self.imageDoneEvent = Event()
         self.imageDoneEvent.set()
         self.imageZoom = None
@@ -173,7 +160,6 @@ class NumpyImage(QWidget) :
         self.okToClose = False
         self.isHidden = True
         self.isClosed = False
-        self.isActive = False
         self.image = None
         self.ny = 0
         self.nx = 0
@@ -189,9 +175,9 @@ class NumpyImage(QWidget) :
         self.ny = 0
             
     def display(self,pixarray) :
-        self.waitForDone()
+        if not self.imageDoneEvent.isSet :
+            return False
         self.imageDoneEvent.clear()
-        self.isActive = True
         ny = pixarray.shape[0]
         nx = pixarray.shape[1]
         excess = compute32bitExcess(nx,pixarray.dtype)
@@ -231,19 +217,11 @@ class NumpyImage(QWidget) :
             self.nx = nx     
         self.setGeometry(QRect(10, 300,self.nx,self.ny))
         self.update()
-        QApplication.processEvents()
         if self.isHidden :
             self.isHidden = False
             self.show()
-
-    def waitForDone(self) :
-        if self.isClosed : return
-        result = self.imageDoneEvent.wait(3.0)
-        if not result : print('waitForDone timeout')
-
-    def threadDone(self) :
-        self.imageDoneEvent.set()
-        self.isActive = False
+        QApplication.processEvents()
+        return True
 
     def closeEvent(self,event) :
         if not self.okToClose :
@@ -253,7 +231,6 @@ class NumpyImage(QWidget) :
         self.isClosed = True
 
     def mousePressEvent(self,event) :
-        if self.isActive : return
         if self.clientZoomCallback==None : return
         self.mousePressed = True
         self.mousePressPosition = QPoint(event.pos())
@@ -299,10 +276,4 @@ class NumpyImage(QWidget) :
         if self.mousePressed : return
         self.thread.render(self.image,self)
         self.thread.wait()
-        
-        
-        
-        
-
-        
 
