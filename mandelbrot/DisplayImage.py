@@ -56,25 +56,18 @@ class CurrentValues() :
         xhigh = mouseLocation[1]
         ylow = mouseLocation[2]
         yhigh = mouseLocation[3]
-#        print('update xsize=',xsize,' ysize=',ysize)
-#        print('update xlow=',xlow,' xhigh=',xhigh,' ylow=',ylow,' yhigh=',yhigh)
         nx = xhigh - xlow
-        excess = nx - int(nx/4)*4
-        print('excess=',excess)
-        xhigh = xhigh - excess
-        print('xlow=',xlow,' xhigh=',xhigh)
-        if xhigh<=xlow :
-            raise Exception('width bad')
         ny = yhigh - ylow
         yxratio = float(ny)/float(nx)
-#        print('nx=',nx,' ny=',ny,' yxratio=',yxratio)
-        if yxratio>1.0 : 
-#            print('raising exception',flush=True)
-            raise Exception('height gt width')
         if yxratio>1.0 :
-#            print('yxratio=',yxratio,flush=True)
             height = int(maxsize)
             width = int(math.ceil(height/yxratio))
+            excess = width - int(width/4)*4
+            if excess>0 :
+                print('excess=',excess,' width=',width)
+                width = width - excess
+                if width<=0 :
+                    raise Exception('width <=0')
         else :
             width = int(maxsize)
             height = int(math.ceil(width*yxratio))
