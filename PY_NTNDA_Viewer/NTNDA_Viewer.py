@@ -196,13 +196,12 @@ class NTNDA_Viewer(QWidget) :
             self.imageDict["dtype"] = imageDict["dtype"]
             dtype = self.imageDict["dtype"]
             
-
     def display(self) :
         if self.isClosed : return
-        result = self.imageDisplay.display(self.imageDict["image"])
-        if result==False : 
-            print('display after result=',result,flush=True)
-            return
+        try :
+            self.imageDisplay.display(self.imageDict["image"])
+        except Exception as error:
+            self.statusText.setText(str(error))    
 
     def closeEvent(self, event) :
         if self.isStarted : self.stop()
@@ -374,30 +373,32 @@ class NTNDA_Viewer(QWidget) :
         ny = 0
         nx = 0
         nz = 1
+        ndim = len(dimArray)
+        if ndim!=2 and ndim!=3 :
+            raise Exception('ndim not 2 or 3')
+            return
         dtype = data.dtype
         if dtype==np.uint8 :
             pass
         elif dtype==np.int8 :
             data = data.astype(np.uint8) 
         elif dtype==np.uint16 :
-            pass
+            if ndim==2 :
+                pass
+            else :
+                data = data.astype(np.uint8)
         elif dtype==np.int16 :
-            data = data.astype(np.uint16)
-        elif dtype==np.uint32 :
-            pass
-        elif dtype==np.int32 :
-            data = data.astype(np.uint32)
+            if ndim==2 :
+                data = data.astype(np.uint16)
+            else :
+                data = data.astype(np.uint8)
         else :
-            data=data.astype(np.uint32) 
+            data=data.astype(np.uint8) 
         dataMin = int(np.min(data))
         dataMax = int(np.max(data))
         self.dataMinText.setText(str(dataMin))
         self.dataMaxText.setText(str(dataMax))
         QApplication.processEvents()
-        ndim = len(dimArray)
-        if ndim!=2 and ndim!=3 :
-            raise Exception('ndim not 2 or 3')
-            return
         if ndim ==2 :
             nx = dimArray[0]["size"]
             ny = dimArray[1]["size"]

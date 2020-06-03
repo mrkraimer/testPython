@@ -18,41 +18,43 @@ def compute32bitExcess(nx,dtype) :
     if excess<0 or excess>3 :
         print('compute32bitExcess nx=',int(nx),' div=',div)
     return excess
-            
-def toQImage(image) :
-    if image is None:
-        return QImage()
-    mv = memoryview(image.data)
-    data = mv.tobytes()       
-    if image.dtype==np.uint8 :
-        if len(image.shape) == 2:
-            qimage = QImage(data, image.shape[1], image.shape[0],QImage.Format_Grayscale8 )
-            return  qimage
-        elif len(image.shape) == 3:
-            if image.shape[2] == 3:
-                qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_RGB888)
-                return qimage
-        raise Exception('nz must have length 3') 
-    if image.dtype==np.uint16 :
-        if len(image.shape) == 2:
-            qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_Grayscale16)
-            return  qimage
 
-        elif len(image.shape) == 3:
-            if image.shape[2] == 3:
-                qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_RGB16)
-                return qimage
-        raise Exception('nz must have length 3') 
-    if image.dtype==np.uint32 :
-        if len(image.shape) == 2:
-            qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_Grayscale16)
-            return  qimage
-        elif len(image.shape) == 3:
-            if image.shape[2] == 3:
-                qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_RGB32)
-                return qimage
-        raise Exception('nz must have length 3') 
-    raise Exception('illegal dtype'+str(image.dtype))
+class ImageToQImage() :
+    def __init__(self):
+        self.error = str()
+    def toQImage(self,image,Format = str('')) :
+        try :
+            self.error = str('')
+            if image is None:
+                self.error = 'no image'
+                return None
+            mv = memoryview(image.data)
+            data = mv.tobytes() 
+            if len(Format)>0 :
+                qimage = QImage(data, image.shape[1], image.shape[0],Format)
+                return qimage      
+            if image.dtype==np.uint8 :
+                if len(image.shape) == 2:
+                    qimage = QImage(data, image.shape[1], image.shape[0],QImage.Format_Grayscale8 )
+                    return  qimage
+                elif len(image.shape) == 3:
+                    if image.shape[2] == 3:
+                        qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_RGB888)
+                        return qimage
+                    elif image.shape[2] == 4:
+                        qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_RGBA8888)
+                        return qimage
+                self.error = 'nz must have length 3 or 4'
+                return None    
+            if image.dtype==np.uint16 :
+                if len(image.shape) == 2:
+                    qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_Grayscale16)
+                    return  qimage
+            self.error = 'unsupported dtype=' + str(image.dtype)
+            return None
+        except Exception as error:
+            self.error = str(error)
+            return None
 
 class Worker(QThread):
     def __init__(self):
@@ -60,14 +62,23 @@ class Worker(QThread):
         self.image = None
         self.caller = None
         self.scale = int(0)
+        self.Format = str('')
+        self.imageToQImage = ImageToQImage()
+        self.error = str()
         
-    def render(self,image,caller):    
+    def render(self,image,caller,Format=str('')):  
+        self.error = str('')
+        self.Format = Format
         self.image = image
         self.caller = caller
         self.start()
 
     def run(self):
-        qimage = toQImage(self.image)
+        qimage = self.imageToQImage.toQImage(self.image,Format=self.Format)
+        if qimage==None :
+            self.error = self.imageToQImage.error
+            self.caller.imageDoneEvent.set()
+            return
         if self.scale!=0 :
             scale = int(self.scale)
             numx = self.image.shape[1]
@@ -149,6 +160,7 @@ class NumpyImage(QWidget) :
         self.maxsize = int(maxsize)
         self.flipy = flipy
         self.thread = Worker()
+        self.Format = str('')
         self.imageDoneEvent = Event()
         self.imageDoneEvent.set()
         self.imageZoom = None
@@ -163,6 +175,7 @@ class NumpyImage(QWidget) :
         self.image = None
         self.ny = 0
         self.nx = 0
+        self.firstDisplay = True
         
     def setZoomCallback(self,clientCallback,clientZoom=False) :
         self.clientZoomCallback = clientCallback
@@ -174,9 +187,10 @@ class NumpyImage(QWidget) :
         self.nx = 0
         self.ny = 0
             
-    def display(self,pixarray) :
+    def display(self,pixarray,Format=str('')) :
         if not self.imageDoneEvent.isSet :
-            return False
+            raise Exception('logic error: self.imageDoneEvent.isSet is False')
+        self.thread.error = str('')
         self.imageDoneEvent.clear()
         ny = pixarray.shape[0]
         nx = pixarray.shape[1]
@@ -216,12 +230,21 @@ class NumpyImage(QWidget) :
             self.ny = ny
             self.nx = nx     
         self.setGeometry(QRect(10, 300,self.nx,self.ny))
+        self.thread.Format = Format
         self.update()
         if self.isHidden :
             self.isHidden = False
             self.show()
         QApplication.processEvents()
-        return True
+        result = self.imageDoneEvent.wait(1.0)
+        if result : self.firstDisplay = False
+        if not result : 
+            if self.firstDisplay :
+                print('wait timeout')
+            else : raise Exception('display timeout')
+        self.firstDisplay = False
+        if len(self.thread.error)>0 :
+            raise Exception('error '+ self.thread.error)
 
     def closeEvent(self,event) :
         if not self.okToClose :
