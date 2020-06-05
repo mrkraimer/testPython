@@ -22,7 +22,7 @@ def compute32bitExcess(nx,dtype) :
 class ImageToQImage() :
     def __init__(self):
         self.error = str()
-    def toQImage(self,image,Format = str('')) :
+    def toQImage(self,image,Format = str(''),colorTable=None) :
         try :
             self.error = str('')
             if image is None:
@@ -35,7 +35,11 @@ class ImageToQImage() :
                 return qimage      
             if image.dtype==np.uint8 :
                 if len(image.shape) == 2:
-                    qimage = QImage(data, image.shape[1], image.shape[0],QImage.Format_Grayscale8 )
+                    if colorTable!=None :
+                        qimage = QImage(data, image.shape[1], image.shape[0],QImage.Format_Indexed8)
+                        qimage.setColorTable(colorTable)
+                    else :
+                        qimage = QImage(data, image.shape[1], image.shape[0],QImage.Format_Grayscale8)
                     return  qimage
                 elif len(image.shape) == 3:
                     if image.shape[2] == 3:
@@ -50,6 +54,13 @@ class ImageToQImage() :
                 if len(image.shape) == 2:
                     qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_Grayscale16)
                     return  qimage
+            if image.dtype==np.uint32 :
+                if len(image.shape) == 2:
+                    if len(Format)>0 :
+                        qimage = QImage(data, image.shape[1], image.shape[0],Format)
+                    else :
+                        qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_Grayscale16)
+                    return  qimage
             self.error = 'unsupported dtype=' + str(image.dtype)
             return None
         except Exception as error:
@@ -59,27 +70,28 @@ class ImageToQImage() :
 class Worker(QThread):
     def __init__(self):
         QThread.__init__(self)
-        self.image = None
-        self.caller = None
         self.scale = int(0)
-        self.Format = str('')
-        self.imageToQImage = ImageToQImage()
-        self.error = str()
-        
-    def render(self,image,caller,Format=str('')):  
         self.error = str('')
-        self.Format = Format
+        self.imageToQImage = ImageToQImage()
+        
+    def setScale(self,scale) :
+        self.scale = scale    
+        
+    def render(self,caller,image,Format=str(''),colorTable=None):  
+        self.error = str('')
         self.image = image
         self.caller = caller
+        self.Format = Format
+        self.colorTable = colorTable
         self.start()
 
     def run(self):
-        qimage = self.imageToQImage.toQImage(self.image,Format=self.Format)
+        qimage = self.imageToQImage.toQImage(self.image,Format=self.Format,colorTable=self.colorTable)
         if qimage==None :
             self.error = self.imageToQImage.error
             self.caller.imageDoneEvent.set()
             return
-        if self.scale!=0 :
+        if self.scale!=int(0) :
             scale = int(self.scale)
             numx = self.image.shape[1]
             numy = self.image.shape[0]
@@ -144,9 +156,10 @@ class NumpyImageZoom() :
         self.scale = scale
         
     def compressImage(self,image,compress) :
-        image = image[::compress,::compress]
+        self.scale = 1.0/compress
         self.ymax = image.shape[0]
         self.xmax = image.shape[1]
+        image = image[::compress,::compress]
         return image                
         
     def createZoomImage(self,image) :
@@ -160,7 +173,6 @@ class NumpyImage(QWidget) :
         self.maxsize = int(maxsize)
         self.flipy = flipy
         self.thread = Worker()
-        self.Format = str('')
         self.imageDoneEvent = Event()
         self.imageDoneEvent.set()
         self.imageZoom = None
@@ -187,10 +199,9 @@ class NumpyImage(QWidget) :
         self.nx = 0
         self.ny = 0
             
-    def display(self,pixarray,Format=str('')) :
+    def display(self,pixarray,Format=str(''),colorTable=None) :
         if not self.imageDoneEvent.isSet :
             raise Exception('logic error: self.imageDoneEvent.isSet is False')
-        self.thread.error = str('')
         self.imageDoneEvent.clear()
         ny = pixarray.shape[0]
         nx = pixarray.shape[1]
@@ -208,13 +219,13 @@ class NumpyImage(QWidget) :
                 nx = self.image.shape[1]
                 maximum = max(ny,nx)
                 if maximum<int(float(self.maxsize/2)) :
-                     scale = math.ceil(float(self.maxsize/2)/maximum)
-                     self.thread.scale = scale
-                     self.imageZoom.scaleImage(scale)
-                     nx = int(nx*scale)
-                     ny = int(ny*scale)
+                    scale = math.ceil(float(self.maxsize/2)/maximum)
+                    self.thread.setScale(scale)
+                    self.imageZoom.scaleImage(scale)
+                    nx = int(nx*scale)
+                    ny = int(ny*scale)
             else :
-                self.imageZoom.setSize(ny,nx)         
+                self.imageZoom.setSize(ny,nx)
         maximum = max(ny,nx)
         if maximum>self.maxsize :
             compress = math.ceil(float(maximum)/self.maxsize)
@@ -230,21 +241,21 @@ class NumpyImage(QWidget) :
             self.ny = ny
             self.nx = nx     
         self.setGeometry(QRect(10, 300,self.nx,self.ny))
-        self.thread.Format = Format
+        self.Format = Format
+        self.colorTable = colorTable
         self.update()
         if self.isHidden :
             self.isHidden = False
             self.show()
         QApplication.processEvents()
-        result = self.imageDoneEvent.wait(1.0)
-        if result : self.firstDisplay = False
-        if not result : 
-            if self.firstDisplay :
-                print('wait timeout')
-            else : raise Exception('display timeout')
-        self.firstDisplay = False
-        if len(self.thread.error)>0 :
-            raise Exception('error '+ self.thread.error)
+        if self.firstDisplay :
+            self.firstDisplay = False
+        else :
+            result = self.imageDoneEvent.wait(2.0)
+            if not result : raise Exception('display timeout')
+            else :
+                if len(self.thread.error)>0 :
+                    raise Exception('error '+ self.thread.error)
 
     def closeEvent(self,event) :
         if not self.okToClose :
@@ -297,6 +308,6 @@ class NumpyImage(QWidget) :
 
     def paintEvent(self, ev):
         if self.mousePressed : return
-        self.thread.render(self.image,self)
+        self.thread.render(self,self.image,self.Format,self.colorTable)
         self.thread.wait()
 
