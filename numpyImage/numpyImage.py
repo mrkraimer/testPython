@@ -22,17 +22,17 @@ def compute32bitExcess(nx,dtype) :
 class ImageToQImage() :
     def __init__(self):
         self.error = str()
-    def toQImage(self,image,Format = str(''),colorTable=None) :
+    def toQImage(self,image,Format=0,colorTable=None) :
         try :
             self.error = str('')
             if image is None:
                 self.error = 'no image'
                 return None
             mv = memoryview(image.data)
-            data = mv.tobytes() 
-            if len(Format)>0 :
-                qimage = QImage(data, image.shape[1], image.shape[0],Format)
-                return qimage      
+            data = mv.tobytes()  
+            if Format>0 :
+                qimage = QImage(data,image.shape[1], image.shape[0],Format)
+                return qimage    
             if image.dtype==np.uint8 :
                 if len(image.shape) == 2:
                     qimage = QImage(data, image.shape[1], image.shape[0],QImage.Format_Grayscale8)

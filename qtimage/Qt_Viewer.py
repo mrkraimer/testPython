@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QWidget,QLabel,QLineEdit
 from PyQt5.QtWidgets import QPushButton,QHBoxLayout,QGridLayout
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QRect
+from PyQt5.QtGui import QImage
 
 import sys,time
 import numpy as np
@@ -139,13 +140,11 @@ class Qt_Viewer(QWidget) :
         if formatName=='Grayscale8' :
             data = value[0]['uint8']
             image = np.reshape(data,(height,width))
-            self.imageDisplay.display(image)
-#            self.imageDisplay.display(image,Format='QImage::Format_Grayscale8')
+            self.imageDisplay.display(image,Format=QImage.Format_Grayscale8)
         elif formatName=='RGB888' :
             data = value[0]['uint8']
             image = np.reshape(data,(height,width,3))
-            self.imageDisplay.display(image)
-#            self.imageDisplay.display(image,Format='QImage::Format_RGB888')
+            self.imageDisplay.display(image,Format=QImage.Format_RGB888)
         else :
             self.statusText.setText('format ' + formatName + ' not yet supported')
             return
