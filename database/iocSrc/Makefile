@@ -5,24 +5,24 @@ include $(TOP)/configure/CONFIG
 #=============================
 # build an ioc application
 
-DBD += mandelbrotDatabase.dbd
+DBD += testPython.dbd
 
-PROD_IOC += mandelbrotDatabase
+PROD_IOC += testPython
 
 
 # <name>_registerRecordDeviceDriver.cpp will be created from <name>.dbd
-mandelbrotDatabase_SRCS += mandelbrotDatabase_registerRecordDeviceDriver.cpp
-mandelbrotDatabase_SRCS_DEFAULT += mandelbrotDatabaseMain.cpp
-mandelbrotDatabase_SRCS_vxWorks += -nil-
+testPython_SRCS += testPython_registerRecordDeviceDriver.cpp
+testPython_SRCS_DEFAULT += testPythonMain.cpp
+testPython_SRCS_vxWorks += -nil-
 
 
 # The following adds support from base/src/vxWorks
-mandelbrotDatabase_OBJS_vxWorks += $(EPICS_BASE_BIN)/vxComLibrary
+testPython_OBJS_vxWorks += $(EPICS_BASE_BIN)/vxComLibrary
 
-mandelbrotDatabase_LIBS += mandelbrotRecord
-mandelbrotDatabase_LIBS += pvDatabase qsrv pvaClient pvAccessIOC pvAccess pvAccessCA nt pvData
+testPython_LIBS += testPython
+testPython_LIBS += pvDatabase qsrv pvaClient pvAccessIOC pvAccess pvAccessCA nt pvData
 
-mandelbrotDatabase_LIBS += $(EPICS_BASE_IOC_LIBS)
+testPython_LIBS += $(EPICS_BASE_IOC_LIBS)
 
 PROD_SYS_LIBS_WIN32 += ws2_32
 

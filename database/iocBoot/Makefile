@@ -1,5 +1,5 @@
 TOP = ..
 include $(TOP)/configure/CONFIG
-DIRS += mandelbrotDatabase
+DIRS += testPython
 include $(EPICS_BASE)/configure/RULES_DIRS
 

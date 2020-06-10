@@ -35,11 +35,7 @@ class ImageToQImage() :
                 return qimage      
             if image.dtype==np.uint8 :
                 if len(image.shape) == 2:
-                    if colorTable!=None :
-                        qimage = QImage(data, image.shape[1], image.shape[0],QImage.Format_Indexed8)
-                        qimage.setColorTable(colorTable)
-                    else :
-                        qimage = QImage(data, image.shape[1], image.shape[0],QImage.Format_Grayscale8)
+                    qimage = QImage(data, image.shape[1], image.shape[0],QImage.Format_Grayscale8)
                     return  qimage
                 elif len(image.shape) == 3:
                     if image.shape[2] == 3:
@@ -53,13 +49,6 @@ class ImageToQImage() :
             if image.dtype==np.uint16 :
                 if len(image.shape) == 2:
                     qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_Grayscale16)
-                    return  qimage
-            if image.dtype==np.uint32 :
-                if len(image.shape) == 2:
-                    if len(Format)>0 :
-                        qimage = QImage(data, image.shape[1], image.shape[0],Format)
-                    else :
-                        qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_Grayscale16)
                     return  qimage
             self.error = 'unsupported dtype=' + str(image.dtype)
             return None
@@ -201,7 +190,8 @@ class NumpyImage(QWidget) :
             
     def display(self,pixarray,Format=str(''),colorTable=None) :
         if not self.imageDoneEvent.isSet :
-            raise Exception('logic error: self.imageDoneEvent.isSet is False')
+            result = self.imageDoneEvent.wait(2.0)
+            if not result : raise Exception('display timeout')
         self.imageDoneEvent.clear()
         ny = pixarray.shape[0]
         nx = pixarray.shape[1]
@@ -248,6 +238,7 @@ class NumpyImage(QWidget) :
             self.isHidden = False
             self.show()
         QApplication.processEvents()
+        '''
         if self.firstDisplay :
             self.firstDisplay = False
         else :
@@ -256,6 +247,7 @@ class NumpyImage(QWidget) :
             else :
                 if len(self.thread.error)>0 :
                     raise Exception('error '+ self.thread.error)
+        '''            
 
     def closeEvent(self,event) :
         if not self.okToClose :
