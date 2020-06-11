@@ -151,7 +151,7 @@ void QtimageRecord::createBGR888(int height,int width)
             int indpix = indy*width*nz + indx*nz;
             if(indpix>=numpix) continue;
             value[indpix] = 0;
-            value[indpix+1] = 0;
+            value[indpix+1] = 255;
             value[indpix+2] = 0;
         }
     }

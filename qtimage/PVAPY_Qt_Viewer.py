@@ -29,6 +29,9 @@ class PVAPYProvider(QObject) :
         self.channelName = channelName
         self.channel = Channel(self.channelName)
         
+    def putInt(self,value,request) :
+        self.channel.put(value,request)
+        
     def getChannelName(self) :
         return self.channelName
 

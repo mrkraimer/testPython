@@ -1,6 +1,6 @@
 # Qt_Viewer.py
 from PyQt5.QtWidgets import QWidget,QLabel,QLineEdit
-from PyQt5.QtWidgets import QPushButton,QHBoxLayout,QGridLayout
+from PyQt5.QtWidgets import QPushButton,QHBoxLayout,QGridLayout,QInputDialog
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QRect
 from PyQt5.QtGui import QImage
@@ -10,9 +10,13 @@ import numpy as np
 sys.path.append('../numpyImage/')
 from numpyImage import NumpyImage
 
-
-size = int(600)
-  
+class FormatSelect() :
+    def __init__(self,choices) :
+        self.choices = choices
+    def select(self) :
+        print('choices=',self.choices)
+        return 0    
+        
 class Qt_Viewer(QWidget) :
     def __init__(self,data_Provider, providerName,parent=None):
         super(QWidget, self).__init__(parent)
@@ -20,6 +24,7 @@ class Qt_Viewer(QWidget) :
         self.provider = data_Provider
         self.setWindowTitle(providerName +"_Qt_Viewer")
         self.imageDisplay = NumpyImage(windowTitle='qtimage')
+        self.formatChoices = None
 # first row
         self.startButton = QPushButton('start')
         self.startButton.setEnabled(True)
@@ -30,20 +35,17 @@ class Qt_Viewer(QWidget) :
         self.stopButton.setEnabled(False)
         self.stopButton.clicked.connect(self.stopEvent)
         self.stopButton.setFixedWidth(40)
-        nptsLabel = QLabel("npts:")
-        nptsLabel.setFixedWidth(50)
-        self.nptsText = QLabel()
-        self.nptsText.setText('0')
-        self.nptsText.setFixedWidth(50)
-        imageNameLabel = QLabel("imageName:")
-        imageNameLabel.setFixedWidth(100)
-        self.imageNameText = QLabel()
-        self.imageNameText.setText('')
-        self.imageNameText.setFixedWidth(80)
         self.nImages = 0
         imageRateLabel = QLabel("imageRate:")
         self.imageRateText = QLabel()
         self.imageRateText.setFixedWidth(40)
+        self.formatButton = QPushButton('setFormat')
+        self.formatButton.setEnabled(True)
+        self.formatButton.clicked.connect(self.formatEvent)
+        self.formatButton.setFixedWidth(80)
+        formatLabel = QLabel("format:")
+        self.formatText = QLabel()
+        self.formatText.setFixedWidth(120)
         self.clearButton = QPushButton('clear')
         self.clearButton.setEnabled(True)
         self.clearButton.clicked.connect(self.clearEvent)
@@ -55,12 +57,11 @@ class Qt_Viewer(QWidget) :
         box.setContentsMargins(0,0,0,0);
         box.addWidget(self.startButton)
         box.addWidget(self.stopButton)
-        box.addWidget(nptsLabel)
-        box.addWidget(self.nptsText)
-        box.addWidget(imageNameLabel)
-        box.addWidget(self.imageNameText)
+        box.addWidget(self.formatButton)
         box.addWidget(imageRateLabel)
         box.addWidget(self.imageRateText)
+        box.addWidget(formatLabel)
+        box.addWidget(self.formatText)
         box.addWidget(self.clearButton)
         statusLabel = QLabel("  status:")
         statusLabel.setFixedWidth(50)
@@ -90,13 +91,26 @@ class Qt_Viewer(QWidget) :
 
     def stopEvent(self) :
         self.stop()
+        
+    def formatEvent(self) : 
+        items = self.formatChoices
+        if items==None :
+            self.statusText.setText('never connected')
+            return
+        isStarted = self.isStarted 
+        if isStarted :  self.provider.stop()
+        item, okPressed = QInputDialog.getItem(self, "Get item","Color:", items, 0, False)
+        if okPressed and item:
+            ind = self.formatChoices.index(item)
+            self.statusText.setText(str(ind))
+            self.provider.putInt(ind,'field(argument.format.index)')
+        if isStarted : self.provider.start()
 
     def clearEvent(self) :
         self.statusText.setText('')
         self.statusText.setStyleSheet("background-color:white")
 
     def start(self) :
-        
         self.provider.start()
         self.isStarted = True
         self.startButton.setEnabled(False)
@@ -133,7 +147,9 @@ class Qt_Viewer(QWidget) :
              return
         Format = value['format']
         index = int(Format['index'])
+        self.formatChoices = Format['choices']
         formatName = Format['choices'][index]
+        self.formatText.setText(formatName)
         height = value['height']
         width = value['width']
         value = value['value']
