@@ -3,19 +3,12 @@ from PyQt5.QtWidgets import QWidget,QLabel,QLineEdit
 from PyQt5.QtWidgets import QPushButton,QHBoxLayout,QGridLayout,QInputDialog
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QRect
-from PyQt5.QtGui import QImage
+from PyQt5.QtGui import QImage,qRgb
 
 import sys,time
 import numpy as np
 sys.path.append('../numpyImage/')
 from numpyImage import NumpyImage
-
-class FormatSelect() :
-    def __init__(self,choices) :
-        self.choices = choices
-    def select(self) :
-        print('choices=',self.choices)
-        return 0    
         
 class Qt_Viewer(QWidget) :
     def __init__(self,data_Provider, providerName,parent=None):
@@ -25,6 +18,7 @@ class Qt_Viewer(QWidget) :
         self.setWindowTitle(providerName +"_Qt_Viewer")
         self.imageDisplay = NumpyImage(windowTitle='qtimage')
         self.formatChoices = None
+        self.rgbTable = [qRgb(i/2, i, i/2) for i in range(256)]
 # first row
         self.startButton = QPushButton('start')
         self.startButton.setEnabled(True)
@@ -157,10 +151,19 @@ class Qt_Viewer(QWidget) :
             data = value[0]['uint8']
             image = np.reshape(data,(height,width))
             self.imageDisplay.display(image,Format=QImage.Format_Grayscale8)
+        elif formatName=='Indexed8' :
+            data = value[0]['uint8']
+            image = np.reshape(data,(height,width))
+            color_table = [qRgb(i, i, i) for i in range(256)]
+            self.imageDisplay.display(image,Format=QImage.Format_Indexed8,colorTable=self.rgbTable)    
         elif formatName=='RGB888' :
             data = value[0]['uint8']
             image = np.reshape(data,(height,width,3))
             self.imageDisplay.display(image,Format=QImage.Format_RGB888)
+        elif formatName=='Grayscale16' :
+            data = value[0]['uint16']
+            image = np.reshape(data,(height,width))
+            self.imageDisplay.display(image,Format=QImage.Format_Grayscale16)
         else :
             self.statusText.setText('format ' + formatName + ' not yet supported')
             return

@@ -48,9 +48,11 @@ public:
     virtual ~QtimageRecord() {}
     virtual bool init() {return false;}
     void createImage();
+    
+private:
     void createGrayscale8(int height,int width);
     void createBGR888(int height,int width);
-private:
+    void createGrayscale16(int height,int width);
     QtimageRecord(std::string const & recordName,
         epics::pvData::PVStructurePtr const & pvStructure);
 

@@ -32,6 +32,8 @@ class ImageToQImage() :
             data = mv.tobytes()  
             if Format>0 :
                 qimage = QImage(data,image.shape[1], image.shape[0],Format)
+                if colorTable!=None :
+                    qimage.setColorTable(colorTable)
                 return qimage    
             if image.dtype==np.uint8 :
                 if len(image.shape) == 2:

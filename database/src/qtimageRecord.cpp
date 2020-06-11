@@ -32,7 +32,8 @@ QtimageRecordPtr QtimageRecord::create(
     PVDataCreatePtr pvDataCreate = getPVDataCreate();
     UnionConstPtr union_t = getFieldCreate()->createFieldBuilder()->
         addArray("uint8",pvUByte)->
-        addArray("uint18",pvUShort)->
+        addArray("uint16",pvUShort)->
+        addArray("uint32",pvUInt)->
         createUnion();
     StructureConstPtr  topStructure = fieldCreate->createFieldBuilder()->
         add("timeStamp",standardField->timeStamp()) ->
@@ -60,12 +61,14 @@ QtimageRecordPtr QtimageRecord::create(
         new QtimageRecord(recordName,pvStructure));
     pvStructure->getSubField<PVInt>("argument.height")->put(800);
     pvStructure->getSubField<PVInt>("argument.width")->put(800);
-    shared_vector<string> choices(2);
+    shared_vector<string> choices(4);
     choices[0] = "Grayscale8";
-    choices[1] = "RGB888";
+    choices[1] = "Indexed8";
+    choices[2] = "RGB888";
+    choices[3] = "Grayscale16";
     PVStringArrayPtr pvChoices = pvStructure->getSubField<PVStringArray>("argument.format.choices");
     pvChoices->replace(freeze(choices));
-    pvStructure->getSubField<PVInt>("argument.format.index")->put(1);
+    pvStructure->getSubField<PVInt>("argument.format.index")->put(0);
     pvRecord->initPVRecord();
     return pvRecord;
 }
@@ -164,6 +167,48 @@ void QtimageRecord::createBGR888(int height,int width)
     pvUnion->set("uint8",pvValue);
 }
 
+
+void QtimageRecord::createGrayscale16(int height,int width)
+{
+    size_t num = width*height;
+    epics::pvData::shared_vector<uint16_t> value(num,65535);
+    double xmin = getPVStructure()->getSubField<PVDouble>("xmin")->get();
+    double xmax = getPVStructure()->getSubField<PVDouble>("xmax")->get();
+    double ymin = getPVStructure()->getSubField<PVDouble>("ymin")->get();
+    double ymax = getPVStructure()->getSubField<PVDouble>("ymax")->get();
+    if(xmax>xmin && ymax>ymin) {
+        double xinc = width/(xmax-xmin);
+        double yinc = height/(ymax-ymin);
+        PVScalarArrayPtr pvScalarArray = getPVStructure()->getSubField<PVDoubleArray>("x");
+        shared_vector<const double> xarr;
+        pvScalarArray->getAs<const double>(xarr);
+        pvScalarArray = getPVStructure()->getSubField<PVDoubleArray>("y");
+        shared_vector<const double> yarr;
+        pvScalarArray->getAs<const double>(yarr);
+        if(xarr.size()!=yarr.size()) {
+                throw std::logic_error("x.size() ne y.size()");
+        }
+        int npts = xarr.size();
+        int numpix = height*width;
+        for(int ind=0; ind<npts; ind++)
+        {
+            double xnow =  (xarr[ind]-xmin)*xinc;
+            double ynow =  (yarr[ind]-ymin)*yinc;
+            int indx = int(xnow);
+            int indy = int(ynow);
+            int indpix = indy*width + indx;
+            if(indpix>=numpix) continue;
+            value[indpix] = 0;
+        }
+    }
+    PVScalarArrayPtr arr = getPVDataCreate()->createPVScalarArray(pvUShort);
+    PVUShortArrayPtr pvValue = std::tr1::static_pointer_cast<PVUShortArray>(arr);
+    pvValue->putFrom(freeze(value));
+    PVStructurePtr pvResult = getPVStructure()->getSubField<PVStructure>("result");
+    PVUnionPtr pvUnion = std::tr1::static_pointer_cast<PVUnion>(pvResult->getSubField("value"));
+    pvUnion->set("uint16",pvValue);
+}
+
 void QtimageRecord::createImage()
 {
     PVStructurePtr pvArgument = getPVStructure()->getSubField<PVStructure>("argument");
@@ -172,10 +217,14 @@ void QtimageRecord::createImage()
     int choice = pvArgument->getSubField<PVInt>("format.index")->get();
     switch (choice) {
         case 0:
+        case 1:
             createGrayscale8(height,width);
             break;
-        case 1:
+        case 2:
             createBGR888(height,width);
+            break;
+        case 3:
+            createGrayscale16(height,width);
             break;
         default:
             cout << "unsupported format\n";
