@@ -84,7 +84,8 @@ QtimageRecord::QtimageRecord(
 void QtimageRecord::createGrayscale8(int height,int width)
 {
     size_t num = width*height;
-    epics::pvData::shared_vector<uint8_t> value(num,255);
+    int maxvalue = 255;
+    epics::pvData::shared_vector<uint8_t> value(num,maxvalue);
     double xmin = getPVStructure()->getSubField<PVDouble>("xmin")->get();
     double xmax = getPVStructure()->getSubField<PVDouble>("xmax")->get();
     double ymin = getPVStructure()->getSubField<PVDouble>("ymin")->get();
@@ -102,15 +103,11 @@ void QtimageRecord::createGrayscale8(int height,int width)
                 throw std::logic_error("x.size() ne y.size()");
         }
         int npts = xarr.size();
-        int numpix = height*width;
         for(int ind=0; ind<npts; ind++)
         {
-            double xnow =  (xarr[ind]-xmin)*xinc;
-            double ynow =  (yarr[ind]-ymin)*yinc;
-            int indx = int(xnow);
-            int indy = int(ynow);
-            int indpix = indy*width + indx;
-            if(indpix>=numpix) continue;
+            int indx =  (xarr[ind]-xmin)*xinc;
+            int indy =  (yarr[ind]-ymin)*yinc;
+            int indpix = int(indy*width + indx);
             value[indpix] = 0;
         }
     }
@@ -126,7 +123,8 @@ void QtimageRecord::createBGR888(int height,int width)
 {
     int nz = 3;
     size_t num = width*height*nz;
-    epics::pvData::shared_vector<uint8_t> value(num,255);
+    int maxvalue = 255;
+    epics::pvData::shared_vector<uint8_t> value(num,maxvalue);
     double xmin = getPVStructure()->getSubField<PVDouble>("xmin")->get();
     double xmax = getPVStructure()->getSubField<PVDouble>("xmax")->get();
     double ymin = getPVStructure()->getSubField<PVDouble>("ymin")->get();
@@ -144,18 +142,12 @@ void QtimageRecord::createBGR888(int height,int width)
                 throw std::logic_error("x.size() ne y.size()");
         }
         int npts = xarr.size();
-        int numpix = height*width*nz;
         for(int ind=0; ind<npts; ind++)
         {
-            double xnow =  (xarr[ind]-xmin)*xinc;
-            double ynow =  (yarr[ind]-ymin)*yinc;
-            int indx = int(xnow);
-            int indy = int(ynow);
-            int indpix = indy*width*nz + indx*nz;
-            if(indpix>=numpix) continue;
+            int indx =  (xarr[ind]-xmin)*xinc;
+            int indy =  (yarr[ind]-ymin)*yinc;
+            int indpix = int(indy*width*nz + indx*nz);
             value[indpix] = 0;
-            value[indpix+1] = 255;
-            value[indpix+2] = 0;
         }
     }
     
@@ -171,7 +163,8 @@ void QtimageRecord::createBGR888(int height,int width)
 void QtimageRecord::createGrayscale16(int height,int width)
 {
     size_t num = width*height;
-    epics::pvData::shared_vector<uint16_t> value(num,65535);
+    int maxvalue = 65535;
+    epics::pvData::shared_vector<uint16_t> value(num,maxvalue);
     double xmin = getPVStructure()->getSubField<PVDouble>("xmin")->get();
     double xmax = getPVStructure()->getSubField<PVDouble>("xmax")->get();
     double ymin = getPVStructure()->getSubField<PVDouble>("ymin")->get();
@@ -189,15 +182,11 @@ void QtimageRecord::createGrayscale16(int height,int width)
                 throw std::logic_error("x.size() ne y.size()");
         }
         int npts = xarr.size();
-        int numpix = height*width;
         for(int ind=0; ind<npts; ind++)
         {
-            double xnow =  (xarr[ind]-xmin)*xinc;
-            double ynow =  (yarr[ind]-ymin)*yinc;
-            int indx = int(xnow);
-            int indy = int(ynow);
-            int indpix = indy*width + indx;
-            if(indpix>=numpix) continue;
+            int indx =  (xarr[ind]-xmin)*xinc;
+            int indy =  (yarr[ind]-ymin)*yinc;
+            int indpix = int(indy*width + indx);
             value[indpix] = 0;
         }
     }
