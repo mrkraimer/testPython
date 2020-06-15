@@ -20,8 +20,8 @@ class PVAPYProvider(QObject) :
         self.isConnected = False
         self.init()
     def init(self) :
-        self.connectCallbacksignal.connect(self.viewerconnectionCallback)
-        self.monitorCallbacksignal.connect(self.viewermonitorCallback)
+        self.connectCallbacksignal.connect(self.connectionCallback)
+        self.monitorCallbacksignal.connect(self.monitorCallback)
         self.callbackDoneEvent = Event()
         self.callbackDoneEvent.set()
         self.channel = Channel(getDynamicRecordName())
@@ -36,14 +36,14 @@ class PVAPYProvider(QObject) :
              else  :
                  data["status"] = "disconnected"
              
-             self.viewerCallback(data)
+             self.callViewerCallback(data)
         self.channel.monitor(self.pvapymonitorcallback,'field()')
     def stop(self) :
         self.channel.stopMonitor()
     def done(self) :
         pass
 
-    def viewerCallback(self,arg) :
+    def callViewerCallback(self,arg) :
         self.viewer.callback(arg)
 
     def pvapyconnectioncallback(self,arg) :
@@ -61,15 +61,15 @@ class PVAPYProvider(QObject) :
         self.callbackDoneEvent.clear()
         self.connectCallbacksignal.emit()
 
-    def viewerconnectionCallback(self) :
+    def connectionCallback(self) :
         while self.connectdata is not None:
             try:
                 arg = self.connectdata
                 self.connectdata = None
-                self.viewerCallback(arg)
+                self.callViewerCallback(arg)
             except Exception as error:
                 arg["exception"] = repr(error)
-                self.viewerCallback(arg)
+                self.callViewerCallback(arg)
         self.callbackDoneEvent.set()
 
     def pvapymonitorcallback(self,arg) :
@@ -88,15 +88,15 @@ class PVAPYProvider(QObject) :
         else:
             self.monitordata = data
 
-    def viewermonitorCallback(self) :
+    def monitorCallback(self) :
         while self.monitordata is not None:
             try:
                 arg = dict()
                 arg['value'] = self.monitordata
-                self.viewerCallback(arg)    
+                self.callViewerCallback(arg)    
             except Exception as error:
                 arg["exception"] = repr(error)
-                self.viewerCallback(arg)
+                self.callViewerCallback(arg)
             self.monitordata = None
         self.callbackDoneEvent.set()
 
