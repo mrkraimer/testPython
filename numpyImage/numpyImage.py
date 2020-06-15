@@ -68,7 +68,7 @@ class Worker(QThread):
     def setScale(self,scale) :
         self.scale = scale    
         
-    def render(self,caller,image,Format=str(''),colorTable=None):  
+    def render(self,caller,image,Format=0,colorTable=None):  
         self.error = str('')
         self.image = image
         self.caller = caller
@@ -190,7 +190,7 @@ class NumpyImage(QWidget) :
         self.nx = 0
         self.ny = 0
             
-    def display(self,pixarray,Format=str(''),colorTable=None) :
+    def display(self,pixarray,Format=0,colorTable=None) :
         if not self.imageDoneEvent.isSet :
             result = self.imageDoneEvent.wait(2.0)
             if not result : raise Exception('display timeout')
