@@ -249,7 +249,7 @@ class NTNDA_Viewer(QWidget) :
         if len(arg)==1 :
             value = arg.get("exception")
             if value!=None :
-                self.statusText.setText(str(error))
+                self.statusText.setText(str(value))
                 return
             value = arg.get("status")
             if value!=None :

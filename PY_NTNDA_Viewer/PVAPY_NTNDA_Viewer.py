@@ -16,27 +16,15 @@ from threading import Event
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QObject,pyqtSignal
 
-class GetChannel(object) :
-    '''
-       This exists because whenever a new channel was started a crash occured
-    '''
-    def __init__(self, parent=None):
-        self.save = dict()
-    def get(self,channelName) :
-        channel = self.save.get(channelName)
-        if channel!=None : return channel
-        channel = Channel(channelName)
-        self.save.update({channelName : channel})
-        return channel
-
 class PVAPYProvider(QObject) :
-    callbacksignal = pyqtSignal()
+    monitorCallbacksignal = pyqtSignal()
     def __init__(self):
         QObject.__init__(self)
-        self.getChannel = GetChannel()
-        self.callbacksignal.connect(self.mycallback)
+        self.monitordata = None
+        self.monitorCallbacksignal.connect(self.monitorCallback)
         self.callbackDoneEvent = Event()
         self.channelName = '13SIM1:Pva1:Image'
+        self.isStarted = False
         
     def setChannelName(self,channelName) :
         self.channelName = channelName
@@ -45,55 +33,62 @@ class PVAPYProvider(QObject) :
         return self.channelName
 
     def start(self) :
-        self.channel = self.getChannel.get(self.getChannelName())
-        self.channel.monitor(self.pvapycallback,
+        if self.isStarted : self.stop()
+        self.isStarted = True
+        self.channel = Channel(self.channelName)
+        self.channel.monitor(self.pvapymonitorcallback,
               'field(value,dimension,codec,compressedSize,uncompressedSize)')
     def stop(self) :
+        self.isStarted = False;
         self.channel.stopMonitor()
-   
-    def pvapycallback(self,arg) :
-        self.struct = arg;
-        self.callbacksignal.emit()
-        self.callbackDoneEvent.wait()
-        self.callbackDoneEvent.clear()
-    def callback(self,arg) :
+        
+    def callViewerCallback(self,arg) :
         self.NTNDA_Viewer.callback(arg)
-    def mycallback(self) :
-        struct = self.struct
-        arg = dict()
-        try :
-            val = struct['value'][0]
-            if len(val) != 1 :
-                raise Exception('value length not 1')
-            element = None
-            for x in val :
-                element = x
-            if element == None : 
-                raise Exception('value is not numpy  array')
-            value = val[element]
-            arg['value'] = value
-            arg['dimension'] = struct['dimension']
-            codec = struct['codec']
-            codecName = codec['name']
-            if len(codecName)<1 :
-                arg['codec'] = struct['codec']
-            else :
-                parameters = codec['parameters']
-                typevalue = parameters[0]['value']
-                cod = dict()
-                cod['name'] = codecName
-                cod['parameters'] = typevalue
-                arg['codec'] = cod
-            arg['compressedSize'] = struct['compressedSize']
-            arg['uncompressedSize'] = struct['uncompressedSize']
-            self.callback(arg)
-            self.callbackDoneEvent.set()
-            return
-        except Exception as error:
-            arg["exception"] = repr(error)
-            self.callback(arg)
-            self.callbackDoneEvent.set()
-            return
+        
+    def pvapymonitorcallback(self,arg) :
+        if self.monitordata==None:
+            self.monitordata = arg
+            self.monitorCallbacksignal.emit()
+            self.callbackDoneEvent.wait()
+            self.callbackDoneEvent.clear()
+        else:
+            self.monitordata = arg
+    
+    def monitorCallback(self) :
+        while not self.monitordata==None :
+            try:
+                arg = dict()
+                val = self.monitordata['value'][0]
+                if len(val) != 1 :
+                    raise Exception('value length not 1')
+                element = None
+                for x in val :
+                    element = x
+                if element == None : 
+                    raise Exception('value is not numpy  array')
+                value = val[element]
+                arg['value'] = value
+                arg['dimension'] = self.monitordata['dimension']
+                codec = self.monitordata['codec']
+                codecName = codec['name']
+                if len(codecName)<1 :
+                    arg['codec'] = self.monitordata['codec']
+                else :
+                    parameters = codec['parameters']
+                    typevalue = parameters[0]['value']
+                    cod = dict()
+                    cod['name'] = codecName
+                    cod['parameters'] = typevalue
+                    arg['codec'] = cod
+                arg['compressedSize'] = self.monitordata['compressedSize']
+                arg['uncompressedSize'] = self.monitordata['uncompressedSize']
+                self.callViewerCallback(arg)    
+            except Exception as error:
+                arg = dict()
+                arg["exception"] = repr(error)
+                self.callViewerCallback(arg)
+            self.monitordata = None
+        self.callbackDoneEvent.set()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

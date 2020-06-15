@@ -81,15 +81,17 @@ class PVAPYProvider(QObject) :
         data.xmax = arg['xmax']
         data.ymin = arg['ymin']
         data.ymax = arg['ymax']
-        if not self.monitordata:
+        if self.monitordata==None:
             self.monitordata = data
-            self.callbackDoneEvent.clear()
             self.monitorCallbacksignal.emit()
+            self.callbackDoneEvent.wait()
+            self.callbackDoneEvent.clear()
+            
         else:
             self.monitordata = data
 
     def monitorCallback(self) :
-        while self.monitordata is not None:
+        while not self.monitordata==None :
             try:
                 arg = dict()
                 arg['value'] = self.monitordata
