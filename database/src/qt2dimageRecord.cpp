@@ -13,7 +13,7 @@
 #include <pv/standardField.h>
 
 #define epicsExportSharedSymbols
-#include "pv/qtimageRecord.h"
+#include "pv/qt2dimageRecord.h"
 
 using namespace epics::pvData;
 using namespace epics::pvDatabase;
@@ -24,7 +24,7 @@ using std::cout;
 namespace epics { namespace testPython {
 
 
-QtimageRecordPtr QtimageRecord::create(
+Qt2dimageRecordPtr Qt2dimageRecord::create(
     string const & recordName)
 {
     StandardFieldPtr standardField = getStandardField();
@@ -57,8 +57,8 @@ QtimageRecordPtr QtimageRecord::create(
             endNested()->
         createStructure();
     PVStructurePtr pvStructure = pvDataCreate->createPVStructure(topStructure);
-    QtimageRecordPtr pvRecord(
-        new QtimageRecord(recordName,pvStructure));
+    Qt2dimageRecordPtr pvRecord(
+        new Qt2dimageRecord(recordName,pvStructure));
     pvStructure->getSubField<PVInt>("argument.height")->put(800);
     pvStructure->getSubField<PVInt>("argument.width")->put(800);
     shared_vector<string> choices(4);
@@ -73,7 +73,7 @@ QtimageRecordPtr QtimageRecord::create(
     return pvRecord;
 }
 
-QtimageRecord::QtimageRecord(
+Qt2dimageRecord::Qt2dimageRecord(
     string const & recordName,
     PVStructurePtr const & pvStructure)
 : PVRecord(recordName,pvStructure)
@@ -81,7 +81,7 @@ QtimageRecord::QtimageRecord(
 
 }
 
-void QtimageRecord::createGrayscale8(int height,int width)
+void Qt2dimageRecord::createGrayscale8(int height,int width)
 {
     size_t num = width*height;
     int maxvalue = 255;
@@ -119,7 +119,7 @@ void QtimageRecord::createGrayscale8(int height,int width)
     pvUnion->set("uint8",pvValue);
 }
 
-void QtimageRecord::createBGR888(int height,int width)
+void Qt2dimageRecord::createBGR888(int height,int width)
 {
     int nz = 3;
     size_t num = width*height*nz;
@@ -160,7 +160,7 @@ void QtimageRecord::createBGR888(int height,int width)
 }
 
 
-void QtimageRecord::createGrayscale16(int height,int width)
+void Qt2dimageRecord::createGrayscale16(int height,int width)
 {
     size_t num = width*height;
     int maxvalue = 65535;
@@ -198,7 +198,7 @@ void QtimageRecord::createGrayscale16(int height,int width)
     pvUnion->set("uint16",pvValue);
 }
 
-void QtimageRecord::createImage()
+void Qt2dimageRecord::createImage()
 {
     PVStructurePtr pvArgument = getPVStructure()->getSubField<PVStructure>("argument");
     int height = pvArgument->getSubField<PVInt>("height")->get();
@@ -220,7 +220,7 @@ void QtimageRecord::createImage()
     }
 }
 
-void QtimageRecord::process()
+void Qt2dimageRecord::process()
 {
     createImage();
 }

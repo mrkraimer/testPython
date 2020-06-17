@@ -17,7 +17,7 @@ class PVAPYProvider(QObject) :
         self.connectdata = None
         self.firstStart = True
         self.isConnected = False
-        self.channelName = 'TPYqtimageRecord'
+        self.channelName = 'TPYqt2dimageRecord'
         self.channel = Channel(self.channelName)
         self.connectCallbacksignal.connect(self.viewerconnectionCallback)
         self.monitorCallbacksignal.connect(self.viewermonitorCallback)
