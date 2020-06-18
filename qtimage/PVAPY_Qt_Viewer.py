@@ -17,19 +17,26 @@ class PVAPYProvider(QObject) :
         self.connectdata = None
         self.firstStart = True
         self.isConnected = False
-        self.channelName = 'TPYqt2dimageRecord'
-        self.channel = Channel(self.channelName)
-        self.connectCallbacksignal.connect(self.viewerconnectionCallback)
-        self.monitorCallbacksignal.connect(self.viewermonitorCallback)
+        self.channelName = 'TPYqtpeakimageRecord'
+        self.connectCallbacksignal.connect(self.connectionCallback)
+        self.monitorCallbacksignal.connect(self.monitorCallback)
         self.callbackDoneEvent = Event()
-        self.callbackDoneEvent.set()
-        self.channel.setConnectionCallback(self.pvapyconnectioncallback)
+        self.callbackDoneEvent.clear()
+        self.channel = None
+        self.isStarted = False
         
     def setChannelName(self,channelName) :
+        if self.channel!=None and self.isStarted : self.stop()
+        self.channel = None
+        self.firstStart = True
         self.channelName = channelName
-        self.channel = Channel(self.channelName)
         
     def putInt(self,value,request) :
+        if self.channel==None :
+            data = dict()
+            data["exception"] = "channel is None"
+            self.viewerCallback(data)
+            return
         self.channel.put(value,request)
         
     def getChannelName(self) :
@@ -37,25 +44,21 @@ class PVAPYProvider(QObject) :
 
     def start(self) : 
         if self.firstStart :
+             self.channel = Channel(self.channelName)
              self.firstStart = False
-             data = dict()
-             if self.isConnected==True :
-                 data["status"] = "connected"
-             else  :
-                 data["status"] = "disconnected"
-             
-             self.viewerCallback(data)
-        self.channel.monitor(self.pvapymonitorcallback,'field(argument{format,height,width},result.value)')
+             self.channel.setConnectionCallback(self.pvapyconnectioncallback)
+        self.channel.monitor(self.pvapymonitorcallback,\
+            'field(argument{format,height,width},result.value)')
+    
     def stop(self) :
+        self.isStarted = False;
+        if self.channel==None : return
         self.channel.stopMonitor()
-    def done(self) :
-        pass
+
     def viewerCallback(self,arg) :
         self.viewer.callback(arg)
+    
     def pvapyconnectioncallback(self,arg) :
-        if self.firstStart :
-            self.isConnected = arg
-            return
         data = dict()
         if arg==True :
             data["status"] = "connected"
@@ -64,44 +67,41 @@ class PVAPYProvider(QObject) :
         else :
             data["exception"] = "bad pvapy connection callback =" + str(arg)
         self.connectdata = data
-        self.callbackDoneEvent.clear()
         self.connectCallbacksignal.emit()
+        self.callbackDoneEvent.wait()
+        self.callbackDoneEvent.clear()
+        
 
-    def viewerconnectionCallback(self) :
-        while self.connectdata is not None:
-            try:
-                arg = self.connectdata
-                self.connectdata = None
-                self.viewerCallback(arg)
-            except Exception as error:
-                arg["exception"] = repr(error)
-                self.viewerCallback(arg)
+    def connectionCallback(self) :
+        arg = self.connectdata
+        self.connectdata = None
+        self.viewerCallback(arg)
         self.callbackDoneEvent.set()
+        self.connectdata = None
 
     def pvapymonitorcallback(self,arg) :
-        data = {\
-            "format" : arg['argument.format'],\
-            "height": arg['argument.height'],\
-            "width": arg['argument.width'],\
-            "value": arg['result.value']\
-        }
-        if not self.monitordata:
+        if self.monitordata==None:
+            data = {\
+                "format" : arg['argument.format'],\
+                "height": arg['argument.height'],\
+                "width": arg['argument.width'],\
+                "value": arg['result.value']\
+            }
             self.monitordata = data
-            self.callbackDoneEvent.clear()
             self.monitorCallbacksignal.emit()
+            self.callbackDoneEvent.wait()
+            self.callbackDoneEvent.clear()
         else:
             self.monitordata = data
 
-    def viewermonitorCallback(self) :
-        while self.monitordata is not None:
-            try:
-                arg = dict()
-                arg['value'] = self.monitordata
-                self.viewerCallback(arg)    
-            except Exception as error:
-                arg["exception"] = repr(error)
-                self.viewerCallback(arg)
-            self.monitordata = None
+    def monitorCallback(self) :
+        arg = dict()
+        try:    
+            arg['value'] = self.monitordata
+        except Exception as error:
+            arg["exception"] = repr(error)
+        self.viewerCallback(arg)
+        self.monitordata = None
         self.callbackDoneEvent.set()
 
 if __name__ == '__main__':

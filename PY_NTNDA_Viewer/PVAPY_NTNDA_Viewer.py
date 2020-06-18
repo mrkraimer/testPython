@@ -36,7 +36,7 @@ class PVAPYProvider(QObject) :
         self.isStarted = False
         
     def setChannelName(self,channelName) :
-        if self.channel!=None : self.stop()
+        if self.channel!=None and self.isStarted : self.stop()
         self.channel = None
         self.firstStart = True
         self.channelName = channelName

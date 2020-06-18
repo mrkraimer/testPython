@@ -14,4 +14,5 @@ removeRecordCreate TPYremoveRecord
 traceRecordCreate TPYtraceRecord
 mandelbrotRecordCreate TPYmandelbrotRecord
 qt2dimageRecordCreate TPYqt2dimageRecord
+qtpeakimageRecordCreate TPYqtpeakimageRecord
 
