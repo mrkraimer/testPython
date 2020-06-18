@@ -19,4 +19,4 @@ if __name__ == '__main__':
         data['peak.y'] = y
         data['peak.intensity'] = 1.0*(float(i)/num)
         chan.put(data)
-        time.sleep(.01)
+        time.sleep(.005)
