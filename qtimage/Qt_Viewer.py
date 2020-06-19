@@ -106,7 +106,7 @@ class Qt_Viewer(QWidget) :
             return
         isStarted = self.isStarted 
         if isStarted :  self.provider.stop()
-        item, okPressed = QInputDialog.getItem(self, "Get item  ","Color:  ", items, 0, False)
+        item, okPressed = QInputDialog.getItem(self, "Get item  ","Format:  ", items, 0, False)
         if okPressed and item:
             ind = self.formatChoices.index(item)
             self.statusText.setText(str(ind))
@@ -124,21 +124,24 @@ class Qt_Viewer(QWidget) :
             self.statusText.setText(str(error))     
 
     def start(self) :
-        self.channelNameText.setEnabled(False)
-        self.provider.start()
         self.isStarted = True
         self.startButton.setEnabled(False)
         self.stopButton.setEnabled(True)
+        self.formatButton.setEnabled(False)
+        self.channelNameText.setEnabled(False)
+        self.provider.start()
 
     def stop(self) :
-        self.provider.stop()
         self.startButton.setEnabled(True)
         self.stopButton.setEnabled(False)
+        self.formatButton.setEnabled(True)
         self.channelNameText.setEnabled(True)
         self.isStarted = False
+        self.provider.stop()
 
     def callback(self,arg):
         if self.isClosed : return
+        if not self.isStarted : return
         value = arg.get("exception")
         if value!=None :
             self.statusText.setText('provider exception '+ value)
