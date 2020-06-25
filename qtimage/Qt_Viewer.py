@@ -183,7 +183,6 @@ class Qt_Viewer(QWidget) :
             try :
                 data = value[0]['uint8']
                 image = np.reshape(data,(height,width))
-                color_table = [qRgb(i, i, i) for i in range(256)]
                 self.imageDisplay.display(\
                     image,Format=QImage.Format_Indexed8,colorTable=self.rgbTable)
             except Exception as error :
