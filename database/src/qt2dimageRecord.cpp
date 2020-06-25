@@ -108,6 +108,7 @@ void Qt2dimageRecord::createGrayscale8(int height,int width)
             int indx =  (xarr[ind]-xmin)*xinc;
             int indy =  (yarr[ind]-ymin)*yinc;
             int indpix = int(indy*width + indx);
+            if(indpix<0 || indpix>=int(num)) continue;
             value[indpix] = 0;
         }
     }
@@ -147,6 +148,7 @@ void Qt2dimageRecord::createBGR888(int height,int width)
             int indx =  (xarr[ind]-xmin)*xinc;
             int indy =  (yarr[ind]-ymin)*yinc;
             int indpix = int(indy*width*nz + indx*nz);
+            if(indpix<0 || indpix>=int(num)) continue;
             value[indpix] = 0;
         }
     }
@@ -187,6 +189,7 @@ void Qt2dimageRecord::createGrayscale16(int height,int width)
             int indx =  (xarr[ind]-xmin)*xinc;
             int indy =  (yarr[ind]-ymin)*yinc;
             int indpix = int(indy*width + indx);
+            if(indpix<0 || indpix>=int(num)) continue;
             value[indpix] = 0;
         }
     }
