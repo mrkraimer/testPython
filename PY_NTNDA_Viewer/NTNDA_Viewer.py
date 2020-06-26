@@ -377,28 +377,17 @@ class NTNDA_Viewer(QWidget) :
         if ndim!=2 and ndim!=3 :
             raise Exception('ndim not 2 or 3')
             return
-        dtype = data.dtype
-        if dtype==np.uint8 :
-            pass
-        elif dtype==np.int8 :
-            data = data.astype(np.uint8) 
-        elif dtype==np.uint16 :
-            if ndim==2 :
-                pass
-            else :
-                data = data.astype(np.uint8)
-        elif dtype==np.int16 :
-            if ndim==2 :
-                data = data.astype(np.uint16)
-            else :
-                data = data.astype(np.uint8)
-        else :
-            data=data.astype(np.uint8) 
         dataMin = int(np.min(data))
         dataMax = int(np.max(data))
         self.dataMinText.setText(str(dataMin))
         self.dataMaxText.setText(str(dataMax))
         QApplication.processEvents()
+        dtype = data.dtype
+        if dtype==np.uint8 :
+            pass
+        else :
+            data=data.astype(np.uint8)
+        
         if ndim ==2 :
             nx = dimArray[0]["size"]
             ny = dimArray[1]["size"]
