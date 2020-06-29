@@ -370,8 +370,6 @@ class NTNDA_Viewer(QWidget) :
         return data
 
     def dataToImage(self,data,dimArray) :
-        ny = 0
-        nx = 0
         nz = 1
         ndim = len(dimArray)
         if ndim!=2 and ndim!=3 :
@@ -383,12 +381,21 @@ class NTNDA_Viewer(QWidget) :
         self.dataMaxText.setText(str(dataMax))
         QApplication.processEvents()
         dtype = data.dtype
-        if dtype==np.uint8 :
-            pass
-        elif dtype==np.uint16 and ndim==2 :
-            pass
+        if dtype==np.uint8 or dtype==np.int8 :
+            if dataMax<200 or dtype==np.int8:
+                data = np.interp(data, (float(data.min()), float(data.max())), (0.0,255.0))
+                data=data.astype(np.uint8)
+        elif dtype==np.uint16 or dtype==np.int16:
+            if dataMax<50000 or dtype==np.int16:
+                data = np.interp(data, (0.0, float(data.max())), (0.0,65535.0))
+                data=data.astype(np.uint16)
         else :
-            data=data.astype(np.uint8)
+            if ndim == 3 :
+                data = np.interp(data, (float(data.min()), float(data.max())), (0.0,255.0))
+                data=data.astype(np.uint8)
+            else :
+                data = np.interp(data, (float(data.min()), float(data.max())), (0.0,65535.0))
+                data=data.astype(np.uint16)
         
         if ndim ==2 :
             nx = dimArray[0]["size"]
