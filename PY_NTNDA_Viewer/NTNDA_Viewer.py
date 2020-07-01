@@ -448,9 +448,10 @@ class NTNDA_Viewer(QWidget) :
         elif dtype==np.int8 :
             data = data.astype(np.uint8)
         elif dtype==np.uint16 :
-            pass
-        elif dtype==np.int16:
-            data = data.astype(np.uint16)
+            if ndim ==3 :
+                data=data.astype(np.uint8)
+            else :
+                pass
         else :
             if ndim == 3 :
                 data=data.astype(np.uint8)
