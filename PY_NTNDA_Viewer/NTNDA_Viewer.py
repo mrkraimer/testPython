@@ -12,8 +12,8 @@ author Marty Kraimer
 import sys,time,signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 import numpy as np
-from PyQt5.QtWidgets import QWidget,QLabel,QLineEdit,QSlider
-from PyQt5.QtWidgets import QPushButton,QHBoxLayout,QGridLayout
+from PyQt5.QtWidgets import QWidget,QLabel,QLineEdit
+from PyQt5.QtWidgets import QPushButton,QHBoxLayout,QGridLayout,QInputDialog
 from PyQt5.QtWidgets import QApplication
 
 from PyQt5.QtCore import *
@@ -27,7 +27,7 @@ import os
 import math
 
 def imageDictCreate() :
-    return {"image" : None , "dtype" : "" , "nx" : 0 , "ny" : 0 ,  "nz" : 0 }
+    return {"image" : None , "dtypeChannel" : None , "dtypeImage" : None  , "nx" : 0 , "ny" : 0 ,  "nz" : 0 }
 
 
 class FindLibrary(object) :
@@ -55,6 +55,9 @@ class NTNDA_Viewer(QWidget) :
         self.imageDict = imageDictCreate()
         self.imageDisplay = NumpyImage(windowTitle='image',flipy=False,maxsize=800)
         self.imageDisplay.setZoomCallback(self.zoomEvent)
+        self.setLimits = (0,0)
+        self.limitType = 0
+        self.limitTypeChoices = { "noScale" : 0, "autoScale" : 1, "manualScale" : 2}
 # first row
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0)
@@ -75,7 +78,6 @@ class NTNDA_Viewer(QWidget) :
         if len(self.provider.getChannelName())<1 :
             name = os.getenv('EPICS_NTNDA_VIEWER_CHANNELNAME')
             if name!= None : self.provider.setChannelName(name)
-           
         self.nImages = 0
         self.channelNameLabel = QLabel("channelName:")
         box.addWidget(self.channelNameLabel)
@@ -103,11 +105,6 @@ class NTNDA_Viewer(QWidget) :
         box.addWidget(nzLabel)
         self.nzText = QLabel('   ')
         box.addWidget(self.nzText)
-        self.dtype = None
-        dtypeLabel = QLabel('dtype: ')
-        box.addWidget(dtypeLabel)
-        self.dtypeText = QLabel('      ')
-        box.addWidget(self.dtypeText)
         self.compressRatio = round(1.0)
         compressRatioLabel = QLabel('compressRatio:')
         box.addWidget(compressRatioLabel)
@@ -132,6 +129,14 @@ class NTNDA_Viewer(QWidget) :
 # third row
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0)
+        dtypeChannelLabel = QLabel('dtypeChannel: ')
+        box.addWidget(dtypeChannelLabel)
+        self.dtypeChannelText = QLabel('      ')
+        box.addWidget(self.dtypeChannelText)
+        dtypeImageLabel = QLabel('dtypeImage: ')
+        box.addWidget(dtypeImageLabel)
+        self.dtypeImageText = QLabel('      ')
+        box.addWidget(self.dtypeImageText)
         zoomLabel = QLabel('zoom ')
         box.addWidget(zoomLabel)
         self.resetButton = QPushButton('reset')
@@ -149,16 +154,43 @@ class NTNDA_Viewer(QWidget) :
 #fourth row
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0)
-        dataMinLabel = QLabel('dataMin: ')
-        box.addWidget(dataMinLabel)
-        self.dataMinText = QLabel('          ')
-        self.dataMinText.setFixedWidth(100)
-        box.addWidget(self.dataMinText)
-        dataMaxLabel = QLabel('dataMax: ')
-        box.addWidget(dataMaxLabel)
-        self.dataMaxText = QLabel('          ')
-        self.dataMaxText.setFixedWidth(100)
-        box.addWidget(self.dataMaxText)
+        
+        self.limitTypeButton = QPushButton('setLimitType')
+        self.limitTypeButton.setEnabled(True)
+        self.limitTypeButton.clicked.connect(self.limitTypeEvent)
+        box.addWidget(self.limitTypeButton)
+        limitTypeLabel = QLabel("limitType:")
+        box.addWidget(limitTypeLabel)
+        self.limitTypeText = QLabel()
+        self.limitTypeText.setFixedWidth(120)
+        box.addWidget(self.limitTypeText)
+        
+        channelLimitsLabel = QLabel('channelLimits: ')
+        box.addWidget(channelLimitsLabel)
+        self.channelLimitsText = QLabel()
+        self.channelLimitsText.setFixedWidth(150)
+        box.addWidget(self.channelLimitsText)
+                
+        imageLimitsLabel = QLabel('imageLimits: ')
+        box.addWidget(imageLimitsLabel)
+        self.imageLimitsText = QLabel()
+        self.imageLimitsText.setFixedWidth(100)
+        box.addWidget(self.imageLimitsText)
+                
+        maxImageLimitsLabel = QLabel('maxImageLimits: ')
+        box.addWidget(maxImageLimitsLabel)
+        self.maxImageLimitsText = QLabel()
+        self.maxImageLimitsText.setFixedWidth(100)
+        box.addWidget(self.maxImageLimitsText)
+        
+        self.setLimitsLabel = QLabel("setLimits:")
+        box.addWidget(self.setLimitsLabel)
+        self.setLimitsText = QLineEdit()
+        self.setLimitsText.setFixedWidth(150)
+        self.setLimitsText.setEnabled(True)
+        self.setLimitsText.setText(str(self.setLimits))
+        self.setLimitsText.editingFinished.connect(self.setLimitsEvent)
+        box.addWidget(self.setLimitsText)
         wid =  QWidget()
         wid.setLayout(box)
         self.fourthRow = wid
@@ -185,20 +217,19 @@ class NTNDA_Viewer(QWidget) :
     def zoomEvent(self,zoomData) :
         self.zoomText.setText(str(zoomData))
         self.display()
-
-    def newImage(self,imageDict):
-        if self.isClosed : return
-        self.imageDict["image"] = imageDict["image"]
-        self.imageDict["nx"] = imageDict["nx"]
-        self.imageDict["ny"] = imageDict["ny"]
-        self.imageDict["nz"] = imageDict["nz"]
-        if not str(imageDict["dtype"])==str(self.imageDict["dtype"]) :
-            self.imageDict["dtype"] = imageDict["dtype"]
-            dtype = self.imageDict["dtype"]
-            
+        
+    def limitTypeEvent(self) :  
+        item, okPressed = QInputDialog.getItem(self, "Get item  ","limitType:  ", self.limitTypeChoices, 0, False)
+        if okPressed and item:
+            self.limitType = self.limitTypeChoices[item]
+            self.limitTypeText.setText(item)
+            self.display()
+             
     def display(self) :
         if self.isClosed : return
         try :
+            if self.limitType>0 :
+                self.scaleLimits()
             self.imageDisplay.display(self.imageDict["image"])
         except Exception as error:
             self.statusText.setText(str(error))    
@@ -225,6 +256,45 @@ class NTNDA_Viewer(QWidget) :
         except Exception as error:
             self.statusText.setText(str(error))
 
+    def setLimitsEvent(self) :
+        try:
+            text = self.setLimitsText.text()
+            limits = text.split(',')
+            if len(limits)!=2 :
+                raise Exception('setLimitsEvent not int,int')
+            low = limits[0]
+            if low[0]=='(' : low = low[1:]
+            high = limits[1]
+            if high.endswith(')') : high = high[:(len(high)-1)]
+            self.setLimits = (int(low),int(high))
+            self.display()
+        except Exception as error:
+            self.statusText.setText(str(error))
+            
+    def scaleLimits(self) :
+        image = self.imageDict["image"]
+        dtype = image.dtype
+        if self.limitType== 0 :
+            return
+        elif self.limitType== 1 :
+            limitsText = self.imageLimitsText.text()
+        else :
+            limitsText = self.setLimitsText.text()
+        limitsText = limitsText[1:]
+        ind = limitsText.find(',')
+        start = limitsText[0:ind]
+        end = limitsText[ind+1:]
+        ind = end.find(')')
+        end = end[0:ind]
+        xp = (float(start),float(end))
+        if dtype==np.uint8 :
+            fp = (0.0,255.0)
+        else :
+            fp = (0.0,65535)
+        image = np.interp(image,xp,fp)
+        image = image.astype(dtype)
+        self.imageDict["image"] = image
+         
     def start(self) :
         self.isStarted = True
         self.provider.start()
@@ -241,7 +311,6 @@ class NTNDA_Viewer(QWidget) :
         self.channelNameLabel.setStyleSheet("background-color:gray")
         self.channelNameText.setEnabled(True)
         self.channel = None
-        
 
     def callback(self,arg):
         if self.isClosed : return
@@ -288,13 +357,10 @@ class NTNDA_Viewer(QWidget) :
             if ratio!=self.compressRatio :
                 self.compressRatio = ratio
                 self.compressRatioText.setText(str(self.compressRatio))
-            self.imageDict["dtype"] = data.dtype
-            self.dtypeText.setText(str(self.imageDict["dtype"]))
         try:
             if codecNameLength != 0 : 
                 data = self.decompress(data,codec,compressed,uncompressed)
             self.dataToImage(data,dimArray)
-            self.newImage(self.imageDict)
             self.display()
         except Exception as error:
             self.statusText.setText(str(error))
@@ -331,8 +397,6 @@ class NTNDA_Viewer(QWidget) :
             lib = self.findLibrary.find('bitshuffle')
         else : lib = None
         if lib==None : raise Exception('shared library ' +codecName + ' not found')
-        self.imageDict["dtype"] = dtype
-        self.dtypeText.setText(str(self.imageDict["dtype"]))
         inarray = bytearray(data)
         in_char_array = ctypes.c_ubyte * compressed
         out_char_array = ctypes.c_ubyte * uncompressed
@@ -368,7 +432,7 @@ class NTNDA_Viewer(QWidget) :
             self.compressRatio = ratio
             self.compressRatioText.setText(str(self.compressRatio))
         return data
-
+        
     def dataToImage(self,data,dimArray) :
         nz = 1
         ndim = len(dimArray)
@@ -377,26 +441,26 @@ class NTNDA_Viewer(QWidget) :
             return
         dataMin = int(np.min(data))
         dataMax = int(np.max(data))
-        self.dataMinText.setText(str(dataMin))
-        self.dataMaxText.setText(str(dataMax))
-        QApplication.processEvents()
+        self.channelLimitsText.setText(str((dataMin,dataMax)))
         dtype = data.dtype
-        if dtype==np.uint8 or dtype==np.int8 :
-            if dataMax<200 or dtype==np.int8:
-                data = np.interp(data, (float(data.min()), float(data.max())), (0.0,255.0))
-                data=data.astype(np.uint8)
-        elif dtype==np.uint16 or dtype==np.int16:
-            if dataMax<50000 or dtype==np.int16:
-                data = np.interp(data, (0.0, float(data.max())), (0.0,65535.0))
-                data=data.astype(np.uint16)
+        if dtype==np.uint8: 
+            pass
+        elif dtype==np.int8 :
+            data = data.astype(np.uint8)
+        elif dtype==np.uint16 :
+            pass
+        elif dtype==np.int16:
+            data = data.astype(np.uint16)
         else :
             if ndim == 3 :
-                data = np.interp(data, (float(data.min()), float(data.max())), (0.0,255.0))
                 data=data.astype(np.uint8)
             else :
-                data = np.interp(data, (float(data.min()), float(data.max())), (0.0,65535.0))
                 data=data.astype(np.uint16)
-        
+        if data.dtype==np.uint8 :
+            self.maxImageLimitsText.setText(str((0,255)))
+        else :
+            self.maxImageLimitsText.setText(str((0,65535)))
+        self.imageLimitsText.setText(str((int(np.min(data)),int(np.max(data)))))       
         if ndim ==2 :
             nx = dimArray[0]["size"]
             ny = dimArray[1]["size"]
@@ -425,10 +489,18 @@ class NTNDA_Viewer(QWidget) :
                 return
         else :
                 raise Exception('ndim not 2 or 3')
-                
-        if dtype!=self.imageDict["dtype"] :
-            self.imageDict["dtype"] = dtype
-            self.dtypeText.setText(str(self.imageDict["dtype"]))
+        
+        if dtype!=self.imageDict["dtypeChannel"] :
+            self.imageDict["dtypeChannel"] = dtype
+            self.dtypeChannelText.setText(str(self.imageDict["dtypeChannel"]))
+        if image.dtype!=self.imageDict["dtypeImage"] :
+            self.imageDict["dtypeImage"] = image.dtype
+            self.dtypeImageText.setText(str(self.imageDict["dtypeImage"]))
+            if image.dtype==np.uint8 :
+                self.setLimits = (0,255)
+            else :
+                self.setLimits = (0,65535)
+            self.setLimitsText.setText(str(self.setLimits))    
         if nx!=self.imageDict["nx"] :
             self.imageDict["nx"] = nx
             self.nxText.setText(str(self.imageDict["nx"]))
@@ -439,4 +511,5 @@ class NTNDA_Viewer(QWidget) :
             self.imageDict["nz"] = nz
             self.nzText.setText(str(self.imageDict["nz"]))
         self.imageDict["image"] = image
+        QApplication.processEvents()
 
