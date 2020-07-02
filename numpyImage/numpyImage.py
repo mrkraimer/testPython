@@ -158,7 +158,7 @@ class NumpyImageZoom() :
     
         
 class NumpyImage(QWidget) :
-    def __init__(self,windowTitle='no title',flipy= True,maxsize=800):
+    def __init__(self,windowTitle='no title',flipy= False,maxsize=800):
         super(QWidget, self).__init__()
         self.setWindowTitle(windowTitle)
         self.maxsize = int(maxsize)
@@ -178,7 +178,8 @@ class NumpyImage(QWidget) :
         self.image = None
         self.ny = 0
         self.nx = 0
-        self.firstDisplay = True
+        self.xoffset = 10
+        self.yoffset = 300
         
     def setZoomCallback(self,clientCallback,clientZoom=False) :
         self.clientZoomCallback = clientCallback
@@ -232,7 +233,7 @@ class NumpyImage(QWidget) :
         if self.ny!=ny or self.nx!=nx :
             self.ny = ny
             self.nx = nx     
-        self.setGeometry(QRect(10, 300,self.nx,self.ny))
+        self.setGeometry(QRect(self.xoffset, self.yoffset,self.nx,self.ny))
         self.Format = Format
         self.colorTable = colorTable
         self.update()
@@ -240,19 +241,12 @@ class NumpyImage(QWidget) :
             self.isHidden = False
             self.show()
         QApplication.processEvents()
-        '''
-        if self.firstDisplay :
-            self.firstDisplay = False
-        else :
-            result = self.imageDoneEvent.wait(2.0)
-            if not result : raise Exception('display timeout')
-            else :
-                if len(self.thread.error)>0 :
-                    raise Exception('error '+ self.thread.error)
-        '''            
-
+        
     def closeEvent(self,event) :
         if not self.okToClose :
+            point = self.geometry().topLeft()
+            self.xoffset = point.x()
+            self.yoffset = point.y()
             self.hide()
             self.isHidden = True
             return

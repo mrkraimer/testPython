@@ -18,7 +18,7 @@ class Dynamic_Viewer(QWidget) :
         self.isClosed = False
         self.provider = data_Provider
         self.setWindowTitle(providerName +"_Data_Viewer")
-        self.imageDisplay = NumpyImage(windowTitle='2d plot')
+        self.imageDisplay = NumpyImage(windowTitle='2d plot',flipy= True)
 # first row
         self.startButton = QPushButton('start')
         self.startButton.setEnabled(True)
