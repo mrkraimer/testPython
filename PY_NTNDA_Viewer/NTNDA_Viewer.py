@@ -132,8 +132,6 @@ class Limits(QWidget) :
         rect = self.geometry()
         self.width = rect.width()
         self.height = rect.height()
-        self.closeEvent(None)
-        self.noScaleButton.click()
         
     def start(self) :
         self.isStarted = True 
@@ -206,6 +204,7 @@ class Limits(QWidget) :
 class NTNDA_Viewer(QWidget) :
     def __init__(self,ntnda_Channel_Provider,providerName, parent=None):
         super(QWidget, self).__init__(parent)
+        self.limits= Limits(self)
         self.isClosed = False
         self.provider = ntnda_Channel_Provider
         self.provider.NTNDA_Viewer = self
@@ -213,7 +212,7 @@ class NTNDA_Viewer(QWidget) :
         self.imageDict = imageDictCreate()
         self.imageDisplay = NumpyImage(windowTitle='image',flipy=False,maxsize=800)
         self.imageDisplay.setZoomCallback(self.zoomEvent)
-        self.limits= Limits(self)
+        
 # first row
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0)
