@@ -14,6 +14,7 @@ signal.signal(signal.SIGINT, signal.SIG_DFL)
 import numpy as np
 from PyQt5.QtWidgets import QWidget,QLabel,QLineEdit
 from PyQt5.QtWidgets import QPushButton,QHBoxLayout,QGridLayout,QInputDialog
+from PyQt5.QtWidgets import QRadioButton
 from PyQt5.QtWidgets import QApplication
 
 from PyQt5.QtCore import *
@@ -44,7 +45,164 @@ class FindLibrary(object) :
             lib = ctypes.cdll.LoadLibrary(result)
         if lib!=None : self.save.update({name : lib})
         return lib
+          
+class Limits(QWidget) :
+    def __init__(self,viewer, parent=None):
+        super(QWidget, self).__init__(parent)
+        self.viewer = viewer
+        self.setWindowTitle("limits")
+        self.okToClose = False
+        self.isClosed = False
+        self.setLimits = (0,0)
+        self.limitType = 0
+        self.limitTypeChoices = { "noScale" : 0, "autoScale" : 1, "manualScale" : 2}
+        self.xoffset = 300
+        self.yoffset = 300
+        self.isStarted = False
 
+#first row
+        box = QHBoxLayout()
+        box.setContentsMargins(0,0,0,0)
+        self.noScaleButton = QRadioButton('noScale')
+        self.noScaleButton.toggled.connect(self.noScaleEvent)
+        self.autoScaleButton = QRadioButton('autoScale')
+        self.autoScaleButton.toggled.connect(self.autoScaleEvent)
+        self.manualScaleButton = QRadioButton('manualScale')
+        self.manualScaleButton.toggled.connect(self.manualScaleEvent)
+        box.addWidget(self.noScaleButton)
+        box.addWidget(self.autoScaleButton)
+        box.addWidget(self.manualScaleButton)
+        wid =  QWidget()
+        wid.setLayout(box)
+        self.firstRow = wid
+        
+#second row
+        box = QHBoxLayout()
+        box.setContentsMargins(0,0,0,0)
+        minLimitLabel = QLabel("manualMinimum:")
+        box.addWidget(minLimitLabel)
+        self.minLimitText = QLineEdit()
+        self.minLimitText.setFixedWidth(150)
+        self.minLimitText.setEnabled(True)
+        self.minLimitText.setText(str(self.setLimits[0]))
+        self.minLimitText.editingFinished.connect(self.minLimitEvent)
+        box.addWidget(self.minLimitText)
+        maxLimitLabel = QLabel("manualMinimum:")
+        box.addWidget(maxLimitLabel)
+        self.maxLimitText = QLineEdit()
+        self.maxLimitText.setFixedWidth(150)
+        self.maxLimitText.setEnabled(True)
+        self.maxLimitText.setText(str(self.setLimits[1]))
+        self.maxLimitText.editingFinished.connect(self.maxLimitEvent)
+        box.addWidget(self.maxLimitText)
+        wid =  QWidget()
+        wid.setLayout(box)
+        self.secondRow = wid
+#third row
+        box = QHBoxLayout()
+        box.setContentsMargins(0,0,0,0)
+        channelLimitsLabel = QLabel('channelLimits: ')
+        box.addWidget(channelLimitsLabel)
+        self.channelLimitsText = QLabel()
+        self.channelLimitsText.setFixedWidth(150)
+        box.addWidget(self.channelLimitsText)
+                
+        imageLimitsLabel = QLabel('imageLimits: ')
+        box.addWidget(imageLimitsLabel)
+        self.imageLimitsText = QLabel()
+        self.imageLimitsText.setFixedWidth(100)
+        box.addWidget(self.imageLimitsText)
+                
+        maxImageLimitsLabel = QLabel('maxImageLimits: ')
+        box.addWidget(maxImageLimitsLabel)
+        self.maxImageLimitsText = QLabel()
+        self.maxImageLimitsText.setFixedWidth(100)
+        box.addWidget(self.maxImageLimitsText)
+        wid =  QWidget()
+        wid.setLayout(box)
+        self.thirdRow = wid
+# initialize
+        layout = QGridLayout()
+        layout.setVerticalSpacing(0);
+        layout.addWidget(self.firstRow,0,0,alignment=Qt.AlignLeft)
+        layout.addWidget(self.secondRow,1,0,alignment=Qt.AlignLeft)
+        layout.addWidget(self.thirdRow,2,0,alignment=Qt.AlignLeft)
+        self.setLayout(layout)
+        self.show()
+        rect = self.geometry()
+        self.width = rect.width()
+        self.height = rect.height()
+        self.closeEvent(None)
+        self.noScaleButton.click()
+        
+    def start(self) :
+        self.isStarted = True 
+        self.setGeometry(QRect(self.xoffset,self.yoffset, self.width,self.height))
+        self.show()
+        
+    def noScaleEvent(self) :  
+        self.limitType = 0
+        self.viewer.display()
+         
+    def autoScaleEvent(self) :  
+        self.limitType = 1
+        self.viewer.display()
+         
+    def manualScaleEvent(self) :  
+        self.limitType = 2
+        self.viewer.display()
+
+    def closeEvent(self, event) :
+        self.isStarted = False
+        if not self.okToClose :
+            point = self.geometry().topLeft()
+            self.xoffset = point.x()
+            self.yoffset = point.y()
+            self.hide()
+            self.isHidden = True
+            return
+        self.isClosed = True
+
+    def minLimitEvent(self) :
+        try:
+            self.setLimits[0]  = int(self.minLimitText.text())
+            self.viewer.display()
+        except Exception as error:
+            self.viewer.statusText.setText(str(error))
+
+    def maxLimitEvent(self) :
+        try:
+            self.setLimits[1]  = int(self.maxLimitText.text())
+            self.viewer.display()
+        except Exception as error:
+            self.viewer.statusText.setText(str(error))
+            
+    def scaleLimits(self) :
+        image = self.viewer.imageDict["image"]
+        dtype = image.dtype
+        if self.limitType== 0 :
+            return
+        elif self.limitType== 1 :
+            limitsText = self.imageLimitsText.text()
+            limitsText = limitsText[1:]
+            ind = limitsText.find(',')
+            start = limitsText[0:ind]
+            end = limitsText[ind+1:]
+            ind = end.find(')')
+            end = end[0:ind]
+        else :
+            start = self.minLimitText.text()
+            end = self.maxLimitText.text()
+        xp = (float(start),float(end))
+        if dtype==np.uint8 :
+            fp = (0.0,255.0)
+        else :
+            fp = (0.0,65535)
+        image = np.interp(image,xp,fp)
+        image = image.astype(dtype)
+        self.viewer.imageDict["image"] = image
+        QApplication.processEvents()
+        
 class NTNDA_Viewer(QWidget) :
     def __init__(self,ntnda_Channel_Provider,providerName, parent=None):
         super(QWidget, self).__init__(parent)
@@ -55,9 +213,7 @@ class NTNDA_Viewer(QWidget) :
         self.imageDict = imageDictCreate()
         self.imageDisplay = NumpyImage(windowTitle='image',flipy=False,maxsize=800)
         self.imageDisplay.setZoomCallback(self.zoomEvent)
-        self.setLimits = (0,0)
-        self.limitType = 0
-        self.limitTypeChoices = { "noScale" : 0, "autoScale" : 1, "manualScale" : 2}
+        self.limits= Limits(self)
 # first row
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0)
@@ -70,6 +226,10 @@ class NTNDA_Viewer(QWidget) :
         self.stopButton.setEnabled(False)
         self.stopButton.clicked.connect(self.stopEvent)
         box.addWidget(self.stopButton)
+        self.scaleButton = QPushButton('scale')
+        self.scaleButton.setEnabled(True)
+        self.scaleButton.clicked.connect(self.scaleEvent)
+        box.addWidget(self.scaleButton)
         imageRateLabel = QLabel("imageRate:")
         box.addWidget(imageRateLabel)
         self.imageRateText = QLabel()
@@ -151,56 +311,13 @@ class NTNDA_Viewer(QWidget) :
         wid =  QWidget()
         wid.setLayout(box)
         self.thirdRow = wid
-#fourth row
-        box = QHBoxLayout()
-        box.setContentsMargins(0,0,0,0)
-        
-        self.limitTypeButton = QPushButton('setLimitType')
-        self.limitTypeButton.setEnabled(True)
-        self.limitTypeButton.clicked.connect(self.limitTypeEvent)
-        box.addWidget(self.limitTypeButton)
-        limitTypeLabel = QLabel("limitType:")
-        box.addWidget(limitTypeLabel)
-        self.limitTypeText = QLabel()
-        self.limitTypeText.setFixedWidth(120)
-        box.addWidget(self.limitTypeText)
-        
-        channelLimitsLabel = QLabel('channelLimits: ')
-        box.addWidget(channelLimitsLabel)
-        self.channelLimitsText = QLabel()
-        self.channelLimitsText.setFixedWidth(150)
-        box.addWidget(self.channelLimitsText)
-                
-        imageLimitsLabel = QLabel('imageLimits: ')
-        box.addWidget(imageLimitsLabel)
-        self.imageLimitsText = QLabel()
-        self.imageLimitsText.setFixedWidth(100)
-        box.addWidget(self.imageLimitsText)
-                
-        maxImageLimitsLabel = QLabel('maxImageLimits: ')
-        box.addWidget(maxImageLimitsLabel)
-        self.maxImageLimitsText = QLabel()
-        self.maxImageLimitsText.setFixedWidth(100)
-        box.addWidget(self.maxImageLimitsText)
-        
-        self.setLimitsLabel = QLabel("setLimits:")
-        box.addWidget(self.setLimitsLabel)
-        self.setLimitsText = QLineEdit()
-        self.setLimitsText.setFixedWidth(150)
-        self.setLimitsText.setEnabled(True)
-        self.setLimitsText.setText(str(self.setLimits))
-        self.setLimitsText.editingFinished.connect(self.setLimitsEvent)
-        box.addWidget(self.setLimitsText)
-        wid =  QWidget()
-        wid.setLayout(box)
-        self.fourthRow = wid
+
 # initialize
         layout = QGridLayout()
         layout.setVerticalSpacing(0);
         layout.addWidget(self.firstRow,0,0,alignment=Qt.AlignLeft)
         layout.addWidget(self.secondRow,1,0,alignment=Qt.AlignLeft)
         layout.addWidget(self.thirdRow,2,0,alignment=Qt.AlignLeft)
-        layout.addWidget(self.fourthRow,3,0,alignment=Qt.AlignLeft)
         self.setLayout(layout)
         self.findLibrary = FindLibrary()
         self.subscription = None
@@ -217,19 +334,12 @@ class NTNDA_Viewer(QWidget) :
     def zoomEvent(self,zoomData) :
         self.zoomText.setText(str(zoomData))
         self.display()
-        
-    def limitTypeEvent(self) :  
-        item, okPressed = QInputDialog.getItem(self, "Get item  ","limitType:  ", self.limitTypeChoices, 0, False)
-        if okPressed and item:
-            self.limitType = self.limitTypeChoices[item]
-            self.limitTypeText.setText(item)
-            self.display()
-             
+                 
     def display(self) :
         if self.isClosed : return
         try :
-            if self.limitType>0 :
-                self.scaleLimits()
+            if self.limits.limitType>0 :
+                self.limits.scaleLimits()
             self.imageDisplay.display(self.imageDict["image"])
         except Exception as error:
             self.statusText.setText(str(error))    
@@ -239,12 +349,17 @@ class NTNDA_Viewer(QWidget) :
         self.isClosed = True
         self.imageDisplay.okToClose = True
         self.imageDisplay.close()
-
+        self.limits.okToClose = True
+        self.limits.close()
+        
     def startEvent(self) :
         self.start()
 
     def stopEvent(self) :
         self.stop()
+        
+    def scaleEvent(self) :
+        if not self.limits.isStarted : self.limits.start()
 
     def clearEvent(self) :
         self.statusText.setText('')
@@ -255,45 +370,6 @@ class NTNDA_Viewer(QWidget) :
             self.provider.setChannelName(self.channelNameText.text())
         except Exception as error:
             self.statusText.setText(str(error))
-
-    def setLimitsEvent(self) :
-        try:
-            text = self.setLimitsText.text()
-            limits = text.split(',')
-            if len(limits)!=2 :
-                raise Exception('setLimitsEvent not int,int')
-            low = limits[0]
-            if low[0]=='(' : low = low[1:]
-            high = limits[1]
-            if high.endswith(')') : high = high[:(len(high)-1)]
-            self.setLimits = (int(low),int(high))
-            self.display()
-        except Exception as error:
-            self.statusText.setText(str(error))
-            
-    def scaleLimits(self) :
-        image = self.imageDict["image"]
-        dtype = image.dtype
-        if self.limitType== 0 :
-            return
-        elif self.limitType== 1 :
-            limitsText = self.imageLimitsText.text()
-        else :
-            limitsText = self.setLimitsText.text()
-        limitsText = limitsText[1:]
-        ind = limitsText.find(',')
-        start = limitsText[0:ind]
-        end = limitsText[ind+1:]
-        ind = end.find(')')
-        end = end[0:ind]
-        xp = (float(start),float(end))
-        if dtype==np.uint8 :
-            fp = (0.0,255.0)
-        else :
-            fp = (0.0,65535)
-        image = np.interp(image,xp,fp)
-        image = image.astype(dtype)
-        self.imageDict["image"] = image
          
     def start(self) :
         self.isStarted = True
@@ -441,7 +517,8 @@ class NTNDA_Viewer(QWidget) :
             return
         dataMin = int(np.min(data))
         dataMax = int(np.max(data))
-        self.channelLimitsText.setText(str((dataMin,dataMax)))
+        if self.limits.isStarted :
+            self.limits.channelLimitsText.setText(str((dataMin,dataMax)))
         dtype = data.dtype
         if dtype==np.uint8: 
             pass
@@ -457,11 +534,12 @@ class NTNDA_Viewer(QWidget) :
                 data=data.astype(np.uint8)
             else :
                 data=data.astype(np.uint16)
-        if data.dtype==np.uint8 :
-            self.maxImageLimitsText.setText(str((0,255)))
-        else :
-            self.maxImageLimitsText.setText(str((0,65535)))
-        self.imageLimitsText.setText(str((int(np.min(data)),int(np.max(data)))))       
+        if data.dtype==np.uint8 and self.limits.isStarted :
+            self.limits.maxImageLimitsText.setText(str((0,255)))
+        elif self.limits.isStarted :
+            self.limits.maxImageLimitsText.setText(str((0,65535)))
+        if self.limits.isStarted :
+            self.limits.imageLimitsText.setText(str((int(np.min(data)),int(np.max(data)))))       
         if ndim ==2 :
             nx = dimArray[0]["size"]
             ny = dimArray[1]["size"]
@@ -498,10 +576,11 @@ class NTNDA_Viewer(QWidget) :
             self.imageDict["dtypeImage"] = image.dtype
             self.dtypeImageText.setText(str(self.imageDict["dtypeImage"]))
             if image.dtype==np.uint8 :
-                self.setLimits = (0,255)
+                self.limits.setLimits = (0,255)
             else :
-                self.setLimits = (0,65535)
-            self.setLimitsText.setText(str(self.setLimits))    
+                self.limits.setLimits = (0,65535)
+            self.limits.minLimitText.setText(str(self.limits.setLimits[0]))
+            self.limits.maxLimitText.setText(str(self.limits.setLimits[1]))
         if nx!=self.imageDict["nx"] :
             self.imageDict["nx"] = nx
             self.nxText.setText(str(self.imageDict["nx"]))
