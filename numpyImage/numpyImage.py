@@ -171,6 +171,8 @@ class NumpyImage(QWidget) :
         self.mousePressPosition = QPoint(0,0)
         self.mouseReleasePosition = QPoint(0,0)
         self.clientZoomCallback = None
+        self.clientMousePressCallback = None
+        self.clientMouseReleaseCallback = None
         self.mousePressed = False
         self.okToClose = False
         self.isHidden = True
@@ -185,6 +187,13 @@ class NumpyImage(QWidget) :
         self.clientZoomCallback = clientCallback
         if not clientZoom :
             self.imageZoom  = NumpyImageZoom()
+            
+    def setMousePressCallback(self,clientCallback) :
+        self.clientMousePressCallback = clientCallback
+            
+    def setMouseReleaseCallback(self,clientCallback) :
+        self.clientMouseReleaseCallback = clientCallback           
+        
         
     def resetZoom(self) :
         self.imageZoom.reset()
@@ -251,8 +260,16 @@ class NumpyImage(QWidget) :
             self.isHidden = True
             return
         self.isClosed = True
+        
+#    def nativeEvent(self,union,extra) :
+#        print('nativeEvent')
+#        print('union=',union)
+#        print('extra=',extra)
+#        return (False,0)  
 
     def mousePressEvent(self,event) :
+        if self.clientMousePressCallback!=None :
+            self.clientMousePressCallback()
         if self.clientZoomCallback==None : return
         self.mousePressed = True
         self.mousePressPosition = QPoint(event.pos())
@@ -264,6 +281,8 @@ class NumpyImage(QWidget) :
         self.rubberBand.setGeometry(QRect(self.mousePressPosition,event.pos()).normalized())
 
     def mouseReleaseEvent(self,event) :
+        if self.clientMouseReleaseCallback!=None :
+            self.clientMouseReleaseCallback()
         if not self.mousePressed : return
         self.mouseReleasePosition = QPoint(event.pos())
         self.rubberBand.hide()

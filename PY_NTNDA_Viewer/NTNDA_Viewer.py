@@ -53,13 +53,12 @@ class Limits(QWidget) :
         self.setWindowTitle("limits")
         self.okToClose = False
         self.isClosed = False
-        self.setLimits = (0,0)
         self.limitType = 0
         self.limitTypeChoices = { "noScale" : 0, "autoScale" : 1, "manualScale" : 2}
         self.xoffset = 300
         self.yoffset = 300
         self.isStarted = False
-
+        self.firstStart = True
 #first row
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0)
@@ -84,16 +83,16 @@ class Limits(QWidget) :
         self.minLimitText = QLineEdit()
         self.minLimitText.setFixedWidth(150)
         self.minLimitText.setEnabled(True)
-        self.minLimitText.setText(str(self.setLimits[0]))
-        self.minLimitText.editingFinished.connect(self.minLimitEvent)
+        self.minLimitText.setText('0')
+        self.minLimitText.returnPressed.connect(self.minLimitEvent)
         box.addWidget(self.minLimitText)
-        maxLimitLabel = QLabel("manualMinimum:")
+        maxLimitLabel = QLabel("manualMaximum:")
         box.addWidget(maxLimitLabel)
         self.maxLimitText = QLineEdit()
         self.maxLimitText.setFixedWidth(150)
         self.maxLimitText.setEnabled(True)
-        self.maxLimitText.setText(str(self.setLimits[1]))
-        self.maxLimitText.editingFinished.connect(self.maxLimitEvent)
+        self.maxLimitText.setText('255')
+        self.maxLimitText.returnPressed.connect(self.maxLimitEvent)
         box.addWidget(self.maxLimitText)
         wid =  QWidget()
         wid.setLayout(box)
@@ -128,15 +127,19 @@ class Limits(QWidget) :
         layout.addWidget(self.secondRow,1,0,alignment=Qt.AlignLeft)
         layout.addWidget(self.thirdRow,2,0,alignment=Qt.AlignLeft)
         self.setLayout(layout)
-        self.show()
-        rect = self.geometry()
-        self.width = rect.width()
-        self.height = rect.height()
+        
         
     def start(self) :
         self.isStarted = True 
-        self.setGeometry(QRect(self.xoffset,self.yoffset, self.width,self.height))
-        self.show()
+        if self.firstStart :
+            self.show()
+            rect = self.geometry()
+            self.width = rect.width()
+            self.height = rect.height()
+            self.firstStart = False
+        else :
+            self.setGeometry(QRect(self.xoffset,self.yoffset, self.width,self.height))
+            self.show()
         
     def noScaleEvent(self) :  
         self.limitType = 0
@@ -163,14 +166,12 @@ class Limits(QWidget) :
 
     def minLimitEvent(self) :
         try:
-            self.setLimits[0]  = int(self.minLimitText.text())
             self.viewer.display()
         except Exception as error:
             self.viewer.statusText.setText(str(error))
 
     def maxLimitEvent(self) :
         try:
-            self.setLimits[1]  = int(self.maxLimitText.text())
             self.viewer.display()
         except Exception as error:
             self.viewer.statusText.setText(str(error))
@@ -212,6 +213,8 @@ class NTNDA_Viewer(QWidget) :
         self.imageDict = imageDictCreate()
         self.imageDisplay = NumpyImage(windowTitle='image',flipy=False,maxsize=800)
         self.imageDisplay.setZoomCallback(self.zoomEvent)
+        self.imageDisplay.setMousePressCallback(self.mousePressEvent)
+        self.imageDisplay.setMouseReleaseCallback(self.mouseReleaseEvent)
         
 # first row
         box = QHBoxLayout()
@@ -333,6 +336,12 @@ class NTNDA_Viewer(QWidget) :
     def zoomEvent(self,zoomData) :
         self.zoomText.setText(str(zoomData))
         self.display()
+
+    def mousePressEvent(self) :
+        if self.isStarted : self.provider.stop()
+
+    def mouseReleaseEvent(self) :
+        if self.isStarted : self.provider.start()
                  
     def display(self) :
         if self.isClosed : return
@@ -575,11 +584,11 @@ class NTNDA_Viewer(QWidget) :
             self.imageDict["dtypeImage"] = image.dtype
             self.dtypeImageText.setText(str(self.imageDict["dtypeImage"]))
             if image.dtype==np.uint8 :
-                self.limits.setLimits = (0,255)
+                self.limits.minLimitText.setText('0')
+                self.limits.maxLimitText.setText('255')
             else :
-                self.limits.setLimits = (0,65535)
-            self.limits.minLimitText.setText(str(self.limits.setLimits[0]))
-            self.limits.maxLimitText.setText(str(self.limits.setLimits[1]))
+                self.limits.minLimitText.setText('0')
+                self.limits.maxLimitText.setText('65535')
         if nx!=self.imageDict["nx"] :
             self.imageDict["nx"] = nx
             self.nxText.setText(str(self.imageDict["nx"]))
