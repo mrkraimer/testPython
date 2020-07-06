@@ -2,7 +2,7 @@
 
 ## limits should not be a separate window
 
-I will do this next.
+This is now done.
 
 ## move image window
 
@@ -15,13 +15,12 @@ Not fixed.
 Mark says:
 After moving image window, as soon as I restart in the viewer or medm the window goes back to its original position.
 
-I do not see this.
-If medm is stopped, image is moved and closed, medm stated, then image appears where it was moved.
+I also seen this.
 
-MARK?
-
-Please try again.
-I have made some other changes so this may be fixed.
+It appears that the only way to make it work is to:
+1) have either the viewer of medm stopped
+2) move the image window
+3) close the image window via the close button on the image title bar.
 
 
 ## zoom image window
@@ -32,19 +31,7 @@ So zoom should work even if images are being generated.
 Mark reports:
 The problem is that the second zoom is not correct.  If I am displaying a single peak and I zoom in on it it seems to work OK.  But if I try to zoom in more on that peak I am no longer seeing the peak at all.  It looks like the part of the image actually being displayed is wrong.  I suspect the transformation from coordinates in the image display to original pixel coordinates is wrong.
 
-MARK?
-
-Are you selecting a very small subwindow?
-Note that QImage requires that width must be 32 bit aligned.
-In numpyImage.py there is code
-
-    excess = compute32bitExcess(nx,dtype)
-    if excess!=0 :  xmax = int(xmax - excess)
-    
-that makes adjustment.
-For really small images this can lead to strange behavior.
-Try select a larger subimage on first zoom, then a smaller subimage.
-Does this work as expected?
+Let me pursue this again.
 
 
 ## manualMinimum and manualMaximum
