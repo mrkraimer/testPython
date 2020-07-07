@@ -254,10 +254,10 @@ class NTNDA_Viewer(QWidget) :
         self.zoomText.setText(str(zoomData))
         self.display()
 
-    def mousePressEvent(self) :
+    def mousePressEvent(self,event) :
         if self.isStarted : self.provider.stop()
 
-    def mouseReleaseEvent(self) :
+    def mouseReleaseEvent(self,event) :
         if self.isStarted : self.provider.start()
                  
     def display(self) :

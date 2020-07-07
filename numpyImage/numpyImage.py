@@ -130,7 +130,7 @@ class NumpyImageZoom() :
         ymax = self.ymax - int(ymax)
         nx = xmax -xmin
         excess = compute32bitExcess(nx,dtype)
-        if excess!=0 :  xmax = int(xmax - excess)  
+        if excess!=0 :  xmax = int(xmax - excess)
         if xmax<=xmin : return False
         if ymax<=ymin : return False
         self.xmin = xmin
@@ -207,9 +207,6 @@ class NumpyImage(QWidget) :
         self.imageDoneEvent.clear()
         ny = pixarray.shape[0]
         nx = pixarray.shape[1]
-        excess = compute32bitExcess(nx,pixarray.dtype)
-        if excess!= 0 :
-            raise Exception('width is not on a 32bit boundry')
         if self.flipy :
             self.image = np.flip(pixarray,0)
         else :
@@ -222,23 +219,34 @@ class NumpyImage(QWidget) :
                 maximum = max(ny,nx)
                 if maximum<int(float(self.maxsize/2)) :
                     scale = math.ceil(float(self.maxsize/2)/maximum)
-                    self.thread.setScale(scale)
-                    self.imageZoom.scaleImage(scale)
-                    nx = int(nx*scale)
-                    ny = int(ny*scale)
+                else :
+                    scale = 1.0
+                self.thread.setScale(scale)
+                self.imageZoom.scaleImage(scale)
+                nx = int(nx*scale)
+                ny = int(ny*scale)
             else :
                 self.imageZoom.setSize(ny,nx)
+        else:
+            pass
         maximum = max(ny,nx)
         if maximum>self.maxsize :
             compress = math.ceil(float(maximum)/self.maxsize)
-            if self.imageZoom!=None :
-                self.image = self.imageZoom.compressImage(self.image,compress)
-            else :
-                self.image = image[::compress,::compress]
+            self.image = self.image[::compress,::compress]
             ny = self.image.shape[0]
             nx = self.image.shape[1]
-            excess = compute32bitExcess(nx,self.image.dtype)
-            if excess!=0 : print('excess=',excess)
+        else:
+            pass
+        excess = compute32bitExcess(nx,self.image.dtype)
+        if excess!=0 :
+            print('excess=',excess)
+            nx = nx - excess
+            print('before shape=',self.image.shape)
+            if len(self.image.shape)==2 :
+                self.image = self.image[:,:nx]
+            else :
+                self.image = self.image[:,:nx,:]
+            print('after shape=',self.image.shape)
         if self.ny!=ny or self.nx!=nx :
             self.ny = ny
             self.nx = nx     
@@ -260,16 +268,10 @@ class NumpyImage(QWidget) :
             self.isHidden = True
             return
         self.isClosed = True
-        
-#    def nativeEvent(self,union,extra) :
-#        print('nativeEvent')
-#        print('union=',union)
-#        print('extra=',extra)
-#        return (False,0)  
 
     def mousePressEvent(self,event) :
         if self.clientMousePressCallback!=None :
-            self.clientMousePressCallback()
+            self.clientMousePressCallback(event)
         if self.clientZoomCallback==None : return
         self.mousePressed = True
         self.mousePressPosition = QPoint(event.pos())
@@ -282,7 +284,7 @@ class NumpyImage(QWidget) :
 
     def mouseReleaseEvent(self,event) :
         if self.clientMouseReleaseCallback!=None :
-            self.clientMouseReleaseCallback()
+            self.clientMouseReleaseCallback(event)
         if not self.mousePressed : return
         self.mouseReleasePosition = QPoint(event.pos())
         self.rubberBand.hide()
