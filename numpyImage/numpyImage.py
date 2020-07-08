@@ -146,12 +146,12 @@ class NumpyImageZoom() :
     def scaleImage(self,scale) :
         self.scale = scale
         
-    def compressImage(self,image,compress) :
-        self.scale = 1.0/compress
-        self.ymax = image.shape[0]
-        self.xmax = image.shape[1]
-        image = image[::compress,::compress]
-        return image                
+#    def compressImage(self,image,compress) :
+#        self.scale = 1.0/compress
+#        self.ymax = image.shape[0]
+#        self.xmax = image.shape[1]
+#        image = image[::compress,::compress]
+#        return image                
         
     def createZoomImage(self,image) :
         return image[self.ymin:self.ymax,self.xmin:self.xmax]
@@ -211,6 +211,14 @@ class NumpyImage(QWidget) :
             self.image = np.flip(pixarray,0)
         else :
             self.image = pixarray
+        maximum = max(ny,nx)
+        if maximum>self.maxsize :
+            compress = math.ceil(float(maximum)/self.maxsize)
+            self.image = self.image[::compress,::compress]
+            ny = self.image.shape[0]
+            nx = self.image.shape[1]
+        else:
+            pass    
         if self.imageZoom!=None :
             if self.imageZoom.isZoom: 
                 self.image = self.imageZoom.createZoomImage(self.image)
@@ -229,24 +237,14 @@ class NumpyImage(QWidget) :
                 self.imageZoom.setSize(ny,nx)
         else:
             pass
-        maximum = max(ny,nx)
-        if maximum>self.maxsize :
-            compress = math.ceil(float(maximum)/self.maxsize)
-            self.image = self.image[::compress,::compress]
-            ny = self.image.shape[0]
-            nx = self.image.shape[1]
-        else:
-            pass
+        
         excess = compute32bitExcess(nx,self.image.dtype)
         if excess!=0 :
-            print('excess=',excess)
             nx = nx - excess
-            print('before shape=',self.image.shape)
             if len(self.image.shape)==2 :
                 self.image = self.image[:,:nx]
             else :
                 self.image = self.image[:,:nx,:]
-            print('after shape=',self.image.shape)
         if self.ny!=ny or self.nx!=nx :
             self.ny = ny
             self.nx = nx     

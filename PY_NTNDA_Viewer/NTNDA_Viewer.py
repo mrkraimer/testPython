@@ -292,6 +292,7 @@ class NTNDA_Viewer(QWidget) :
     def autoScaleEvent(self) :  
         self.limitType = 1
         self.display()
+        self.showLimitsButton.setChecked(True)
          
     def manualScaleEvent(self) :  
         self.limitType = 2
