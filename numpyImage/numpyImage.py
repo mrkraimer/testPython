@@ -7,18 +7,6 @@ from PyQt5.QtGui import QPainter,QImage
 import numpy as np
 import math
 
-def compute32bitExcess(nx,dtype) :
-    div = 0
-    if dtype==np.uint8 or dtype==np.int8 :
-        div = 4
-    elif dtype==np.uint16 or dtype==np.int16 :
-        div = 2
-    else : return 0
-    excess = nx - int(nx/div)*div
-    if excess<0 or excess>3 :
-        print('compute32bitExcess nx=',int(nx),' div=',div)
-    return excess
-
 class ImageToQImage() :
     def __init__(self):
         self.error = str()
@@ -37,20 +25,24 @@ class ImageToQImage() :
                 return qimage    
             if image.dtype==np.uint8 :
                 if len(image.shape) == 2:
-                    qimage = QImage(data, image.shape[1], image.shape[0],QImage.Format_Grayscale8)
+                    nx = image.shape[1]
+                    qimage = QImage(data, image.shape[1], image.shape[0],nx,QImage.Format_Grayscale8)
                     return  qimage
                 elif len(image.shape) == 3:
                     if image.shape[2] == 3:
-                        qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_RGB888)
+                        nx = image.shape[1]*3
+                        qimage = QImage(data, image.shape[1], image.shape[0],nx,QImage.Format_RGB888)
                         return qimage
                     elif image.shape[2] == 4:
-                        qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_RGBA8888)
+                        nx = image.shape[1]*4
+                        qimage = QImage(data, image.shape[1], image.shape[0],nx, QImage.Format_RGBA8888)
                         return qimage
                 self.error = 'nz must have length 3 or 4'
                 return None    
             if image.dtype==np.uint16 :
                 if len(image.shape) == 2:
-                    qimage = QImage(data, image.shape[1], image.shape[0], QImage.Format_Grayscale16)
+                    nx = image.shape[1]*2
+                    qimage = QImage(data, image.shape[1], image.shape[0],nx, QImage.Format_Grayscale16)
                     return  qimage
             self.error = 'unsupported dtype=' + str(image.dtype)
             return None
@@ -120,7 +112,7 @@ class NumpyImageZoom() :
     def setSize(self,ymax,xmax) :
         self.ymax = ymax
         self.xmax = xmax
-        
+
     def newZoom(self,xsize,ysize,xmin,xmax,ymin,ymax,dtype) :
         xmin = self.xmin + int(xmin/self.scale)
         xmax = float(xsize - xmax)/self.scale
@@ -128,9 +120,6 @@ class NumpyImageZoom() :
         ymin = self.ymin + int(ymin/self.scale)
         ymax = float(ysize - ymax)/self.scale
         ymax = self.ymax - int(ymax)
-        nx = xmax -xmin
-        excess = compute32bitExcess(nx,dtype)
-        if excess!=0 :  xmax = int(xmax - excess)
         if xmax<=xmin : return False
         if ymax<=ymin : return False
         self.xmin = xmin
@@ -139,24 +128,16 @@ class NumpyImageZoom() :
         self.ymax = ymax
         self.isZoom = True
         return True
-        
+                
     def getData(self) :
         return (self.xmin,self.xmax,self.ymin,self.ymax)
         
     def scaleImage(self,scale) :
         self.scale = scale
         
-#    def compressImage(self,image,compress) :
-#        self.scale = 1.0/compress
-#        self.ymax = image.shape[0]
-#        self.xmax = image.shape[1]
-#        image = image[::compress,::compress]
-#        return image                
-        
     def createZoomImage(self,image) :
         return image[self.ymin:self.ymax,self.xmin:self.xmax]
     
-        
 class NumpyImage(QWidget) :
     def __init__(self,windowTitle='no title',flipy= False,maxsize=800):
         super(QWidget, self).__init__()
@@ -194,7 +175,6 @@ class NumpyImage(QWidget) :
     def setMouseReleaseCallback(self,clientCallback) :
         self.clientMouseReleaseCallback = clientCallback           
         
-        
     def resetZoom(self) :
         self.imageZoom.reset()
         self.nx = 0
@@ -220,7 +200,11 @@ class NumpyImage(QWidget) :
         else:
             pass    
         if self.imageZoom!=None :
-            if self.imageZoom.isZoom: 
+            if self.imageZoom.isZoom:
+                if len(self.image.shape)==2 and self.image.dtype==np.uint16 :
+                    image = np.array(self.image,copy=True)
+                    image = image/255
+                    self.image = image.astype(np.uint8)
                 self.image = self.imageZoom.createZoomImage(self.image)
                 ny = self.image.shape[0]
                 nx = self.image.shape[1]
@@ -238,13 +222,6 @@ class NumpyImage(QWidget) :
         else:
             pass
         
-        excess = compute32bitExcess(nx,self.image.dtype)
-        if excess!=0 :
-            nx = nx - excess
-            if len(self.image.shape)==2 :
-                self.image = self.image[:,:nx]
-            else :
-                self.image = self.image[:,:nx,:]
         if self.ny!=ny or self.nx!=nx :
             self.ny = ny
             self.nx = nx     
