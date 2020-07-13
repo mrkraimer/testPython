@@ -49,12 +49,13 @@ class FindLibrary(object) :
 class NTNDA_Viewer(QWidget) :
     def __init__(self,ntnda_Channel_Provider,providerName, parent=None):
         super(QWidget, self).__init__(parent)
+        self.imageSize = 800
         self.isClosed = False
         self.provider = ntnda_Channel_Provider
         self.provider.NTNDA_Viewer = self
         self.setWindowTitle(providerName + "_NTNDA_Viewer")
         self.imageDict = imageDictCreate()
-        self.imageDisplay = NumpyImage(windowTitle='image',flipy=False,maxsize=800)
+        self.imageDisplay = NumpyImage(windowTitle='image',flipy=False,imageSize=self.imageSize)
         self.imageDisplay.setZoomCallback(self.zoomEvent)
         self.imageDisplay.setMousePressCallback(self.mousePressEvent)
         self.imageDisplay.setMouseReleaseCallback(self.mouseReleaseEvent)
@@ -63,7 +64,6 @@ class NTNDA_Viewer(QWidget) :
         self.xoffset = 300
         self.yoffset = 300
         self.showLimits = False
-        
 # first row
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0)
@@ -127,7 +127,7 @@ class NTNDA_Viewer(QWidget) :
         box.addWidget(self.clearButton)
         self.statusText = QLineEdit()
         self.statusText.setText('nothing done so far                    ')
-        self.statusText.setFixedWidth(400)
+        self.statusText.setFixedWidth(500)
         box.addWidget(self.statusText)
         wid =  QWidget()
         wid.setLayout(box)
@@ -152,7 +152,7 @@ class NTNDA_Viewer(QWidget) :
         zoomCordLabel = QLabel(' (xmin,xmax,ymin,ymax) = ')
         box.addWidget(zoomCordLabel)
         self.zoomText =  QLabel('')
-        self.zoomText.setFixedWidth(600)
+        self.zoomText.setFixedWidth(400)
         box.addWidget(self.zoomText,alignment=Qt.AlignLeft)
         wid =  QWidget()
         wid.setLayout(box)
@@ -193,21 +193,33 @@ class NTNDA_Viewer(QWidget) :
         groupbox=QGroupBox('manualLimits')
         showbox.addWidget(QLabel("minimum:"))
         self.minLimitText = QLineEdit()
-        self.minLimitText.setFixedWidth(150)
+        self.minLimitText.setFixedWidth(60)
         self.minLimitText.setEnabled(True)
         self.minLimitText.setText('0')
         self.minLimitText.returnPressed.connect(self.minLimitEvent)
         showbox.addWidget(self.minLimitText)
-
+        
         showbox.addWidget(QLabel("maximum:"))
         self.maxLimitText = QLineEdit()
-        self.maxLimitText.setFixedWidth(150)
+        self.maxLimitText.setFixedWidth(60)
         self.maxLimitText.setEnabled(True)
         self.maxLimitText.setText('255')
         self.maxLimitText.returnPressed.connect(self.maxLimitEvent)
         showbox.addWidget(self.maxLimitText)
         groupbox.setLayout(showbox)
         box.addWidget(groupbox)
+        
+        showbox = QHBoxLayout()
+        groupbox=QGroupBox('imageSize')
+        self.imageSizeText = QLineEdit()
+        self.imageSizeText.setFixedWidth(60)
+        self.imageSizeText.setEnabled(True)
+        self.imageSizeText.setText(str(self.imageSize))
+        self.imageSizeText.returnPressed.connect(self.imageSizeEvent)
+        showbox.addWidget(self.imageSizeText)
+        groupbox.setLayout(showbox)
+        box.addWidget(groupbox)
+        
         wid =  QWidget()
         wid.setLayout(box)
         self.fourthRow = wid
@@ -306,6 +318,28 @@ class NTNDA_Viewer(QWidget) :
 
     def minLimitEvent(self) :
         try:
+            self.display()
+        except Exception as error:
+            self.statusText.setText(str(error))
+
+    def imageSizeEvent(self) :
+        try:
+            size = self.imageSizeText.text()
+            try :
+                value = int(size)
+            except Exception as error:
+                self.statusText.setText('value is not an integer')
+                self.imageSizeText.setText(str(self.imageSize))
+                return
+            if value<128 :
+                value = 128
+                self.imageSizeText.setText(str(value))
+            if value>1024 :
+                value = 1024
+                self.imageSizeText.setText(str(value))
+            self.resetEvent()    
+            self.imageSize = value   
+            self.imageDisplay.setImageSize(self.imageSize)
             self.display()
         except Exception as error:
             self.statusText.setText(str(error))
@@ -554,15 +588,20 @@ class NTNDA_Viewer(QWidget) :
             else :
                 self.minLimitText.setText('0')
                 self.maxLimitText.setText('65535')
+        reset = False     
         if nx!=self.imageDict["nx"] :
             self.imageDict["nx"] = nx
             self.nxText.setText(str(self.imageDict["nx"]))
+            reset = True
         if ny!=self.imageDict["ny"] :
             self.imageDict["ny"] = ny
             self.nyText.setText(str(self.imageDict["ny"]))
+            reset = True
         if nz!=self.imageDict["nz"] :
             self.imageDict["nz"] = nz
             self.nzText.setText(str(self.imageDict["nz"]))
+            reset = True
+        if reset: self.resetEvent()
         self.imageDict["image"] = image
         QApplication.processEvents()
 

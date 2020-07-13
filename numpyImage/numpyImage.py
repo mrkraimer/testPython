@@ -10,7 +10,7 @@ import math
 class ImageToQImage() :
     def __init__(self):
         self.error = str()
-    def toQImage(self,image,Format=0,colorTable=None) :
+    def toQImage(self,image,bytesPerLine=None,Format=0,colorTable=None) :
         try :
             self.error = str('')
             if image is None:
@@ -19,7 +19,10 @@ class ImageToQImage() :
             mv = memoryview(image.data)
             data = mv.tobytes()  
             if Format>0 :
-                qimage = QImage(data,image.shape[1], image.shape[0],Format)
+                if bytesPerLine==None :
+                    qimage = QImage(data,image.shape[1], image.shape[0],Format)
+                else :
+                    qimage = QImage(data,image.shape[1], image.shape[0],bytesPerLine,Format)
                 if colorTable!=None :
                     qimage.setColorTable(colorTable)
                 return qimage    
@@ -51,54 +54,57 @@ class ImageToQImage() :
             return None
 
 class Worker(QThread):
-    def __init__(self):
+    def __init__(self,imageSize):
         QThread.__init__(self)
-        self.scale = int(0)
         self.error = str('')
         self.imageToQImage = ImageToQImage()
+        self.imageSize = imageSize
         
-    def setScale(self,scale) :
-        self.scale = scale    
+    def setImageSize(self,imageSize) :
+        self.imageSize = imageSize
         
-    def render(self,caller,image,Format=0,colorTable=None):  
+    def render(self,caller,image,bytesPerLine=None,Format=0,colorTable=None): 
         self.error = str('')
         self.image = image
         self.caller = caller
         self.Format = Format
         self.colorTable = colorTable
+        self.bytesPerLine = bytesPerLine
         self.start()
 
     def run(self):
-        qimage = self.imageToQImage.toQImage(self.image,Format=self.Format,colorTable=self.colorTable)
+        qimage = self.imageToQImage.toQImage(\
+            self.image,bytesPerLine=self.bytesPerLine,Format=self.Format,colorTable=self.colorTable)
         if qimage==None :
             self.error = self.imageToQImage.error
             self.caller.imageDoneEvent.set()
             return
-        if self.scale!=int(0) :
-            scale = int(self.scale)
-            numx = self.image.shape[1]
-            numy = self.image.shape[0]
-            if numy>numx :
-                qimage = qimage.scaledToWidth(numx*scale)
-            else :
-                qimage = qimage.scaledToHeight(numy*scale)
-    
+        numx = self.image.shape[1]
+        numy = self.image.shape[0]
+        if numy>numx :
+            qimage = qimage.scaledToHeight(self.imageSize)
+        else :
+            qimage = qimage.scaledToWidth(self.imageSize)
         painter = QPainter(self.caller)
         painter.drawImage(0,0,qimage)
         while True :
             if painter.end() : break
         self.image = None
-        self.scale = int(0)
         self.caller.imageDoneEvent.set()
         
 class NumpyImageZoom() :
-    def __init__(self):
+    def __init__(self,imageSize):
         self.isZoom = False
         self.xmin = 0
         self.xmax = 0
         self.ymin = 0
         self.ymax = 0
-        self.scale = 1.0     
+        self.xscale = 1.0
+        self.yscale = 1.0
+        
+    def setFullSize(self,nx,ny) :
+        self.xmax = nx
+        self.ymax = ny
         
     def reset(self) :
         self.isZoom = False
@@ -106,20 +112,22 @@ class NumpyImageZoom() :
         self.xmax = 0
         self.ymin = 0
         self.ymax = 0
-        self.scale = 1.0
+        self.xscale = 1.0
+        self.yscale = 1.0
         self.dtype = None
-        
-    def setSize(self,ymax,xmax) :
-        self.ymax = ymax
-        self.xmax = xmax
 
     def newZoom(self,xsize,ysize,xmin,xmax,ymin,ymax,dtype) :
-        xmin = self.xmin + int(xmin/self.scale)
-        xmax = float(xsize - xmax)/self.scale
-        xmax = self.xmax - int(xmax)
-        ymin = self.ymin + int(ymin/self.scale)
-        ymax = float(ysize - ymax)/self.scale
-        ymax = self.ymax - int(ymax)
+        xscale = float((self.xmax-self.xmin)/xsize)
+        yscale = float((self.ymax-self.ymin)/ysize)     
+        delx = (xmax-xmin)*xscale
+        dely = (ymax-ymin)*yscale  
+        
+        xmin = self.xmin + int(xmin*xscale)
+        xmax = int(xmin + delx)
+        
+        ymin = self.ymin + int(ymin*yscale)
+        ymax = int(ymin + dely) 
+        
         if xmax<=xmin : return False
         if ymax<=ymin : return False
         self.xmin = xmin
@@ -132,19 +140,16 @@ class NumpyImageZoom() :
     def getData(self) :
         return (self.xmin,self.xmax,self.ymin,self.ymax)
         
-    def scaleImage(self,scale) :
-        self.scale = scale
-        
     def createZoomImage(self,image) :
         return image[self.ymin:self.ymax,self.xmin:self.xmax]
     
 class NumpyImage(QWidget) :
-    def __init__(self,windowTitle='no title',flipy= False,maxsize=800):
+    def __init__(self,windowTitle='no title',flipy= False,imageSize=800):
         super(QWidget, self).__init__()
         self.setWindowTitle(windowTitle)
-        self.maxsize = int(maxsize)
+        self.imageSize = int(imageSize)
         self.flipy = flipy
-        self.thread = Worker()
+        self.thread = Worker(self.imageSize)
         self.imageDoneEvent = Event()
         self.imageDoneEvent.set()
         self.imageZoom = None
@@ -159,15 +164,14 @@ class NumpyImage(QWidget) :
         self.isHidden = True
         self.isClosed = False
         self.image = None
-        self.ny = 0
-        self.nx = 0
         self.xoffset = 10
         self.yoffset = 300
+        self.firstDisplay = True
         
     def setZoomCallback(self,clientCallback,clientZoom=False) :
         self.clientZoomCallback = clientCallback
         if not clientZoom :
-            self.imageZoom  = NumpyImageZoom()
+            self.imageZoom  = NumpyImageZoom(self.imageSize)
             
     def setMousePressCallback(self,clientCallback) :
         self.clientMousePressCallback = clientCallback
@@ -177,28 +181,29 @@ class NumpyImage(QWidget) :
         
     def resetZoom(self) :
         self.imageZoom.reset()
-        self.nx = 0
-        self.ny = 0
+        
+    def setImageSize(self,imageSize) :
+        self.imageSize = imageSize
+        self.thread.setImageSize(self.imageSize)
+        point = self.geometry().topLeft()
+        self.xoffset = point.x()
+        self.yoffset = point.y()    
+        self.setGeometry(QRect(self.xoffset, self.yoffset,self.imageSize,self.imageSize))    
+           
             
-    def display(self,pixarray,Format=0,colorTable=None) :
+    def display(self,pixarray,bytesPerLine=None,Format=0,colorTable=None) :
         if not self.imageDoneEvent.isSet :
             result = self.imageDoneEvent.wait(2.0)
             if not result : raise Exception('display timeout')
         self.imageDoneEvent.clear()
-        ny = pixarray.shape[0]
-        nx = pixarray.shape[1]
+        if self.firstDisplay :
+            self.setGeometry(QRect(self.xoffset, self.yoffset,self.imageSize,self.imageSize))
+            self.firstDisplay = False
         if self.flipy :
             self.image = np.flip(pixarray,0)
         else :
             self.image = pixarray
-        maximum = max(ny,nx)
-        if maximum>self.maxsize :
-            compress = math.ceil(float(maximum)/self.maxsize)
-            self.image = self.image[::compress,::compress]
-            ny = self.image.shape[0]
-            nx = self.image.shape[1]
-        else:
-            pass    
+        
         if self.imageZoom!=None :
             if self.imageZoom.isZoom:
                 if len(self.image.shape)==2 and self.image.dtype==np.uint16 :
@@ -206,32 +211,18 @@ class NumpyImage(QWidget) :
                     image = image/255
                     self.image = image.astype(np.uint8)
                 self.image = self.imageZoom.createZoomImage(self.image)
-                ny = self.image.shape[0]
-                nx = self.image.shape[1]
-                maximum = max(ny,nx)
-                if maximum<int(float(self.maxsize/2)) :
-                    scale = math.ceil(float(self.maxsize/2)/maximum)
-                else :
-                    scale = 1.0
-                self.thread.setScale(scale)
-                self.imageZoom.scaleImage(scale)
-                nx = int(nx*scale)
-                ny = int(ny*scale)
+                
             else :
-                self.imageZoom.setSize(ny,nx)
+               self.imageZoom.setFullSize(self.image.shape[1],self.image.shape[0])
         else:
             pass
-        
-        if self.ny!=ny or self.nx!=nx :
-            self.ny = ny
-            self.nx = nx     
-        self.setGeometry(QRect(self.xoffset, self.yoffset,self.nx,self.ny))
+        self.bytesPerLine = bytesPerLine
         self.Format = Format
         self.colorTable = colorTable
         self.update()
         if self.isHidden :
             self.isHidden = False
-            self.show()
+            self.show()  
         QApplication.processEvents()
         
     def closeEvent(self,event) :
@@ -241,6 +232,7 @@ class NumpyImage(QWidget) :
             self.yoffset = point.y()
             self.hide()
             self.isHidden = True
+            self.firstDisplay = True
             return
         self.isClosed = True
 
@@ -292,6 +284,6 @@ class NumpyImage(QWidget) :
 
     def paintEvent(self, ev):
         if self.mousePressed : return
-        self.thread.render(self,self.image,self.Format,self.colorTable)
+        self.thread.render(self,self.image,self.bytesPerLine,self.Format,self.colorTable)
         self.thread.wait()
 
