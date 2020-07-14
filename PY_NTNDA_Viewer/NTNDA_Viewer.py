@@ -59,11 +59,13 @@ class NTNDA_Viewer(QWidget) :
         self.imageDisplay.setZoomCallback(self.zoomEvent)
         self.imageDisplay.setMousePressCallback(self.mousePressEvent)
         self.imageDisplay.setMouseReleaseCallback(self.mouseReleaseEvent)
+        self.imageDisplay.setResizeCallback(self.resizeImageEvent)
         self.limitType = 0
         self.limitTypeChoices = { "noScale" : 0, "autoScale" : 1, "manualScale" : 2}
         self.xoffset = 300
         self.yoffset = 300
         self.showLimits = False
+        self.gotResizeEvent = False
 # first row
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0)
@@ -255,6 +257,7 @@ class NTNDA_Viewer(QWidget) :
         self.lasttime = time.time() -2
         self.arg = None
         self.show()
+        self.startEvent()
         
     def resetEvent(self) :
         if self.imageDict['nx']==0 : return
@@ -271,6 +274,11 @@ class NTNDA_Viewer(QWidget) :
 
     def mouseReleaseEvent(self,event) :
         if self.isStarted : self.provider.start()
+        
+    def resizeImageEvent(self,event,width,height) :
+        self.imageSizeText.setText(str(width))
+        if self.isStarted : self.stop()
+        self.gotResizeEvent = True
                  
     def display(self) :
         if self.isClosed : return
@@ -323,7 +331,7 @@ class NTNDA_Viewer(QWidget) :
         except Exception as error:
             self.statusText.setText(str(error))
 
-    def imageSizeEvent(self) :
+    def imageSizeEvent(self,display=True) :
         try:
             size = self.imageSizeText.text()
             try :
@@ -341,7 +349,7 @@ class NTNDA_Viewer(QWidget) :
             self.resetEvent()    
             self.imageSize = value   
             self.imageDisplay.setImageSize(self.imageSize)
-            self.display()
+            if display : self.display()
         except Exception as error:
             self.statusText.setText(str(error))
 
@@ -384,6 +392,9 @@ class NTNDA_Viewer(QWidget) :
             self.statusText.setText(str(error))
          
     def start(self) :
+        if self.gotResizeEvent : 
+            self.gotResetEvent = False
+            self.imageSizeEvent(display=False)
         self.isStarted = True
         self.provider.start()
         self.channelNameText.setEnabled(False)

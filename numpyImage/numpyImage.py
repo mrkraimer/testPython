@@ -6,6 +6,7 @@ from threading import Event
 from PyQt5.QtGui import QPainter,QImage
 import numpy as np
 import math
+import time
 
 class ImageToQImage() :
     def __init__(self):
@@ -99,8 +100,6 @@ class NumpyImageZoom() :
         self.xmax = 0
         self.ymin = 0
         self.ymax = 0
-        self.xscale = 1.0
-        self.yscale = 1.0
         
     def setFullSize(self,nx,ny) :
         self.xmax = nx
@@ -112,15 +111,17 @@ class NumpyImageZoom() :
         self.xmax = 0
         self.ymin = 0
         self.ymax = 0
-        self.xscale = 1.0
-        self.yscale = 1.0
         self.dtype = None
 
     def newZoom(self,xsize,ysize,xmin,xmax,ymin,ymax,dtype) :
         xscale = float((self.xmax-self.xmin)/xsize)
         yscale = float((self.ymax-self.ymin)/ysize)     
         delx = (xmax-xmin)*xscale
-        dely = (ymax-ymin)*yscale  
+        dely = (ymax-ymin)*yscale
+        if delx>dely :
+            dely = delx
+        else :
+            delx = dely    
         
         xmin = self.xmin + int(xmin*xscale)
         xmax = int(xmin + delx)
@@ -159,6 +160,7 @@ class NumpyImage(QWidget) :
         self.clientZoomCallback = None
         self.clientMousePressCallback = None
         self.clientMouseReleaseCallback = None
+        self.clientResizeCallback = None
         self.mousePressed = False
         self.okToClose = False
         self.isHidden = True
@@ -177,7 +179,10 @@ class NumpyImage(QWidget) :
         self.clientMousePressCallback = clientCallback
             
     def setMouseReleaseCallback(self,clientCallback) :
-        self.clientMouseReleaseCallback = clientCallback           
+        self.clientMouseReleaseCallback = clientCallback
+
+    def setResizeCallback(self,clientCallback) :
+        self.clientResizeCallback = clientCallback                  
         
     def resetZoom(self) :
         self.imageZoom.reset()
@@ -281,6 +286,13 @@ class NumpyImage(QWidget) :
         if self.imageZoom.newZoom(xsize,ysize,xmin,xmax,ymin,ymax,self.image.dtype) :
             self.clientZoomCallback(self.imageZoom.getData())
 
+    def resizeEvent(self,event) :
+        if self.clientResizeCallback!= None :
+            time.sleep(.2)
+            imageGeometry = self.geometry().getRect()
+            xsize = imageGeometry[2]
+            ysize = imageGeometry[3]
+            self.clientResizeCallback(event,xsize,ysize)
 
     def paintEvent(self, ev):
         if self.mousePressed : return
