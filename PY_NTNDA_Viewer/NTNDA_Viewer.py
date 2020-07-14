@@ -274,6 +274,7 @@ class NTNDA_Viewer(QWidget) :
                  
     def display(self) :
         if self.isClosed : return
+        if type(self.imageDict["image"])==type(None) : return
         try :
             if self.limitType>0 :
                 self.scaleLimits()
