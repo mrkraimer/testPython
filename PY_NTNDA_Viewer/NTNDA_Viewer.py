@@ -530,6 +530,10 @@ class NTNDA_Viewer(QWidget) :
         if self.showLimits :
             self.channelLimitsText.setText(str((dataMin,dataMax)))
         dtype = data.dtype
+        if dtype!=np.uint8 and dtype!=np.int8:
+            xp = (0.0,65535.0)
+            fp = (0.0,255.0)
+            data = np.interp(data,xp,fp)
         if dtype==np.uint8: 
             pass
         elif dtype==np.int8 :
