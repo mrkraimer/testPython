@@ -16,12 +16,9 @@ from PyQt5.QtWidgets import QWidget,QLabel,QLineEdit
 from PyQt5.QtWidgets import QPushButton,QHBoxLayout,QGridLayout,QInputDialog
 from PyQt5.QtWidgets import QRadioButton,QGroupBox
 from PyQt5.QtWidgets import QApplication
-
 from PyQt5.QtCore import *
-
 sys.path.append('../numpyImage/')
 from numpyImage import NumpyImage
-
 import ctypes
 import ctypes.util
 import os
@@ -61,11 +58,7 @@ class NTNDA_Viewer(QWidget) :
         self.imageDisplay.setMouseReleaseCallback(self.mouseReleaseEvent)
         self.imageDisplay.setResizeCallback(self.resizeImageEvent)
         self.limitType = 0
-        self.limitTypeChoices = { "noScale" : 0, "autoScale" : 1, "manualScale" : 2}
-        self.xoffset = 300
-        self.yoffset = 300
         self.showLimits = False
-        self.gotResizeEvent = False
 # first row
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0)
@@ -159,7 +152,6 @@ class NTNDA_Viewer(QWidget) :
         wid =  QWidget()
         wid.setLayout(box)
         self.thirdRow = wid
-        
 # fourth row
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0)
@@ -180,9 +172,9 @@ class NTNDA_Viewer(QWidget) :
         groupbox=QGroupBox('scaleType')
         self.noScaleButton = QRadioButton('noScale')
         self.noScaleButton.toggled.connect(self.noScaleEvent)
-        self.noScaleButton.setChecked(True)
         self.autoScaleButton = QRadioButton('autoScale')
         self.autoScaleButton.toggled.connect(self.autoScaleEvent)
+        self.autoScaleButton.setChecked(True)
         self.manualScaleButton = QRadioButton('manualScale')
         self.manualScaleButton.toggled.connect(self.manualScaleEvent)
         showbox.addWidget(self.noScaleButton)
@@ -257,7 +249,6 @@ class NTNDA_Viewer(QWidget) :
         self.lasttime = time.time() -2
         self.arg = None
         self.show()
-        self.startEvent()
         
     def resetEvent(self) :
         if self.imageDict['nx']==0 : return
@@ -277,8 +268,7 @@ class NTNDA_Viewer(QWidget) :
         
     def resizeImageEvent(self,event,width,height) :
         self.imageSizeText.setText(str(width))
-        if self.isStarted : self.stop()
-        self.gotResizeEvent = True
+        self.imageDisplay.setImageSize(width)
                  
     def display(self) :
         if self.isClosed : return
@@ -392,9 +382,6 @@ class NTNDA_Viewer(QWidget) :
             self.statusText.setText(str(error))
          
     def start(self) :
-        if self.gotResizeEvent : 
-            self.gotResetEvent = False
-            self.imageSizeEvent(display=False)
         self.isStarted = True
         self.provider.start()
         self.channelNameText.setEnabled(False)
@@ -410,7 +397,7 @@ class NTNDA_Viewer(QWidget) :
         self.channelNameLabel.setStyleSheet("background-color:gray")
         self.channelNameText.setEnabled(True)
         self.channel = None
-
+        self.imageRateText.setText('0')
     def callback(self,arg):
         if self.isClosed : return
         if not self.isStarted : return
@@ -547,16 +534,8 @@ class NTNDA_Viewer(QWidget) :
             pass
         elif dtype==np.int8 :
             data = data.astype(np.uint8)
-        elif dtype==np.uint16 :
-            if ndim ==3 :
-                data=data.astype(np.uint8)
-            else :
-                pass
         else :
-            if ndim == 3 :
-                data=data.astype(np.uint8)
-            else :
-                data=data.astype(np.uint16)
+            data=data.astype(np.uint8)
         if self.showLimits:
             self.imageLimitsText.setText(str((int(np.min(data)),int(np.max(data)))))       
         if ndim ==2 :
@@ -616,4 +595,3 @@ class NTNDA_Viewer(QWidget) :
         if reset: self.resetEvent()
         self.imageDict["image"] = image
         QApplication.processEvents()
-
