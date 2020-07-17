@@ -1,5 +1,5 @@
 # DisplayImage.py
-from PyQt5.QtWidgets import QWidget,QRubberBand,QApplication
+from PyQt5.QtWidgets import QWidget,QRubberBand
 from PyQt5.QtCore import QPoint,QRect,QSize,QPointF
 from PyQt5.QtCore import QThread
 from threading import Event
@@ -227,8 +227,7 @@ class NumpyImage(QWidget) :
         self.update()
         if self.isHidden :
             self.isHidden = False
-            self.show()  
-        QApplication.processEvents()
+            self.show()
         
     def closeEvent(self,event) :
         if not self.okToClose :

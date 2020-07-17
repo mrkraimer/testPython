@@ -15,7 +15,6 @@ import numpy as np
 from PyQt5.QtWidgets import QWidget,QLabel,QLineEdit
 from PyQt5.QtWidgets import QPushButton,QHBoxLayout,QGridLayout,QInputDialog
 from PyQt5.QtWidgets import QRadioButton,QGroupBox
-from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import *
 sys.path.append('../numpyImage/')
 from numpyImage import NumpyImage
@@ -171,10 +170,10 @@ class NTNDA_Viewer(QWidget) :
         showbox = QHBoxLayout()
         groupbox=QGroupBox('scaleType')
         self.noScaleButton = QRadioButton('noScale')
+        self.noScaleButton.setChecked(True)
         self.noScaleButton.toggled.connect(self.noScaleEvent)
         self.autoScaleButton = QRadioButton('autoScale')
         self.autoScaleButton.toggled.connect(self.autoScaleEvent)
-        self.autoScaleButton.setChecked(True)
         self.manualScaleButton = QRadioButton('manualScale')
         self.manualScaleButton.toggled.connect(self.manualScaleEvent)
         showbox.addWidget(self.noScaleButton)
@@ -303,7 +302,6 @@ class NTNDA_Viewer(QWidget) :
     def autoScaleEvent(self) :  
         self.limitType = 1
         self.display()
-        self.showLimitsButton.setChecked(True)
          
     def manualScaleEvent(self) :  
         self.limitType = 2
@@ -372,8 +370,7 @@ class NTNDA_Viewer(QWidget) :
             fp = (0.0,65535)
         image = np.interp(image,xp,fp)
         image = image.astype(dtype)
-        self.imageDict["image"] = image
-        QApplication.processEvents()        
+        self.imageDict["image"] = image   
     
     def channelNameEvent(self) :
         try:
@@ -598,4 +595,3 @@ class NTNDA_Viewer(QWidget) :
             reset = True
         if reset: self.resetEvent()
         self.imageDict["image"] = image
-        QApplication.processEvents()
