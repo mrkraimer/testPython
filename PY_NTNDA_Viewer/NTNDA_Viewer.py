@@ -15,7 +15,6 @@ import numpy as np
 from PyQt5.QtWidgets import QWidget,QLabel,QLineEdit
 from PyQt5.QtWidgets import QPushButton,QHBoxLayout,QGridLayout,QInputDialog
 from PyQt5.QtWidgets import QRadioButton,QGroupBox
-#from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import *
 sys.path.append('../numpyImage/')
 from numpyImage import NumpyImage
@@ -58,6 +57,7 @@ class NTNDA_Viewer(QWidget) :
         self.imageDisplay.setMouseReleaseCallback(self.mouseReleaseEvent)
         self.imageDisplay.setResizeCallback(self.resizeImageEvent)
         self.limitType = 0
+        self.limits = (0,255)
         self.showLimits = False
 # first row
         box = QHBoxLayout()
@@ -380,13 +380,8 @@ class NTNDA_Viewer(QWidget) :
         if self.limitType== 0 :
             return
         elif self.limitType== 1 :
-            limitsText = self.imageLimitsText.text()
-            limitsText = limitsText[1:]
-            ind = limitsText.find(',')
-            start = limitsText[0:ind]
-            end = limitsText[ind+1:]
-            ind = end.find(')')
-            end = end[0:ind]
+           start = self.limits[0]
+           end = self.limits[1]
         else :
             start = self.minLimitText.text()
             end = self.maxLimitText.text()
@@ -555,7 +550,7 @@ class NTNDA_Viewer(QWidget) :
             self.channelLimitsText.setText(str((dataMin,dataMax)))
         dtype = data.dtype
         if dtype!=np.uint8 and dtype!=np.int8:
-            xp = (0.0,65535.0)
+            xp = (float(dataMin),float(dataMax))
             fp = (0.0,255.0)
             data = np.interp(data,xp,fp)
         if dtype==np.uint8: 
@@ -564,7 +559,9 @@ class NTNDA_Viewer(QWidget) :
             data = data.astype(np.uint8)
         else :
             data=data.astype(np.uint8)
-        if self.showLimits:
+        if self.limitType==1:
+            self.limits = (int(np.min(data)),int(np.max(data)))
+        if self.showLimits :
             self.imageLimitsText.setText(str((int(np.min(data)),int(np.max(data)))))       
         if ndim ==2 :
             nx = dimArray[0]["size"]

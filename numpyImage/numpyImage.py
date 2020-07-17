@@ -100,10 +100,15 @@ class NumpyImageZoom() :
         self.xmax = 0
         self.ymin = 0
         self.ymax = 0
+        self.nx = 0
+        self.ny = 0
         
     def setFullSize(self,nx,ny) :
         self.xmax = nx
         self.ymax = ny
+        self.nx = nx
+        self.ny = ny
+        
         
     def reset(self) :
         self.isZoom = False
@@ -111,7 +116,6 @@ class NumpyImageZoom() :
         self.xmax = 0
         self.ymin = 0
         self.ymax = 0
-        self.dtype = None
 
     def newZoom(self,xsize,ysize,xmin,xmax,ymin,ymax,dtype) :
         xscale = float((self.xmax-self.xmin)/xsize)
@@ -124,8 +128,10 @@ class NumpyImageZoom() :
             delx = dely    
         xmin = self.xmin + int(xmin*xscale)
         xmax = int(xmin + delx)
+        if xmax>self.nx : return False
         ymin = self.ymin + int(ymin*yscale)
-        ymax = int(ymin + dely) 
+        ymax = int(ymin + dely)
+        if ymax>self.ny : return False
         if xmax<=xmin : return False
         if ymax<=ymin : return False
         self.xmin = xmin
@@ -140,11 +146,13 @@ class NumpyImageZoom() :
         xmin = self.xmin + inc
         if xmin<0 : return False
         xmax = self.xmax - inc
+        if xmax>self.nx : return False
         if xmax>imageSize : return False
         if (xmax-xmin)<2.0 : return False
         ymin = self.ymin + inc
         if ymin<0 : return False
         ymax = self.ymax - inc
+        if ymax>self.ny : return False
         if ymax>imageSize : return False
         if (ymax-ymin)<2.0 : return False
         self.xmin = xmin
