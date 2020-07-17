@@ -122,13 +122,10 @@ class NumpyImageZoom() :
             dely = delx
         else :
             delx = dely    
-        
         xmin = self.xmin + int(xmin*xscale)
         xmax = int(xmin + delx)
-        
         ymin = self.ymin + int(ymin*yscale)
         ymax = int(ymin + dely) 
-        
         if xmax<=xmin : return False
         if ymax<=ymin : return False
         self.xmin = xmin
@@ -137,7 +134,33 @@ class NumpyImageZoom() :
         self.ymax = ymax
         self.isZoom = True
         return True
-                
+
+    def zoomInc(self,inc,imageSize) :
+        if not self.isZoom : return False
+        xmin = self.xmin + inc
+        if xmin<0 : return False
+        xmax = self.xmax - inc
+        if xmax>imageSize : return False
+        if (xmax-xmin)<2.0 : return False
+        ymin = self.ymin + inc
+        if ymin<0 : return False
+        ymax = self.ymax - inc
+        if ymax>imageSize : return False
+        if (ymax-ymin)<2.0 : return False
+        self.xmin = xmin
+        self.xmax = xmax
+        self.ymin = ymin
+        self.ymax = ymax
+        return True
+
+    def zoomIn(self,imageSize) :
+        inc = 1
+        return self.zoomInc(inc,imageSize)
+
+    def zoomOut(self,imageSize) :
+        inc = -1
+        return self.zoomInc(inc,imageSize)
+
     def getData(self) :
         return (self.xmin,self.xmax,self.ymin,self.ymax)
         
@@ -186,6 +209,20 @@ class NumpyImage(QWidget) :
         
     def resetZoom(self) :
         self.imageZoom.reset()
+        
+    def zoomIn(self):
+        if self.imageZoom==None : return False
+        result =  self.imageZoom.zoomIn(self.imageSize)
+        if result and self.clientZoomCallback!=None :
+            self.clientZoomCallback(self.imageZoom.getData())
+        return result
+
+    def zoomOut(self):
+        if self.imageZoom==None : return False
+        result =  self.imageZoom.zoomOut(self.imageSize)
+        if result and self.clientZoomCallback!=None :
+            self.clientZoomCallback(self.imageZoom.getData())
+        return result     
         
     def setImageSize(self,imageSize) :
         self.imageSize = imageSize

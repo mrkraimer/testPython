@@ -15,6 +15,7 @@ import numpy as np
 from PyQt5.QtWidgets import QWidget,QLabel,QLineEdit
 from PyQt5.QtWidgets import QPushButton,QHBoxLayout,QGridLayout,QInputDialog
 from PyQt5.QtWidgets import QRadioButton,QGroupBox
+#from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import *
 sys.path.append('../numpyImage/')
 from numpyImage import NumpyImage
@@ -143,6 +144,14 @@ class NTNDA_Viewer(QWidget) :
         box.addWidget(self.resetButton)
         self.resetButton.setEnabled(True)
         self.resetButton.clicked.connect(self.resetEvent)
+        self.zoomInButton = QPushButton('zoomIn')
+        box.addWidget(self.zoomInButton)
+        self.zoomInButton.setEnabled(True)
+        self.zoomInButton.clicked.connect(self.zoomInEvent)
+        self.zoomOutButton = QPushButton('zoomOut')
+        box.addWidget(self.zoomOutButton)
+        self.zoomOutButton.setEnabled(True)
+        self.zoomOutButton.clicked.connect(self.zoomOutEvent)
         zoomCordLabel = QLabel(' (xmin,xmax,ymin,ymax) = ')
         box.addWidget(zoomCordLabel)
         self.zoomText =  QLabel('')
@@ -253,6 +262,24 @@ class NTNDA_Viewer(QWidget) :
         if self.imageDict['nx']==0 : return
         self.zoomText.setText('')
         self.imageDisplay.resetZoom()
+        self.display()
+
+    def zoomInEvent(self) :
+        if self.isStarted :
+            self.statusText.setText('zoomIn can only be done when stopped')
+            return
+        if not self.imageDisplay.zoomIn() : 
+            self.statusText.setText('zoomIn failed')
+            return
+        self.display()
+
+    def zoomOutEvent(self) :
+        if self.isStarted :
+            self.statusText.setText('zoomOut can only be done when stopped')
+            return
+        if not self.imageDisplay.zoomOut() : 
+            self.statusText.setText('zoomOut failed')
+            return   
         self.display()
 
     def zoomEvent(self,zoomData) :
