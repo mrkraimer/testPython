@@ -178,11 +178,14 @@ class NTNDA_Viewer(QWidget) :
         
         showbox = QHBoxLayout()
         groupbox=QGroupBox('scaleType')
+        self.noScaleButton = QRadioButton('noScale')
+        self.noScaleButton.setChecked(True)
+        self.noScaleButton.toggled.connect(self.noScaleEvent)
         self.autoScaleButton = QRadioButton('autoScale')
         self.autoScaleButton.toggled.connect(self.autoScaleEvent)
-        self.autoScaleButton.setChecked(True)
         self.manualScaleButton = QRadioButton('manualScale')
         self.manualScaleButton.toggled.connect(self.manualScaleEvent)
+        showbox.addWidget(self.noScaleButton)
         showbox.addWidget(self.autoScaleButton)
         showbox.addWidget(self.manualScaleButton)
         groupbox.setLayout(showbox)
@@ -317,12 +320,16 @@ class NTNDA_Viewer(QWidget) :
         self.statusText.setText('')
         self.statusText.setStyleSheet("background-color:white")
         
-    def autoScaleEvent(self) :  
+    def noScaleEvent(self) :  
         self.limitType = 0
         self.display()
          
-    def manualScaleEvent(self) :  
+    def autoScaleEvent(self) :  
         self.limitType = 1
+        self.display()
+         
+    def manualScaleEvent(self) :  
+        self.limitType = 2
         self.display()
         
     def showLimitsEvent(self) :  
@@ -364,7 +371,7 @@ class NTNDA_Viewer(QWidget) :
             self.display()
         except Exception as error:
             self.statusText.setText(str(error))
-    
+            
     def channelNameEvent(self) :
         try:
             self.provider.setChannelName(self.channelNameText.text())
@@ -518,7 +525,11 @@ class NTNDA_Viewer(QWidget) :
         dtype = data.dtype
         dataMin = np.min(data)
         dataMax = np.max(data)
-        if self.limitType== 0 :
+        if self.limitType == 0 :
+            if dtype != np.uint8 and dtype != np.uint16 :
+                raise Exception('noScale requires uint8 or uint16')
+                return
+        if self.limitType == 1 :
             displayMin = dataMin
             displayMax = dataMax
             self.limits = (dataMin, dataMax)
@@ -527,9 +538,10 @@ class NTNDA_Viewer(QWidget) :
             displayMax = float(self.maxLimitText.text())
         if self.showLimits :
             self.channelLimitsText.setText(str((dataMin,dataMax)))
-        xp = (displayMin, displayMax)
-        fp = (0.0, 255.0)
-        data = (np.interp(data,xp,fp)).astype(np.uint8)
+        if self.limitType != 0 :
+            xp = (displayMin, displayMax)
+            fp = (0.0, 255.0)
+            data = (np.interp(data,xp,fp)).astype(np.uint8)
         
         if ndim ==2 :
             nx = dimArray[0]["size"]
