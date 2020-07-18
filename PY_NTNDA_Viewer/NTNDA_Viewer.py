@@ -549,16 +549,39 @@ class NTNDA_Viewer(QWidget) :
         if self.showLimits :
             self.channelLimitsText.setText(str((dataMin,dataMax)))
         dtype = data.dtype
-        if dtype!=np.uint8 and dtype!=np.int8:
+        if dtype==np.int8 :
+            xp = (-128.0,127.0)
+            fp = (0.0,255.0)
+            data = np.interp(data,xp,fp)
+            data = data.astype(np.uint8)
+        elif dtype==np.int8 :
+            pass
+        elif dtype==np.int16 :
+            xp = (-32768.0,32767.0)
+            fp = (0.0,255.0)
+            data = np.interp(data,xp,fp)
+            data = data.astype(np.uint8)
+        elif dtype==np.uint16 :
+            xp = (0.0,65535.0)
+            fp = (0.0,255.0)
+            data = np.interp(data,xp,fp)
+            data = data.astype(np.uint8)
+        elif dtype==np.int32 :
+            xp = (-2147483648,2147483647.0)
+            fp = (0.0,255.0)
+            data = np.interp(data,xp,fp)
+            data = data.astype(np.uint8)       
+        elif dtype==np.uint32 :
+            xp = (0.0,4294967295.0)
+            fp = (0.0,255.0)
+            data = np.interp(data,xp,fp)
+            data = data.astype(np.uint8)
+        else :
             xp = (float(dataMin),float(dataMax))
             fp = (0.0,255.0)
             data = np.interp(data,xp,fp)
-        if dtype==np.uint8: 
-            pass
-        elif dtype==np.int8 :
             data = data.astype(np.uint8)
-        else :
-            data=data.astype(np.uint8)
+        
         if self.limitType==1:
             self.limits = (int(np.min(data)),int(np.max(data)))
         if self.showLimits :
