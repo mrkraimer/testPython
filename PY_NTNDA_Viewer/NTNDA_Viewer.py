@@ -554,7 +554,7 @@ class NTNDA_Viewer(QWidget) :
             fp = (0.0,255.0)
             data = np.interp(data,xp,fp)
             data = data.astype(np.uint8)
-        elif dtype==np.int8 :
+        elif dtype==np.uint8 :
             pass
         elif dtype==np.int16 :
             xp = (-32768.0,32767.0)
