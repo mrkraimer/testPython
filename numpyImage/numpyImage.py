@@ -82,10 +82,11 @@ class Worker(QThread):
             return
         numx = self.image.shape[1]
         numy = self.image.shape[0]
-        if numy>numx :
-            qimage = qimage.scaledToHeight(self.imageSize)
-        else :
-            qimage = qimage.scaledToWidth(self.imageSize)
+        if numx!=self.imageSize or numx!=self.imageSize :
+            if numy>numx :
+                qimage = qimage.scaledToHeight(self.imageSize)
+            else :
+                qimage = qimage.scaledToWidth(self.imageSize)
         painter = QPainter(self.caller)
         painter.drawImage(0,0,qimage)
         while True :
