@@ -59,6 +59,8 @@ class NTNDA_Viewer(QWidget) :
         self.limitType = 0
         self.limits = (0,255)
         self.showLimits = False
+        self.suppressBackground = False
+        self.nImages = 0
 # first row
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0)
@@ -79,7 +81,16 @@ class NTNDA_Viewer(QWidget) :
         if len(self.provider.getChannelName())<1 :
             name = os.getenv('EPICS_NTNDA_VIEWER_CHANNELNAME')
             if name!= None : self.provider.setChannelName(name)
-        self.nImages = 0
+        
+        self.imageSizeLabel = QLabel("imageSize:")
+        box.addWidget(self.imageSizeLabel)
+        self.imageSizeText = QLineEdit()
+        self.imageSizeText.setFixedWidth(60)
+        self.imageSizeText.setEnabled(True)
+        self.imageSizeText.setText(str(self.imageSize))
+        self.imageSizeText.returnPressed.connect(self.imageSizeEvent)
+        box.addWidget(self.imageSizeText)
+        
         self.channelNameLabel = QLabel("channelName:")
         box.addWidget(self.channelNameLabel)
         self.channelNameText = QLineEdit()
@@ -192,6 +203,18 @@ class NTNDA_Viewer(QWidget) :
         box.addWidget(groupbox)
         
         showbox = QHBoxLayout()
+        groupbox=QGroupBox('suppressBackground')
+        self.suppressBackgroundButton = QRadioButton('yes')
+        self.suppressBackgroundButton.toggled.connect(self.suppressBackgroundEvent)
+        self.nosuppressBackgroundButton = QRadioButton('no')
+        self.nosuppressBackgroundButton.toggled.connect(self.nosuppressBackgroundEvent)
+        self.nosuppressBackgroundButton.setChecked(True)
+        showbox.addWidget(self.suppressBackgroundButton)
+        showbox.addWidget(self.nosuppressBackgroundButton)
+        groupbox.setLayout(showbox)
+        box.addWidget(groupbox)
+        
+        showbox = QHBoxLayout()
         groupbox=QGroupBox('manualLimits')
         showbox.addWidget(QLabel("minimum:"))
         self.minLimitText = QLineEdit()
@@ -211,14 +234,6 @@ class NTNDA_Viewer(QWidget) :
         groupbox.setLayout(showbox)
         box.addWidget(groupbox)
         
-        showbox = QHBoxLayout()
-        groupbox=QGroupBox('imageSize')
-        self.imageSizeText = QLineEdit()
-        self.imageSizeText.setFixedWidth(60)
-        self.imageSizeText.setEnabled(True)
-        self.imageSizeText.setText(str(self.imageSize))
-        self.imageSizeText.returnPressed.connect(self.imageSizeEvent)
-        showbox.addWidget(self.imageSizeText)
         groupbox.setLayout(showbox)
         box.addWidget(groupbox)
         
@@ -338,6 +353,12 @@ class NTNDA_Viewer(QWidget) :
     def noshowLimitsEvent(self) :  
         self.showLimits = False
 
+    def suppressBackgroundEvent(self) :  
+        self.suppressBackground = True
+        
+    def nosuppressBackgroundEvent(self) :  
+        self.suppressBackground = False        
+
     def minLimitEvent(self) :
         try:
             self.display()
@@ -362,7 +383,6 @@ class NTNDA_Viewer(QWidget) :
             self.resetEvent()    
             self.imageSize = value   
             self.imageDisplay.setImageSize(self.imageSize)
-            if display : self.display()
         except Exception as error:
             self.statusText.setText(str(error))
 
@@ -385,6 +405,11 @@ class NTNDA_Viewer(QWidget) :
         self.startButton.setEnabled(False)
         self.stopButton.setEnabled(True)
         self.channelNameText.setEnabled(False)
+        self.imageSizeText.setEnabled(False)
+        self.zoomInButton.setEnabled(False)
+        self.zoomOutButton.setEnabled(False)
+        self.minLimitText.setEnabled(False)
+        self.maxLimitText.setEnabled(False)
 
     def stop(self) :
         self.isStarted = False
@@ -393,6 +418,11 @@ class NTNDA_Viewer(QWidget) :
         self.stopButton.setEnabled(False)
         self.channelNameLabel.setStyleSheet("background-color:gray")
         self.channelNameText.setEnabled(True)
+        self.imageSizeText.setEnabled(True)
+        self.zoomInButton.setEnabled(True)
+        self.zoomOutButton.setEnabled(True)
+        self.minLimitText.setEnabled(True)
+        self.maxLimitText.setEnabled(True)
         self.channel = None
         self.imageRateText.setText('0')
     def callback(self,arg):
@@ -515,13 +545,80 @@ class NTNDA_Viewer(QWidget) :
             self.compressRatio = ratio
             self.compressRatioText.setText(str(self.compressRatio))
         return data
+
+    def reshape(self,data,dimArray,step) :
+        nz = 1
+        ndim = len(dimArray)
+        if ndim ==2 :
+            nx = dimArray[0]["size"]
+            ny = dimArray[1]["size"]
+            if step > 0 :
+                nx = int(float(nx)/step)
+                ny = int(float(ny)/step)
+            image = np.reshape(data,(ny,nx))
+        elif ndim ==3 :
+            if dimArray[0]["size"]==3 :
+                nz = dimArray[0]["size"]
+                nx = dimArray[1]["size"]
+                ny = dimArray[2]["size"]
+                if step > 0 :
+                    nx = int(float(nx)/step)
+                    ny = int(float(ny)/step)
+                image = np.reshape(data,(ny,nx,nz))
+            elif dimArray[1]["size"]==3 :
+                nz = dimArray[1]["size"]
+                nx = dimArray[0]["size"]
+                ny = dimArray[2]["size"]
+                if step > 0 :
+                    nx = int(float(nx)/step)
+                    ny = int(float(ny)/step)
+                image = np.reshape(data,(ny,nz,nx))
+                image = np.swapaxes(image,2,1)
+            elif dimArray[2]["size"]==3 :
+                nz = dimArray[2]["size"]
+                nx = dimArray[0]["size"]
+                ny = dimArray[1]["size"]
+                if step > 0 :
+                    nx = int(float(nx)/step)
+                    ny = int(float(ny)/step)
+                image = np.reshape(data,(nz,ny,nx))
+                image = np.swapaxes(image,0,2)
+                image = np.swapaxes(image,0,1)
+            else  :  
+                raise Exception('no axis has dim = 3')
+                return
+        else :
+                raise Exception('ndim not 2 or 3')
+        return (image,nx,ny,nz)        
         
     def dataToImage(self,data,dimArray) :
-        nz = 1
         ndim = len(dimArray)
         if ndim!=2 and ndim!=3 :
             raise Exception('ndim not 2 or 3')
             return
+        nmax = 0
+        step = 1
+        ndim = len(dimArray)
+        if ndim >=2 :
+            num = int(dimArray[0]["size"])
+            if num>nmax : nmax = num
+            num = int(dimArray[1]["size"])
+            if num>nmax : nmax = num
+            if ndim==3 :
+                num = int(dimArray[2]["size"])
+                if num>nmax : nmax = num
+        if nmax>self.imageSize :
+            retval = self.reshape(data,dimArray,1)
+            image = retval[0]
+            nx = retval[1]
+            ny = retval[2]
+            nz = retval[3]
+            step = math.ceil(float(nmax)/self.imageSize)
+            if nz==1 :
+                image = image[::step,::step]
+            else :
+                image =  image[::step,::step,::]  
+            data = image.flatten()
         dtype = data.dtype
         dataMin = np.min(data)
         dataMax = np.max(data)
@@ -536,42 +633,27 @@ class NTNDA_Viewer(QWidget) :
         else :
             displayMin = float(self.minLimitText.text())
             displayMax = float(self.maxLimitText.text())
-        if self.showLimits :
-            self.channelLimitsText.setText(str((dataMin,dataMax)))
+            
         if self.limitType != 0 :
-            xp = (displayMin, displayMax)
+            suppress = self.suppressBackground
+            if dtype==np.uint8 or dtype==np.uint8 : suppress = False
+            if suppress :
+                xp = (displayMax/255,displayMax)
+            else :
+                xp = (displayMin, displayMax)
             fp = (0.0, 255.0)
             data = (np.interp(data,xp,fp)).astype(np.uint8)
-        
-        if ndim ==2 :
-            nx = dimArray[0]["size"]
-            ny = dimArray[1]["size"]
-            image = np.reshape(data,(ny,nx))
-        elif ndim ==3 :
-            if dimArray[0]["size"]==3 :
-                nz = dimArray[0]["size"]
-                nx = dimArray[1]["size"]
-                ny = dimArray[2]["size"]
-                image = np.reshape(data,(ny,nx,nz))
-            elif dimArray[1]["size"]==3 :
-                nz = dimArray[1]["size"]
-                nx = dimArray[0]["size"]
-                ny = dimArray[2]["size"]
-                image = np.reshape(data,(ny,nz,nx))
-                image = np.swapaxes(image,2,1)
-            elif dimArray[2]["size"]==3 :
-                nz = dimArray[2]["size"]
-                nx = dimArray[0]["size"]
-                ny = dimArray[1]["size"]
-                image = np.reshape(data,(nz,ny,nx))
-                image = np.swapaxes(image,0,2)
-                image = np.swapaxes(image,0,1)
-            else  :  
-                raise Exception('no axis has dim = 3')
-                return
-        else :
-                raise Exception('ndim not 2 or 3')
-        
+        if self.showLimits :
+            self.channelLimitsText.setText(str((dataMin,dataMax)))
+            imageMin = np.min(data)
+            imageMax = np.max(data)
+            self.imageLimitsText.setText(str((imageMin,imageMax))) 
+        retval = self.reshape(data,dimArray,step)
+        image = retval[0]
+        nx = retval[1]
+        ny = retval[2]
+        nz = retval[3]
+        self.imageDict["image"] = image
         if dtype!=self.imageDict["dtypeChannel"] :
             self.imageDict["dtypeChannel"] = dtype
             self.dtypeChannelText.setText(str(self.imageDict["dtypeChannel"]))
@@ -598,4 +680,4 @@ class NTNDA_Viewer(QWidget) :
             self.nzText.setText(str(self.imageDict["nz"]))
             reset = True
         if reset: self.resetEvent()
-        self.imageDict["image"] = image
+        
