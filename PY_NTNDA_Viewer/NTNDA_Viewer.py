@@ -300,8 +300,6 @@ class NTNDA_Viewer(QWidget) :
         if self.isClosed : return
         if type(self.imageDict["image"])==type(None) : return
         try :
-            if self.limitType>0 :
-                self.scaleLimits()
             self.imageDisplay.display(self.imageDict["image"])
         except Exception as error:
             self.statusText.setText(str(error))    
@@ -374,26 +372,6 @@ class NTNDA_Viewer(QWidget) :
         except Exception as error:
             self.statusText.setText(str(error))
             
-    def scaleLimits(self) :
-        image = self.imageDict["image"]
-        dtype = image.dtype
-        if self.limitType== 0 :
-            return
-        elif self.limitType== 1 :
-           start = self.limits[0]
-           end = self.limits[1]
-        else :
-            start = self.minLimitText.text()
-            end = self.maxLimitText.text()
-        xp = (float(start),float(end))
-        if dtype==np.uint8 :
-            fp = (0.0,255.0)
-        else :
-            fp = (0.0,65535)
-        image = np.interp(image,xp,fp)
-        image = image.astype(dtype)
-        self.imageDict["image"] = image   
-    
     def channelNameEvent(self) :
         try:
             self.provider.setChannelName(self.channelNameText.text())
@@ -544,48 +522,27 @@ class NTNDA_Viewer(QWidget) :
         if ndim!=2 and ndim!=3 :
             raise Exception('ndim not 2 or 3')
             return
-        dataMin = int(np.min(data))
-        dataMax = int(np.max(data))
+        dtype = data.dtype
+        dataMin = np.min(data)
+        dataMax = np.max(data)
+        if self.limitType == 0 :
+            if dtype != np.uint8 and dtype != np.uint16 :
+                raise Exception('noScale requires uint8 or uint16')
+                return
+        if self.limitType == 1 :
+            displayMin = dataMin
+            displayMax = dataMax
+            self.limits = (dataMin, dataMax)
+        else :
+            displayMin = float(self.minLimitText.text())
+            displayMax = float(self.maxLimitText.text())
         if self.showLimits :
             self.channelLimitsText.setText(str((dataMin,dataMax)))
-        dtype = data.dtype
-        if dtype==np.int8 :
-            xp = (-128.0,127.0)
-            fp = (0.0,255.0)
-            data = np.interp(data,xp,fp)
-            data = data.astype(np.uint8)
-        elif dtype==np.uint8 :
-            pass
-        elif dtype==np.int16 :
-            xp = (-32768.0,32767.0)
-            fp = (0.0,255.0)
-            data = np.interp(data,xp,fp)
-            data = data.astype(np.uint8)
-        elif dtype==np.uint16 :
-            xp = (0.0,65535.0)
-            fp = (0.0,255.0)
-            data = np.interp(data,xp,fp)
-            data = data.astype(np.uint8)
-        elif dtype==np.int32 :
-            xp = (-2147483648,2147483647.0)
-            fp = (0.0,255.0)
-            data = np.interp(data,xp,fp)
-            data = data.astype(np.uint8)       
-        elif dtype==np.uint32 :
-            xp = (0.0,4294967295.0)
-            fp = (0.0,255.0)
-            data = np.interp(data,xp,fp)
-            data = data.astype(np.uint8)
-        else :
-            xp = (float(dataMin),float(dataMax))
-            fp = (0.0,255.0)
-            data = np.interp(data,xp,fp)
-            data = data.astype(np.uint8)
+        if self.limitType != 0 :
+            xp = (displayMin, displayMax)
+            fp = (0.0, 255.0)
+            data = (np.interp(data,xp,fp)).astype(np.uint8)
         
-        if self.limitType==1:
-            self.limits = (int(np.min(data)),int(np.max(data)))
-        if self.showLimits :
-            self.imageLimitsText.setText(str((int(np.min(data)),int(np.max(data)))))       
         if ndim ==2 :
             nx = dimArray[0]["size"]
             ny = dimArray[1]["size"]
