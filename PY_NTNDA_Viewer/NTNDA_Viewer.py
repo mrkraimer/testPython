@@ -597,6 +597,9 @@ class NTNDA_Viewer(QWidget) :
             raise Exception('ndim not 2 or 3')
             return
         nmax = 0
+        nz = 0
+        nx = 0
+        ny = 0
         step = 1
         ndim = len(dimArray)
         if ndim >=2 :
@@ -650,9 +653,10 @@ class NTNDA_Viewer(QWidget) :
             self.imageLimitsText.setText(str((imageMin,imageMax))) 
         retval = self.reshape(data,dimArray,step)
         image = retval[0]
-        nx = retval[1]
-        ny = retval[2]
-        nz = retval[3]
+        if step==1 : 
+            nx = retval[1]
+            ny = retval[2]
+            nz = retval[3]
         self.imageDict["image"] = image
         if dtype!=self.imageDict["dtypeChannel"] :
             self.imageDict["dtypeChannel"] = dtype
