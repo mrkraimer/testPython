@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import QWidget,QLabel,QLineEdit
 from PyQt5.QtWidgets import QPushButton,QHBoxLayout,QGridLayout,QInputDialog
 from PyQt5.QtWidgets import QRadioButton,QGroupBox
 from PyQt5.QtCore import *
+from PyQt5.QtGui import qRgb
 sys.path.append('../numpyImage/')
 from numpyImage import NumpyImage
 import ctypes
@@ -61,6 +62,8 @@ class NTNDA_Viewer(QWidget) :
         self.showLimits = False
         self.suppressBackground = False
         self.nImages = 0
+        self.colorTable = [qRgb(i,i,i) for i in range(256)]
+        self.setColorTable = False
 # first row
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0)
@@ -218,15 +221,14 @@ class NTNDA_Viewer(QWidget) :
         groupbox=QGroupBox('manualLimits')
         showbox.addWidget(QLabel("minimum:"))
         self.minLimitText = QLineEdit()
-        self.minLimitText.setFixedWidth(60)
+        self.minLimitText.setFixedWidth(50)
         self.minLimitText.setEnabled(True)
         self.minLimitText.setText('0')
         self.minLimitText.returnPressed.connect(self.minLimitEvent)
         showbox.addWidget(self.minLimitText)
-        
         showbox.addWidget(QLabel("maximum:"))
         self.maxLimitText = QLineEdit()
-        self.maxLimitText.setFixedWidth(60)
+        self.maxLimitText.setFixedWidth(50)
         self.maxLimitText.setEnabled(True)
         self.maxLimitText.setText('255')
         self.maxLimitText.returnPressed.connect(self.maxLimitEvent)
@@ -234,8 +236,31 @@ class NTNDA_Viewer(QWidget) :
         groupbox.setLayout(showbox)
         box.addWidget(groupbox)
         
+        showbox = QHBoxLayout()
+        groupbox=QGroupBox('colorTable')
+        showbox.addWidget(QLabel("red:"))
+        self.redText = QLineEdit()
+        self.redText.setFixedWidth(50)
+        self.redText.setEnabled(True)
+        self.redText.setText('1.0')
+        self.redText.returnPressed.connect(self.colorLimitEvent)
+        showbox.addWidget(self.redText)
+        showbox.addWidget(QLabel("green:"))
+        self.greenText = QLineEdit()
+        self.greenText.setFixedWidth(50)
+        self.greenText.setEnabled(True)
+        self.greenText.setText('1.0')
+        self.greenText.returnPressed.connect(self.colorLimitEvent)
+        showbox.addWidget(self.greenText)
+        showbox.addWidget(QLabel("blue:"))
+        self.blueText = QLineEdit()
+        self.blueText.setFixedWidth(50)
+        self.blueText.setEnabled(True)
+        self.blueText.setText('1.0')
+        self.blueText.returnPressed.connect(self.colorLimitEvent)
+        showbox.addWidget(self.blueText)
         groupbox.setLayout(showbox)
-        box.addWidget(groupbox)
+        box.addWidget(groupbox)        
         
         wid =  QWidget()
         wid.setLayout(box)
@@ -243,6 +268,7 @@ class NTNDA_Viewer(QWidget) :
 # fifth row
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0)
+        
         channelLimitsLabel = QLabel('channelLimits: ')
         box.addWidget(channelLimitsLabel)
         self.channelLimitsText = QLabel()
@@ -254,6 +280,16 @@ class NTNDA_Viewer(QWidget) :
         self.imageLimitsText = QLabel()
         self.imageLimitsText.setFixedWidth(100)
         box.addWidget(self.imageLimitsText)
+        
+        self.colorTableButton = QPushButton('colorTable')
+        self.colorTableButton.setEnabled(True)
+        self.colorTableButton.clicked.connect(self.colorTableEvent)
+        self.useColorTable = False
+        box.addWidget(self.colorTableButton)
+        self.nocolorTableButton = QPushButton('nocolorTable')
+        self.nocolorTableButton.setEnabled(False)
+        self.nocolorTableButton.clicked.connect(self.nocolorTableEvent)
+        box.addWidget(self.nocolorTableButton)
 
         wid =  QWidget()
         wid.setLayout(box)
@@ -315,7 +351,10 @@ class NTNDA_Viewer(QWidget) :
         if self.isClosed : return
         if type(self.imageDict["image"])==type(None) : return
         try :
-            self.imageDisplay.display(self.imageDict["image"])
+            if self.setColorTable :
+                self.imageDisplay.display(self.imageDict["image"],colorTable=self.colorTable)
+            else :
+                self.imageDisplay.display(self.imageDict["image"])
         except Exception as error:
             self.statusText.setText(str(error))    
 
@@ -342,7 +381,42 @@ class NTNDA_Viewer(QWidget) :
     def autoScaleEvent(self) :  
         self.limitType = 1
         self.display()
-         
+
+    def colorTableEvent(self) :
+        self.colorTableButton.setEnabled(False)
+        self.nocolorTableButton.setEnabled(True)
+        self.setColorTable = True
+
+    def nocolorTableEvent(self) :
+        self.colorTableButton.setEnabled(True)
+        self.nocolorTableButton.setEnabled(False) 
+        self.setColorTable = False      
+
+    def stopEvent(self) :
+        self.stop()        
+        
+    def colorLimitEvent(self) :
+        try :
+           red = float(self.redText.text())
+           green= float(self.greenText.text())
+           blue = float(self.blueText.text())
+           maxvalue = red
+           if green>maxvalue : maxvalue = green
+           if blue>maxvalue : maxvalue = blue
+           red = red/maxvalue
+           green = green/maxvalue
+           blue = blue/maxvalue
+           colorTable = []
+           for ind in range(256) :
+               r = int(ind*red)
+               g = int(ind*green)
+               b = int(ind*blue)
+               colorTable.append(qRgb(r,g,b))
+           self.colorTable = colorTable  
+           self.display()
+        except Exception as error:
+            self.statusText.setText(str(error))    
+  
     def manualScaleEvent(self) :  
         self.limitType = 2
         self.display()

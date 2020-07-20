@@ -30,7 +30,13 @@ class ImageToQImage() :
             if image.dtype==np.uint8 :
                 if len(image.shape) == 2:
                     nx = image.shape[1]
-                    qimage = QImage(data, image.shape[1], image.shape[0],nx,QImage.Format_Grayscale8)
+                    if colorTable==None :
+                        qimage = QImage(data, image.shape[1], image.shape[0],nx,\
+                            QImage.Format_Grayscale8)
+                    else :
+                        qimage = QImage(data,image.shape[1], image.shape[0],nx,
+                            QImage.Format_Indexed8)
+                        qimage.setColorTable(colorTable) 
                     return  qimage
                 elif len(image.shape) == 3:
                     if image.shape[2] == 3:
