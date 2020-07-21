@@ -4,8 +4,10 @@ Copyright - See the COPYRIGHT that is included with this distribution.
     NTNDA_Viewer is distributed subject to a Software License Agreement found
     in file LICENSE that is included with this distribution.
 
-author Marty Kraimer
-    latest date 2020.03.02
+authors
+    Marty Kraimer
+    Mark Rivers
+latest date 2020.07.21
     original development started 2019.12
 '''
 
@@ -316,18 +318,12 @@ class NTNDA_Viewer(QWidget) :
         self.display()
 
     def zoomInEvent(self) :
-        if self.isStarted :
-            self.statusText.setText('zoomIn can only be done when stopped')
-            return
         if not self.imageDisplay.zoomIn() : 
             self.statusText.setText('zoomIn failed')
             return
         self.display()
 
     def zoomOutEvent(self) :
-        if self.isStarted :
-            self.statusText.setText('zoomOut can only be done when stopped')
-            return
         if not self.imageDisplay.zoomOut() : 
             self.statusText.setText('zoomOut failed')
             return   
@@ -386,11 +382,13 @@ class NTNDA_Viewer(QWidget) :
         self.colorTableButton.setEnabled(False)
         self.nocolorTableButton.setEnabled(True)
         self.setColorTable = True
+        self.display()
 
     def nocolorTableEvent(self) :
         self.colorTableButton.setEnabled(True)
         self.nocolorTableButton.setEnabled(False) 
-        self.setColorTable = False      
+        self.setColorTable = False
+        self.display()    
 
     def stopEvent(self) :
         self.stop()        
@@ -398,11 +396,16 @@ class NTNDA_Viewer(QWidget) :
     def colorLimitEvent(self) :
         try :
            red = float(self.redText.text())
-           green= float(self.greenText.text())
+           if red <0.0 : raise Exception('red is less than zero')
+           green = float(self.greenText.text())
+           if green <0.0 : raise Exception('green is less than zero')
            blue = float(self.blueText.text())
+           if blue <0.0 : raise Exception('blue is less than zero')
            maxvalue = red
            if green>maxvalue : maxvalue = green
            if blue>maxvalue : maxvalue = blue
+           if maxvalue<=0 :
+               raise Exception('at least one of red,green,blue must be > 0')
            red = red/maxvalue
            green = green/maxvalue
            blue = blue/maxvalue
@@ -480,8 +483,6 @@ class NTNDA_Viewer(QWidget) :
         self.stopButton.setEnabled(True)
         self.channelNameText.setEnabled(False)
         self.imageSizeText.setEnabled(False)
-        self.zoomInButton.setEnabled(False)
-        self.zoomOutButton.setEnabled(False)
         self.minLimitText.setEnabled(False)
         self.maxLimitText.setEnabled(False)
 
@@ -493,8 +494,6 @@ class NTNDA_Viewer(QWidget) :
         self.channelNameLabel.setStyleSheet("background-color:gray")
         self.channelNameText.setEnabled(True)
         self.imageSizeText.setEnabled(True)
-        self.zoomInButton.setEnabled(True)
-        self.zoomOutButton.setEnabled(True)
         self.minLimitText.setEnabled(True)
         self.maxLimitText.setEnabled(True)
         self.channel = None
