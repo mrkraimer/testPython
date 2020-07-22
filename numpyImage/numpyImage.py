@@ -102,6 +102,7 @@ class Worker(QThread):
         
 class NumpyImageZoom() :
     def __init__(self,imageSize):
+        self.imageSize = imageSize
         self.isZoom = False
         self.xmin = 0
         self.xmax = 0
@@ -109,7 +110,10 @@ class NumpyImageZoom() :
         self.ymax = 0
         self.nx = 0
         self.ny = 0
-        
+
+    def setImageSize(self,imageSize) :
+        self.imageSize = imageSize
+             
     def setFullSize(self,nx,ny) :
         self.xmax = nx
         self.ymax = ny
@@ -120,9 +124,9 @@ class NumpyImageZoom() :
     def reset(self) :
         self.isZoom = False
         self.xmin = 0
-        self.xmax = 0
+        self.xmax = self.imageSize
         self.ymin = 0
-        self.ymax = 0
+        self.ymax = self.imageSize
 
     def newZoom(self,xsize,ysize,xmin,xmax,ymin,ymax,dtype) :
         xscale = float((self.xmax-self.xmin)/xsize)
@@ -148,19 +152,19 @@ class NumpyImageZoom() :
         self.isZoom = True
         return True
 
-    def zoomInc(self,inc,imageSize) :
-        if not self.isZoom : return False
+    def zoomInc(self,inc) :
+        self.isZoom = True
         xmin = self.xmin + inc
         if xmin<0 : return False
         xmax = self.xmax - inc
         if xmax>self.nx : return False
-        if xmax>imageSize : return False
+        if xmax>self.imageSize : return False
         if (xmax-xmin)<2.0 : return False
         ymin = self.ymin + inc
         if ymin<0 : return False
         ymax = self.ymax - inc
         if ymax>self.ny : return False
-        if ymax>imageSize : return False
+        if ymax>self.imageSize : return False
         if (ymax-ymin)<2.0 : return False
         self.xmin = xmin
         self.xmax = xmax
@@ -168,13 +172,13 @@ class NumpyImageZoom() :
         self.ymax = ymax
         return True
 
-    def zoomIn(self,imageSize) :
-        inc = 1
-        return self.zoomInc(inc,imageSize)
+    def zoomIn(self,zoomScale) :
+        inc = 1*zoomScale
+        return self.zoomInc(inc)
 
-    def zoomOut(self,imageSize) :
-        inc = -1
-        return self.zoomInc(inc,imageSize)
+    def zoomOut(self,zoomScale) :
+        inc = -1*zoomScale
+        return self.zoomInc(inc)
 
     def getData(self) :
         return (self.xmin,self.xmax,self.ymin,self.ymax)
@@ -225,16 +229,16 @@ class NumpyImage(QWidget) :
     def resetZoom(self) :
         self.imageZoom.reset()
         
-    def zoomIn(self):
+    def zoomIn(self,zoomScale):
         if self.imageZoom==None : return False
-        result =  self.imageZoom.zoomIn(self.imageSize)
+        result =  self.imageZoom.zoomIn(zoomScale)
         if result and self.clientZoomCallback!=None :
             self.clientZoomCallback(self.imageZoom.getData())
         return result
 
-    def zoomOut(self):
+    def zoomOut(self,zoomScale):
         if self.imageZoom==None : return False
-        result =  self.imageZoom.zoomOut(self.imageSize)
+        result =  self.imageZoom.zoomOut(zoomScale)
         if result and self.clientZoomCallback!=None :
             self.clientZoomCallback(self.imageZoom.getData())
         return result     
@@ -242,6 +246,7 @@ class NumpyImage(QWidget) :
     def setImageSize(self,imageSize) :
         self.imageSize = imageSize
         self.thread.setImageSize(self.imageSize)
+        self.imageZoom.setImageSize(self.imageSize)
         point = self.geometry().topLeft()
         self.xoffset = point.x()
         self.yoffset = point.y()    

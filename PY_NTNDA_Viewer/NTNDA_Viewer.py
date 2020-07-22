@@ -66,6 +66,7 @@ class NTNDA_Viewer(QWidget) :
         self.nImages = 0
         self.colorTable = [qRgb(i,i,i) for i in range(256)]
         self.setColorTable = False
+        self.zoomScale = 1
 # first row
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0)
@@ -193,21 +194,6 @@ class NTNDA_Viewer(QWidget) :
         box.addWidget(groupbox)
         
         showbox = QHBoxLayout()
-        groupbox=QGroupBox('scaleType')
-        self.noScaleButton = QRadioButton('noScale')
-        self.noScaleButton.setChecked(True)
-        self.noScaleButton.toggled.connect(self.noScaleEvent)
-        self.autoScaleButton = QRadioButton('autoScale')
-        self.autoScaleButton.toggled.connect(self.autoScaleEvent)
-        self.manualScaleButton = QRadioButton('manualScale')
-        self.manualScaleButton.toggled.connect(self.manualScaleEvent)
-        showbox.addWidget(self.noScaleButton)
-        showbox.addWidget(self.autoScaleButton)
-        showbox.addWidget(self.manualScaleButton)
-        groupbox.setLayout(showbox)
-        box.addWidget(groupbox)
-        
-        showbox = QHBoxLayout()
         groupbox=QGroupBox('suppressBackground')
         self.suppressBackgroundButton = QRadioButton('yes')
         self.suppressBackgroundButton.toggled.connect(self.suppressBackgroundEvent)
@@ -220,15 +206,30 @@ class NTNDA_Viewer(QWidget) :
         box.addWidget(groupbox)
         
         showbox = QHBoxLayout()
+        groupbox=QGroupBox('scaleType')
+        self.noScaleButton = QRadioButton('noScale')
+        self.noScaleButton.setChecked(True)
+        self.noScaleButton.toggled.connect(self.noScaleEvent)
+        self.autoScaleButton = QRadioButton('auto')
+        self.autoScaleButton.toggled.connect(self.autoScaleEvent)
+        self.manualScaleButton = QRadioButton('manual')
+        self.manualScaleButton.toggled.connect(self.manualScaleEvent)
+        showbox.addWidget(self.noScaleButton)
+        showbox.addWidget(self.autoScaleButton)
+        showbox.addWidget(self.manualScaleButton)
+        groupbox.setLayout(showbox)
+        box.addWidget(groupbox)
+        
+        showbox = QHBoxLayout()
         groupbox=QGroupBox('manualLimits')
-        showbox.addWidget(QLabel("minimum:"))
+        showbox.addWidget(QLabel("min:"))
         self.minLimitText = QLineEdit()
         self.minLimitText.setFixedWidth(50)
         self.minLimitText.setEnabled(True)
         self.minLimitText.setText('0')
         self.minLimitText.returnPressed.connect(self.minLimitEvent)
         showbox.addWidget(self.minLimitText)
-        showbox.addWidget(QLabel("maximum:"))
+        showbox.addWidget(QLabel("max:"))
         self.maxLimitText = QLineEdit()
         self.maxLimitText.setFixedWidth(50)
         self.maxLimitText.setEnabled(True)
@@ -262,8 +263,26 @@ class NTNDA_Viewer(QWidget) :
         self.blueText.returnPressed.connect(self.colorLimitEvent)
         showbox.addWidget(self.blueText)
         groupbox.setLayout(showbox)
-        box.addWidget(groupbox)        
-        
+        box.addWidget(groupbox)
+
+        showbox = QHBoxLayout()
+        groupbox=QGroupBox('zoomScale')
+        self.x1Button = QRadioButton('x1')
+        self.x1Button.toggled.connect(self.zoomScaleEvent)
+        self.x1Button.setChecked(True)
+        showbox.addWidget(self.x1Button)
+        self.x2Button = QRadioButton('x2')
+        self.x2Button.toggled.connect(self.zoomScaleEvent)
+        showbox.addWidget(self.x2Button)
+        self.x4Button = QRadioButton('x4')
+        self.x4Button.toggled.connect(self.zoomScaleEvent)
+        showbox.addWidget(self.x4Button)
+        self.x8Button = QRadioButton('x8')
+        self.x8Button.toggled.connect(self.zoomScaleEvent)
+        showbox.addWidget(self.x8Button)
+        groupbox.setLayout(showbox)
+        box.addWidget(groupbox)
+
         wid =  QWidget()
         wid.setLayout(box)
         self.fourthRow = wid
@@ -318,16 +337,29 @@ class NTNDA_Viewer(QWidget) :
         self.display()
 
     def zoomInEvent(self) :
-        if not self.imageDisplay.zoomIn() : 
+        if not self.imageDisplay.zoomIn(self.zoomScale) : 
             self.statusText.setText('zoomIn failed')
             return
         self.display()
 
     def zoomOutEvent(self) :
-        if not self.imageDisplay.zoomOut() : 
+        if not self.imageDisplay.zoomOut(self.zoomScale) : 
             self.statusText.setText('zoomOut failed')
             return   
         self.display()
+
+    def zoomScaleEvent(self) :
+        if self.x1Button.isChecked() :
+            self.zoomScale = 1
+        elif  self.x2Button.isChecked() :
+            self.zoomScale = 2
+        elif  self.x4Button.isChecked() :
+            self.zoomScale = 4
+        elif  self.x8Button.isChecked() :
+            self.zoomScale = 8
+        else :
+            self.statusText.setText('why is no zoomScale enabled?')
+               
 
     def zoomEvent(self,zoomData) :
         self.zoomText.setText(str(zoomData))
