@@ -12,92 +12,30 @@ import math
 sys.path.append('../numpyImage/')
 from numpyImage import NumpyImage
 
-maxsize = 600
-
-class InitialValues() :
-    pixeltype = "uint8"
-    pixelmax = 256
-    xmin = float(-2.5)
-    xmax = float(1.00)
-    ymin = float(-1.25)
-    ymax = float(1.25)
-    # convert from x,y to pixel (width,height)
-    yxratio = (ymax-ymin)/(xmax-xmin)
-    if yxratio>1.0 :
-        height = int(maxsize)
-        width = int(math.ceil(height*yxratio))
-    else :
-        width = int(maxsize)
-        height = int(math.ceil(width*yxratio))
-    nz = 3
-
 class CurrentValues() :
-    def __init__(self,parent=None):
-        ini = InitialValues()
-        self.pixeltype = ini.pixeltype
-        self.pixelmax = ini.pixelmax
-        self.xmin = ini.xmin
-        self.xmax = ini.xmax
-        self.ymin = ini.ymin
-        self.ymax = ini.ymax
-        self.height = ini.height
-        self.width = ini.width
-        self.nz = ini.nz
+    def __init__(self):
+        self.pixeltype = pixeltype = "uint8"
+        self.pixelmax = 256
+        self.xmin = float(-2.5)
+        self.xmax = float(1.5)
+        self.ymin = float(-2.0)
+        self.ymax = float(2.0)
+        self.nz = 3
     def show(self) :
         print('self.xmin=',self.xmin,' self.xmax=',self.xmax)
         print('self.ymin=',self.ymin,' self.ymax=',self.ymax)
-        print('self.height=',self.height,' self.width=',self.width)
         print('self.nz=',self.nz)
 
-    def update(self,imageSize,mouseLocation) :
-        xsize = imageSize[0]
-        ysize = imageSize[1]
-        xlow = mouseLocation[0]
-        xhigh = mouseLocation[1]
-        ylow = mouseLocation[2]
-        yhigh = mouseLocation[3]
-        nx = xhigh - xlow
-        ny = yhigh - ylow
-        yxratio = float(ny)/float(nx)
-        if yxratio>1.0 :
-            height = int(maxsize)
-            width = int(math.ceil(height/yxratio))
-            excess = width - int(width/4)*4
-            if excess>0 :
-                print('excess=',excess,' width=',width)
-                width = width - excess
-                if width<=0 :
-                    raise Exception('width <=0')
-        else :
-            width = int(maxsize)
-            height = int(math.ceil(width*yxratio))
-        xminPre = self.xmin
-        xmaxPre = self.xmax
-        widthPre = self.width
-        xincPre = (xmaxPre-xminPre)/widthPre
-        xmin = xminPre + xincPre*(xlow)
-        xmax = xmaxPre - xincPre*(xsize-xhigh)
-        yminPre = self.ymin
-        ymaxPre = self.ymax
-        heightPre = self.height
-        yincPre = (ymaxPre-yminPre)/heightPre
-        ymin = yminPre + yincPre*(ylow)
-        ymax = ymaxPre - yincPre*(ysize-yhigh)
-        self.xmin = xmin
-        self.xmax = xmax
-        self.ymin = ymin
-        self.ymax = ymax
-        self.height = height
-        self.width = width
         
 class Viewer(QWidget) :
     def __init__(self,mandelbrot,parent=None):
         super(QWidget, self).__init__(parent)
         self.mandelbrot = mandelbrot
+        self.imageSize = 600
         self.isClosed = False
         self.setWindowTitle("Viewer")
         self.currentValues = CurrentValues()
-        self.imageDisplay = NumpyImage(windowTitle='mandelbrot',flipy=True)
+        self.imageDisplay = NumpyImage(windowTitle='mandelbrot',flipy=False,imageSize=self.imageSize)
         self.imageDisplay.setZoomCallback(self.zoomEvent,clientZoom=True)
 # first row
         self.startButton = QPushButton('start')
@@ -312,12 +250,8 @@ class Viewer(QWidget) :
         self.zoomActive = True
         xmin = self.currentValues.xmin
         xmax = self.currentValues.xmax
-#        xinc = self.currentValues.xinc
         ymin = self.currentValues.ymin
         ymax = self.currentValues.ymax
-#        yinc = self.currentValues.yinc
-        width = self.currentValues.width
-        height = self.currentValues.height
         rangex = (xmax-xmin)
         rangey = (ymax-ymin)
         nimages = self.nimages
@@ -332,16 +266,12 @@ class Viewer(QWidget) :
             if self.stopZoom : break
             xmin = xmin + delX
             xmax = xmax - delX
-#            xinc = (xmax-xmin)/float(width)
             ymin = ymin + delY
             ymax = ymax - delY
-#            yinc = (ymax-ymin)/float(height)
             self.currentValues.xmin = xmin
             self.currentValues.xmax = xmax
-#            self.currentValues.xinc = xinc
             self.currentValues.ymin = ymin
             self.currentValues.ymax = ymax
-#            self.currentValues.yinc = yinc
             begin = time.time()
             self.generateImage()
             end = time.time()
@@ -350,6 +280,24 @@ class Viewer(QWidget) :
             if delay>0.0 : time.sleep(delay)
         self.zoomActive = False
 
+    def update(self,imageSize,mouseLocation) :
+        xminPre = self.currentValues.xmin
+        xmaxPre = self.currentValues.xmax
+        xincPre = (xmaxPre-xminPre)/self.imageSize
+        yminPre = self.currentValues.ymin
+        ymaxPre = self.currentValues.ymax
+        yincPre = (ymaxPre-yminPre)/self.imageSize
+        xlow = mouseLocation[0]
+        xhigh = mouseLocation[1]
+        ylow = mouseLocation[2]
+        yhigh = mouseLocation[3]
+        nx = xhigh - xlow
+        ny = yhigh - ylow
+        npts = max(nx,ny)
+        self.currentValues.xmin = xminPre + xincPre*xlow
+        self.currentValues.xmax = self.currentValues.xmin+ xincPre*npts
+        self.currentValues.ymin = yminPre + yincPre*ylow
+        self.currentValues.ymax = self.currentValues.ymin + yincPre*npts
 
     def generateImage(self) :
         isConnected = self.mandelbrot.checkConnected()
@@ -360,7 +308,7 @@ class Viewer(QWidget) :
         QApplication.processEvents()
         arg = (self.currentValues.xmin,self.currentValues.xmax,\
               self.currentValues.ymin,self.currentValues.ymax,\
-              self.currentValues.width,self.currentValues.height,\
+              self.imageSize,\
               self.currentValues.nz)
         try :
             self.pixarray = self.mandelbrot.createImage(arg)
@@ -395,22 +343,14 @@ class Viewer(QWidget) :
 
     def zoomEvent(self,imageSize,mouseLocation) :
         if self.zoomActive: return
-#        print('imageSize=',imageSize)
-#        print('mouseLocation=',mouseLocation)
-#        print('before update')
-        self.currentValues.show()
         success = True
         try :
-            self.currentValues.update(imageSize,mouseLocation)
+            self.update(imageSize,mouseLocation)
         except Exception as error:
             print('catching exception=',error)
             success = False
             self.statusText.setText(str(error))
- #       print('after update')
-        self.currentValues.show()
-        QApplication.processEvents()
         if success :
-#            print('calling start',flush=True)
             self.start()
 
 

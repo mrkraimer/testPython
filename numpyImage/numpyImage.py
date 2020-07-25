@@ -325,12 +325,8 @@ class NumpyImage(QWidget) :
         if xmin>xmax : xmax,xmin = xmin,xmax
         if xmin<0 : xmin = 0
         if xmax>xsize : xmax = xsize
-        if self.flipy :
-            ymin = self.ny - self.mouseReleasePosition.y()
-            ymax = self.ny - self.mousePressPosition.y()
-        else :
-            ymin = self.mousePressPosition.y()
-            ymax = self.mouseReleasePosition.y()
+        ymin = self.mousePressPosition.y()
+        ymax = self.mouseReleasePosition.y()
         if ymin>ymax : ymax,ymin = ymin,ymax
         if ymin<0 : ymin = 0
         if ymax>ysize : ymax = ysize

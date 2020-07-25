@@ -37,8 +37,7 @@ MandelbrotRecordPtr MandelbrotRecord::create(
             add("xmax",pvDouble)->
             add("ymin",pvDouble)->
             add("ymax",pvDouble)->
-            add("width",pvInt)->
-            add("height",pvInt)->
+            add("imageSize",pvInt)->
             add("nz",pvInt)->
             endNested()->
         addNestedStructure("result") ->
@@ -87,19 +86,18 @@ void MandelbrotRecord::createImage()
     double xmax = pvArgument->getSubField<PVDouble>("xmax")->get();
     double ymin = pvArgument->getSubField<PVDouble>("ymin")->get();
     double ymax = pvArgument->getSubField<PVDouble>("ymax")->get();
-    int height = pvArgument->getSubField<PVInt>("height")->get();
-    int width = pvArgument->getSubField<PVInt>("width")->get();
-    double xinc = (xmax-xmin)/width;
-    double yinc = (ymax-ymin)/height;
+    int imageSize = pvArgument->getSubField<PVInt>("imageSize")->get();
+    double xinc = (xmax-xmin)/imageSize;
+    double yinc = (ymax-ymin)/imageSize;
     int nz = pvArgument->getSubField<PVInt>("nz")->get();
-    size_t num = width*height*nz;
+    size_t num = imageSize*imageSize*nz;
     epics::pvData::shared_vector<uint8_t> value(num,255);
-    for(int indy=0; indy<height; ++indy)
+    for(int indy=0; indy<imageSize; ++indy)
     {
         double y = ymin + indy*yinc;
-        for(int indx=0; indx<width; ++indx)
+        for(int indx=0; indx<imageSize; ++indx)
         {
-             int indpix = indy*width*nz + indx*nz;
+             int indpix = indy*imageSize*nz + indx*nz;
              double x = xmin + indx*xinc;
              int  intensity = calcIntensity(x,y);
              if(nz==1) {
