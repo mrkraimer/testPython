@@ -80,6 +80,7 @@ class Worker(QThread):
         self.start()
 
     def run(self):
+        self.setPriority(QThread.HighPriority)
         qimage = self.imageToQImage.toQImage(\
             self.image,bytesPerLine=self.bytesPerLine,Format=self.Format,colorTable=self.colorTable)
         if qimage==None :
