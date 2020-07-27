@@ -31,7 +31,7 @@ class Viewer(QWidget) :
     def __init__(self,mandelbrot,parent=None):
         super(QWidget, self).__init__(parent)
         self.mandelbrot = mandelbrot
-        self.imageSize = 600
+        self.imageSize = 800
         self.isClosed = False
         self.setWindowTitle("Viewer")
         self.currentValues = CurrentValues()
