@@ -52,41 +52,29 @@ class DataToImageAD() :
     def getManualLimits(self) :
         return self.manualLimits
 
-    def reshape(self,data,dimArray,step) :
+    def reshape(self,data,dimArray) :
         nz = 1
         ndim = len(dimArray)
         if ndim ==2 :
             nx = dimArray[0]["size"]
             ny = dimArray[1]["size"]
-            if step > 0 :
-                nx = int(float(nx)/step)
-                ny = int(float(ny)/step)
             image = np.reshape(data,(ny,nx))
         elif ndim ==3 :
             if dimArray[0]["size"]==3 :
                 nz = dimArray[0]["size"]
                 nx = dimArray[1]["size"]
                 ny = dimArray[2]["size"]
-                if step > 0 :
-                    nx = int(float(nx)/step)
-                    ny = int(float(ny)/step)
                 image = np.reshape(data,(ny,nx,nz))
             elif dimArray[1]["size"]==3 :
                 nz = dimArray[1]["size"]
                 nx = dimArray[0]["size"]
                 ny = dimArray[2]["size"]
-                if step > 0 :
-                    nx = int(float(nx)/step)
-                    ny = int(float(ny)/step)
                 image = np.reshape(data,(ny,nz,nx))
                 image = np.swapaxes(image,2,1)
             elif dimArray[2]["size"]==3 :
                 nz = dimArray[2]["size"]
                 nx = dimArray[0]["size"]
                 ny = dimArray[1]["size"]
-                if step > 0 :
-                    nx = int(float(nx)/step)
-                    ny = int(float(ny)/step)
                 image = np.reshape(data,(nz,ny,nx))
                 image = np.swapaxes(image,0,2)
                 image = np.swapaxes(image,0,1)
@@ -98,35 +86,6 @@ class DataToImageAD() :
         return (image,nx,ny,nz)        
         
     def dataToImage(self,data,dimArray,imageSize,scaleType=1,showLimits=False,suppressBackground=False) :
-        ndim = len(dimArray)
-        if ndim!=2 and ndim!=3 :
-            raise Exception('ndim not 2 or 3')
-        nmax = 0
-        nz = 0
-        nx = 0
-        ny = 0
-        step = 1
-        ndim = len(dimArray)
-        if ndim >=2 :
-            num = int(dimArray[0]["size"])
-            if num>nmax : nmax = num
-            num = int(dimArray[1]["size"])
-            if num>nmax : nmax = num
-            if ndim==3 :
-                num = int(dimArray[2]["size"])
-                if num>nmax : nmax = num
-        if nmax>imageSize :
-            retval = self.reshape(data,dimArray,1)
-            image = retval[0]
-            nx = retval[1]
-            ny = retval[2]
-            nz = retval[3]
-            step = math.ceil(float(nmax)/imageSize)
-            if nz==1 :
-                image = image[::step,::step]
-            else :
-                image =  image[::step,::step,::]  
-            data = image.flatten()
         dtype = data.dtype
         dataMin = np.min(data)
         dataMax = np.max(data)
@@ -154,12 +113,20 @@ class DataToImageAD() :
             imageMin = np.min(data)
             imageMax = np.max(data)
             self.imageLimits = (imageMin,imageMax)
-        retval = self.reshape(data,dimArray,step)
+        retval = self.reshape(data,dimArray)
         image = retval[0]
-        if step==1 : 
-            nx = retval[1]
-            ny = retval[2]
-            nz = retval[3]
+        nx = retval[1]
+        ny = retval[2]
+        nz = retval[3]
+        nmax = 0
+        if nx>nmax : nmax = nx
+        if ny>nmax : nmax = ny
+        if nmax > imageSize :
+            step = math.ceil(float(nmax)/imageSize)
+            if nz==1 :
+                image = image[::step,::step]
+            else :
+                image =  image[::step,::step,::]   
         self.imageDict["image"] = image
         self.imageDict["nx"] = nx
         self.imageDict["ny"] = ny
