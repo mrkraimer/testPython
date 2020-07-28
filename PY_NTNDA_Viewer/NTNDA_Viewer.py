@@ -21,29 +21,15 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import qRgb
 sys.path.append('../numpyImage/')
 from numpyImage import NumpyImage
+sys.path.append('../codecAD/')
+from codecAD import CodecAD
+sys.path.append('../dataToImageAD/')
+from dataToImageAD import DataToImageAD
+
 import ctypes
 import ctypes.util
 import os
 import math
-
-def imageDictCreate() :
-    return {"image" : None , "dtypeChannel" : None , "dtypeImage" : None  , "nx" : 0 , "ny" : 0 ,  "nz" : 0 }
-
-
-class FindLibrary(object) :
-    def __init__(self, parent=None):
-        self.save = dict()
-    def find(self,name) :
-        lib = self.save.get(name)
-        if lib!=None : return lib
-        result = ctypes.util.find_library(name)
-        if result==None : return None
-        if os.name == 'nt':
-            lib = ctypes.windll.LoadLibrary(result)
-        else :
-            lib = ctypes.cdll.LoadLibrary(result)
-        if lib!=None : self.save.update({name : lib})
-        return lib
         
 class NTNDA_Viewer(QWidget) :
     def __init__(self,ntnda_Channel_Provider,providerName, parent=None):
@@ -53,20 +39,22 @@ class NTNDA_Viewer(QWidget) :
         self.provider = ntnda_Channel_Provider
         self.provider.NTNDA_Viewer = self
         self.setWindowTitle(providerName + "_NTNDA_Viewer")
-        self.imageDict = imageDictCreate()
+        self.codecAD = CodecAD()
+        self.dataToImage = DataToImageAD()
+        self.imageDict = self.dataToImage.imageDictCreate()
         self.imageDisplay = NumpyImage(windowTitle='image',flipy=False,imageSize=self.imageSize)
         self.imageDisplay.setZoomCallback(self.zoomEvent)
         self.imageDisplay.setMousePressCallback(self.mousePressEvent)
         self.imageDisplay.setMouseReleaseCallback(self.mouseReleaseEvent)
         self.imageDisplay.setResizeCallback(self.resizeImageEvent)
-        self.limitType = 0
-        self.limits = (0,255)
+        self.scaleType = 0
         self.showLimits = False
         self.suppressBackground = False
         self.nImages = 0
         self.colorTable = [qRgb(i,i,i) for i in range(256)]
         self.setColorTable = False
         self.zoomScale = 1
+        self.codecIsNone = True
 # first row
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0)
@@ -264,14 +252,14 @@ class NTNDA_Viewer(QWidget) :
         self.minLimitText.setFixedWidth(50)
         self.minLimitText.setEnabled(True)
         self.minLimitText.setText('0')
-        self.minLimitText.returnPressed.connect(self.minLimitEvent)
+        self.minLimitText.returnPressed.connect(self.manualLimitsEvent)
         showbox.addWidget(self.minLimitText)
         showbox.addWidget(QLabel("max:"))
         self.maxLimitText = QLineEdit()
         self.maxLimitText.setFixedWidth(50)
         self.maxLimitText.setEnabled(True)
         self.maxLimitText.setText('255')
-        self.maxLimitText.returnPressed.connect(self.maxLimitEvent)
+        self.maxLimitText.returnPressed.connect(self.manualLimitsEvent)
         showbox.addWidget(self.maxLimitText)
         groupbox.setLayout(showbox)
         box.addWidget(groupbox)
@@ -324,7 +312,6 @@ class NTNDA_Viewer(QWidget) :
         layout.addWidget(self.thirdRow,2,0,alignment=Qt.AlignLeft)
         layout.addWidget(self.fourthRow,3,0,alignment=Qt.AlignLeft)
         self.setLayout(layout)
-        self.findLibrary = FindLibrary()
         self.subscription = None
         self.lasttime = time.time() -2
         self.arg = None
@@ -404,11 +391,11 @@ class NTNDA_Viewer(QWidget) :
 
     def scaleEvent(self) :
          if self.noScaleButton.isChecked() :
-            self.limitType = 0
+            self.scaleType = 0
          elif self.autoScaleButton.isChecked() :
-            self.limitType = 1
+            self.scaleType = 1
          elif self.manualScaleButton.isChecked() :
-            self.limitType = 2
+            self.scaleType = 2
          else :
             self.statusText.setText('why is no scaleButton enabled?')
          self.display()    
@@ -468,8 +455,11 @@ class NTNDA_Viewer(QWidget) :
     def nosuppressBackgroundEvent(self) :  
         self.suppressBackground = False        
 
-    def minLimitEvent(self) :
+    def manualLimitsEvent(self) :
         try:
+            low = int(self.minLimitText.text())
+            high = int(self.maxLimitText.text())
+            self.dataToImage.setManualLimits((low,high))
             self.display()
         except Exception as error:
             self.statusText.setText(str(error))
@@ -495,11 +485,6 @@ class NTNDA_Viewer(QWidget) :
         except Exception as error:
             self.statusText.setText(str(error))
 
-    def maxLimitEvent(self) :
-        try:
-            self.display()
-        except Exception as error:
-            self.statusText.setText(str(error))
             
     def channelNameEvent(self) :
         try:
@@ -550,31 +535,53 @@ class NTNDA_Viewer(QWidget) :
         try:
             data = arg['value']
             dimArray = arg['dimension']
+            ndim = len(dimArray)
+            if ndim!=2 and ndim!=3 :
+                self.statusText.setText('ndim not 2 or 3')
+                return            
             compressed = arg['compressedSize']
             uncompressed = arg['uncompressedSize']
             codec = arg['codec']
             codecName = codec['name']
             codecNameLength = len(codecName)
+            if self.codecAD.decompress(data,codec,compressed,uncompressed) :
+                self.codecIsNone = False
+                self.codecNameText.setText(self.codecAD.getCodecName())
+                data = self.codecAD.getData()
+                self.compressRatioText.setText(str(self.codecAD.getCompressRatio()))
+            else :
+                if not self.codecIsNone :
+                    self.codecIsNone = True
+                    self.codecNameText.setText('none') 
+                    self.compressRatioText.setText('1.0') 
         except Exception as error:
             self.statusText.setText(str(error))
             return
-        ndim = len(dimArray)
-        if ndim!=2 and ndim!=3 :
-            self.statusText.setText('ndim not 2 or 3')
-            return
-        if codecNameLength == 0 : 
-            codecName = 'none'
-            if codecName!=self.codecName : 
-                self.codecName = codecName
-                self.codecNameText.setText(self.codecName)
-            ratio = round(1.0)
-            if ratio!=self.compressRatio :
-                self.compressRatio = ratio
-                self.compressRatioText.setText(str(self.compressRatio))
         try:
-            if codecNameLength != 0 : 
-                data = self.decompress(data,codec,compressed,uncompressed)
-            self.dataToImage(data,dimArray)
+            self.dataToImage.dataToImage(data,dimArray,self.imageSize,\
+                scaleType=self.scaleType,\
+                showLimits=self.showLimits,\
+                suppressBackground=self.suppressBackground)
+            imageDict = self.dataToImage.getImageDict()
+            self.imageDict["image"] = imageDict["image"]
+            if self.imageDict["dtypeChannel"]!=imageDict["dtypeChannel"] :
+                self.imageDict["dtypeChannel"] = imageDict["dtypeChannel"]
+                self.dtypeChannelText.setText(str(self.imageDict["dtypeChannel"]))
+            if self.imageDict["dtypeImage"]!=imageDict["dtypeImage"] :
+                self.imageDict["dtypeImage"] = imageDict["dtypeImage"]
+                self.dtypeImageText.setText(str(self.imageDict["dtypeImage"]))
+            if self.imageDict["nx"]!=imageDict["nx"] :
+                self.imageDict["nx"] = imageDict["nx"]
+                self.nxText.setText(str(self.imageDict["nx"]))
+            if self.imageDict["ny"]!=imageDict["ny"] :
+                self.imageDict["ny"] = imageDict["ny"]
+                self.nyText.setText(str(self.imageDict["ny"]))
+            if self.imageDict["nz"]!=imageDict["nz"] :
+                self.imageDict["nz"] = imageDict["nz"]
+                self.nzText.setText(str(self.imageDict["nz"]))        
+            if self.showLimits :
+                self.channelLimitsText.setText(str(self.dataToImage.getChannelLimits()))
+                self.imageLimitsText.setText(str(self.dataToImage.getImageLimits()))
             self.display()
         except Exception as error:
             self.statusText.setText(str(error))
@@ -585,204 +592,4 @@ class NTNDA_Viewer(QWidget) :
             self.imageRateText.setText(str(round(self.nImages/timediff)))
             self.lasttime = self.timenow 
             self.nImages = 0
-
-    def decompress(self,data,codec,compressed,uncompressed) :
-        codecName = codec['name']
-        if codecName!=self.codecName : 
-            self.codecName = codecName
-            self.codecNameText.setText(self.codecName)
-        typevalue = codec['parameters']
-        if typevalue== 1 : dtype = "int8"; elementsize =int(1)
-        elif typevalue== 5 : dtype = "uint8"; elementsize =int(1)
-        elif typevalue== 2 : dtype = "int16"; elementsize =int(2)
-        elif typevalue== 6 : dtype = "uint16"; elementsize =int(2)
-        elif typevalue== 3 : dtype = "int32"; elementsize =int(4)
-        elif typevalue== 7 : dtype = "uint32"; elementsize =int(4)
-        elif typevalue== 4 : dtype = "int64"; elementsize =int(8)
-        elif typevalue== 8 : dtype = "uint64"; elementsize =int(8)
-        elif typevalue== 9 : dtype = "float32"; elementsize =int(4)
-        elif typevalue== 10 : dtype = "float64"; elementsize =int(8)
-        else : raise Exception('decompress mapIntToType failed')
-        if codecName=='blosc':
-            lib = self.findLibrary.find(codecName)
-        elif codecName=='jpeg' :
-            lib = self.findLibrary.find('decompressJPEG')
-        elif codecName=='lz4' or codecName=='bslz4' :
-            lib = self.findLibrary.find('bitshuffle')
-        else : lib = None
-        if lib==None : raise Exception('shared library ' +codecName + ' not found')
-        inarray = bytearray(data)
-        in_char_array = ctypes.c_ubyte * compressed
-        out_char_array = ctypes.c_ubyte * uncompressed
-        outarray = bytearray(uncompressed)
-        if codecName=='blosc' : 
-            lib.blosc_decompress(
-                 in_char_array.from_buffer(inarray),
-                 out_char_array.from_buffer(outarray),uncompressed)
-            data = np.array(outarray)
-            data = np.frombuffer(data,dtype=dtype)
-        elif codecName=='lz4' :
-            lib.LZ4_decompress_fast(
-                 in_char_array.from_buffer(inarray),
-                 out_char_array.from_buffer(outarray),uncompressed)
-            data = np.array(outarray)
-            data = np.frombuffer(data,dtype=dtype)
-        elif codecName=='bslz4' :
-            lib.bshuf_decompress_lz4(
-                 in_char_array.from_buffer(inarray),
-                 out_char_array.from_buffer(outarray),int(uncompressed/elementsize),
-                 elementsize,int(0))
-            data = np.array(outarray)
-            data = np.frombuffer(data,dtype=dtype)
-        elif codecName=='jpeg' :
-            lib.decompressJPEG(
-                 in_char_array.from_buffer(inarray),compressed,
-                 out_char_array.from_buffer(outarray),uncompressed)
-            data = np.array(outarray)
-            data = data.flatten()
-        else : raise Exception(codecName + " is unsupported codec")
-        ratio = round(float(uncompressed/compressed))
-        if ratio!=self.compressRatio :
-            self.compressRatio = ratio
-            self.compressRatioText.setText(str(self.compressRatio))
-        return data
-
-    def reshape(self,data,dimArray,step) :
-        nz = 1
-        ndim = len(dimArray)
-        if ndim ==2 :
-            nx = dimArray[0]["size"]
-            ny = dimArray[1]["size"]
-            if step > 0 :
-                nx = int(float(nx)/step)
-                ny = int(float(ny)/step)
-            image = np.reshape(data,(ny,nx))
-        elif ndim ==3 :
-            if dimArray[0]["size"]==3 :
-                nz = dimArray[0]["size"]
-                nx = dimArray[1]["size"]
-                ny = dimArray[2]["size"]
-                if step > 0 :
-                    nx = int(float(nx)/step)
-                    ny = int(float(ny)/step)
-                image = np.reshape(data,(ny,nx,nz))
-            elif dimArray[1]["size"]==3 :
-                nz = dimArray[1]["size"]
-                nx = dimArray[0]["size"]
-                ny = dimArray[2]["size"]
-                if step > 0 :
-                    nx = int(float(nx)/step)
-                    ny = int(float(ny)/step)
-                image = np.reshape(data,(ny,nz,nx))
-                image = np.swapaxes(image,2,1)
-            elif dimArray[2]["size"]==3 :
-                nz = dimArray[2]["size"]
-                nx = dimArray[0]["size"]
-                ny = dimArray[1]["size"]
-                if step > 0 :
-                    nx = int(float(nx)/step)
-                    ny = int(float(ny)/step)
-                image = np.reshape(data,(nz,ny,nx))
-                image = np.swapaxes(image,0,2)
-                image = np.swapaxes(image,0,1)
-            else  :  
-                raise Exception('no axis has dim = 3')
-                return
-        else :
-                raise Exception('ndim not 2 or 3')
-        return (image,nx,ny,nz)        
-        
-    def dataToImage(self,data,dimArray) :
-        ndim = len(dimArray)
-        if ndim!=2 and ndim!=3 :
-            raise Exception('ndim not 2 or 3')
-            return
-        nmax = 0
-        nz = 0
-        nx = 0
-        ny = 0
-        step = 1
-        ndim = len(dimArray)
-        if ndim >=2 :
-            num = int(dimArray[0]["size"])
-            if num>nmax : nmax = num
-            num = int(dimArray[1]["size"])
-            if num>nmax : nmax = num
-            if ndim==3 :
-                num = int(dimArray[2]["size"])
-                if num>nmax : nmax = num
-        if nmax>self.imageSize :
-            retval = self.reshape(data,dimArray,1)
-            image = retval[0]
-            nx = retval[1]
-            ny = retval[2]
-            nz = retval[3]
-            step = math.ceil(float(nmax)/self.imageSize)
-            if nz==1 :
-                image = image[::step,::step]
-            else :
-                image =  image[::step,::step,::]  
-            data = image.flatten()
-        dtype = data.dtype
-        dataMin = np.min(data)
-        dataMax = np.max(data)
-        if self.limitType == 0 :
-            if dtype != np.uint8 and dtype != np.uint16 :
-                raise Exception('noScale requires uint8 or uint16')
-                return
-        if self.limitType == 1 :
-            displayMin = dataMin
-            displayMax = dataMax
-            self.limits = (dataMin, dataMax)
-        else :
-            displayMin = float(self.minLimitText.text())
-            displayMax = float(self.maxLimitText.text())
-            
-        if self.limitType != 0 :
-            suppress = self.suppressBackground
-            if dtype==np.uint8 or dtype==np.uint8 : suppress = False
-            if suppress :
-                xp = (displayMax/255,displayMax)
-            else :
-                xp = (displayMin, displayMax)
-            fp = (0.0, 255.0)
-            data = (np.interp(data,xp,fp)).astype(np.uint8)
-        if self.showLimits :
-            self.channelLimitsText.setText(str((dataMin,dataMax)))
-            imageMin = np.min(data)
-            imageMax = np.max(data)
-            self.imageLimitsText.setText(str((imageMin,imageMax))) 
-        retval = self.reshape(data,dimArray,step)
-        image = retval[0]
-        if step==1 : 
-            nx = retval[1]
-            ny = retval[2]
-            nz = retval[3]
-        self.imageDict["image"] = image
-        if dtype!=self.imageDict["dtypeChannel"] :
-            self.imageDict["dtypeChannel"] = dtype
-            self.dtypeChannelText.setText(str(self.imageDict["dtypeChannel"]))
-        if image.dtype!=self.imageDict["dtypeImage"] :
-            self.imageDict["dtypeImage"] = image.dtype
-            self.dtypeImageText.setText(str(self.imageDict["dtypeImage"]))
-            if image.dtype==np.uint8 :
-                self.minLimitText.setText('0')
-                self.maxLimitText.setText('255')
-            else :
-                self.minLimitText.setText('0')
-                self.maxLimitText.setText('65535')
-        reset = False     
-        if nx!=self.imageDict["nx"] :
-            self.imageDict["nx"] = nx
-            self.nxText.setText(str(self.imageDict["nx"]))
-            reset = True
-        if ny!=self.imageDict["ny"] :
-            self.imageDict["ny"] = ny
-            self.nyText.setText(str(self.imageDict["ny"]))
-            reset = True
-        if nz!=self.imageDict["nz"] :
-            self.imageDict["nz"] = nz
-            self.nzText.setText(str(self.imageDict["nz"]))
-            reset = True
-        if reset: self.resetEvent()
         
