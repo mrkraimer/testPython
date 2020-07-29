@@ -66,6 +66,7 @@ class Worker(QThread):
         self.error = str('')
         self.imageToQImage = ImageToQImage()
         self.imageSize = imageSize
+        self.bytesPerLine = None
         
     def setImageSize(self,imageSize) :
         self.imageSize = imageSize
@@ -195,9 +196,8 @@ class NumpyImageZoom() :
         return image[self.ymin:self.ymax,self.xmin:self.xmax]
     
 class NumpyImage(QWidget) :
-    def __init__(self,windowTitle='no title',flipy= False,imageSize=800):
+    def __init__(self,imageSize=800, flipy= False):
         super(QWidget, self).__init__()
-        self.setWindowTitle(windowTitle)
         self.imageSize = int(imageSize)
         self.flipy = flipy
         self.thread = Worker(self.imageSize)
@@ -219,6 +219,8 @@ class NumpyImage(QWidget) :
         self.xoffset = 10
         self.yoffset = 300
         self.firstDisplay = True
+        self.bytesPerLine = None
+        self.Format = None
         
     def setZoomCallback(self,clientCallback,clientZoom=False) :
         self.clientZoomCallback = clientCallback
@@ -262,13 +264,14 @@ class NumpyImage(QWidget) :
            
             
     def display(self,pixarray,bytesPerLine=None,Format=0,colorTable=None) :
+        if self.firstDisplay :
+            self.firstDisplay = False
+            self.setGeometry(QRect(self.xoffset, self.yoffset,self.imageSize,self.imageSize))
         if not self.imageDoneEvent.isSet :
             result = self.imageDoneEvent.wait(2.0)
             if not result : raise Exception('display timeout')
         self.imageDoneEvent.clear()
-        if self.firstDisplay :
-            self.setGeometry(QRect(self.xoffset, self.yoffset,self.imageSize,self.imageSize))
-            self.firstDisplay = False
+        
         if self.flipy :
             self.image = np.flip(pixarray,0)
         else :
@@ -355,6 +358,9 @@ class NumpyImage(QWidget) :
             self.clientResizeCallback(event,xsize,ysize)
 
     def paintEvent(self, ev):
+        if self.firstDisplay :
+            self.firstDisplay = False
+            return
         if self.mousePressed : return
         self.thread.render(self,self.image,self.bytesPerLine,self.Format,self.colorTable)
         self.thread.wait()

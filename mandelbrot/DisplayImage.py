@@ -35,7 +35,7 @@ class Viewer(QWidget) :
         self.isClosed = False
         self.setWindowTitle("Viewer")
         self.currentValues = CurrentValues()
-        self.imageDisplay = NumpyImage(windowTitle='mandelbrot',flipy=False,imageSize=self.imageSize)
+        self.imageDisplay = NumpyImage(flipy=False,imageSize=self.imageSize)
         self.imageDisplay.setZoomCallback(self.zoomEvent,clientZoom=True)
 # first row
         self.startButton = QPushButton('start')

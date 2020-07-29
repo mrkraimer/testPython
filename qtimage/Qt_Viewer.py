@@ -17,7 +17,7 @@ class Qt_Viewer(QWidget) :
         self.isClosed = False
         self.provider = data_Provider
         self.setWindowTitle(providerName +"_Qt_Viewer")
-        self.imageDisplay = NumpyImage(windowTitle='qtimage')
+        self.imageDisplay = NumpyImage()
         self.formatChoices = None
         self.rgbTable = [qRgb(i/2, i, i/2) for i in range(256)]
 # first row
