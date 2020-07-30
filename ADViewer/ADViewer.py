@@ -26,11 +26,6 @@ sys.path.append('../codecAD/')
 from codecAD import CodecAD
 sys.path.append('../dataToImageAD/')
 from dataToImageAD import DataToImageAD
-
-import ctypes
-import ctypes.util
-import os
-import math
         
 class ADViewer(QWidget) :
     def __init__(self,ntnda_Channel_Provider,providerName, parent=None):
@@ -43,7 +38,6 @@ class ADViewer(QWidget) :
         self.codecAD = CodecAD()
         self.dataToImage = DataToImageAD()
         self.imageDict = self.dataToImage.imageDictCreate()
-        
         self.scaleType = 0
         self.nImages = 0
         self.colorTable = [qRgb(i,i,i) for i in range(256)]
@@ -62,6 +56,7 @@ class ADViewer(QWidget) :
         self.stopButton.setEnabled(False)
         self.stopButton.clicked.connect(self.stopEvent)
         box.addWidget(self.stopButton)
+        
         imageRateLabel = QLabel("imageRate:")
         box.addWidget(imageRateLabel)
         self.imageRateText = QLabel()
@@ -97,12 +92,12 @@ class ADViewer(QWidget) :
         box.addWidget(nzLabel)
         self.nzText = QLabel('   ')
         box.addWidget(self.nzText)
-        self.compressRatio = round(1.0)
+
         compressRatioLabel = QLabel('compressRatio:')
         box.addWidget(compressRatioLabel)
         self.compressRatioText = QLabel('1    ')
         box.addWidget(self.compressRatioText)
-        self.codecName = ''
+
         codecNameLabel = QLabel('codec:')
         box.addWidget(codecNameLabel)
         self.codecNameText = QLabel('none   ')
@@ -140,8 +135,7 @@ class ADViewer(QWidget) :
         self.nocolorTableButton.setEnabled(False)
         self.nocolorTableButton.clicked.connect(self.nocolorTableEvent)
         box.addWidget(self.nocolorTableButton)
-        
-        
+
         box.addWidget(QLabel("red:"))
         self.redText = QLineEdit()
         self.redText.setFixedWidth(50)
@@ -163,7 +157,7 @@ class ADViewer(QWidget) :
         self.blueText.setText('1.0')
         self.blueText.returnPressed.connect(self.colorLimitEvent)
         box.addWidget(self.blueText)
-        
+
         wid =  QWidget()
         wid.setLayout(box)
         self.thirdRow = wid
@@ -180,7 +174,8 @@ class ADViewer(QWidget) :
         box.addWidget(self.imageDisplay)
 
         rightvbox = QVBoxLayout()
-        
+        remainingSize = self.imageSize
+
         vbox = QVBoxLayout()
         self.noScaleButton = QRadioButton('noScale')
         self.noScaleButton.setChecked(True)
@@ -191,8 +186,10 @@ class ADViewer(QWidget) :
         vbox.addWidget(self.autoScaleButton)
         wid =  QWidget()
         wid.setLayout(vbox)
+        wid.setFixedHeight(60)
+        remainingSize = remainingSize - 60
         rightvbox.addWidget(wid)
-        
+
         vbox = QVBoxLayout()
         self.resetButton = QPushButton('resetZoom')
         vbox.addWidget(self.resetButton)
@@ -208,8 +205,10 @@ class ADViewer(QWidget) :
         self.zoomOutButton.clicked.connect(self.zoomOutEvent)
         wid =  QWidget()
         wid.setLayout(vbox)
+        wid.setFixedHeight(80)
+        remainingSize = remainingSize - 80
         rightvbox.addWidget(wid)
-        
+
         vbox = QVBoxLayout()
         self.x1Button = QRadioButton('x1')
         self.x1Button.toggled.connect(self.zoomScaleEvent)
@@ -229,17 +228,26 @@ class ADViewer(QWidget) :
         vbox.addWidget(self.x16Button)
         wid =  QWidget()
         wid.setLayout(vbox)
+        wid.setFixedHeight(120)
+        remainingSize = remainingSize - 120
         rightvbox.addWidget(wid)
-        
+
+        vbox = QVBoxLayout()
+        label = QLabel("")
+        vbox.addWidget(label)
+        wid =  QWidget()
+        wid.setLayout(vbox)
+        wid.setFixedHeight(remainingSize)
+        rightvbox.addWidget(wid)
+
         wid =  QWidget()
         wid.setLayout(rightvbox)
+        wid.setFixedHeight(self.imageSize)
         box.addWidget(wid)
-        
-        
+
         wid =  QWidget()
         wid.setLayout(box)
         self.fourthRow = wid
-             
 # initialize
         layout = QGridLayout()
         layout.setVerticalSpacing(0);
@@ -253,9 +261,9 @@ class ADViewer(QWidget) :
         self.arg = None
         self.show()
         self.imageDisplay.show()
-        
+
     def resetEvent(self) :
-        if self.imageDict['nx']==0 : return
+        if type(self.imageDict["image"])==type(None) : return
         self.imageDisplay.resetZoom()
         self.display()
 
@@ -293,7 +301,6 @@ class ADViewer(QWidget) :
             self.zoomScale = 16
         else :
             self.statusText.setText('why is no zoomScale enabled?')
-               
 
     def zoomEvent(self,zoomData) :
         self.display()
@@ -320,7 +327,7 @@ class ADViewer(QWidget) :
         self.isClosed = True
         self.imageDisplay.okToClose = True
         self.imageDisplay.close()
-        
+
     def startEvent(self) :
         self.start()
 
@@ -343,9 +350,6 @@ class ADViewer(QWidget) :
         self.setColorTable = False
         self.display()    
 
-    def stopEvent(self) :
-        self.stop()        
-        
     def colorLimitEvent(self) :
         try :
            red = float(self.redText.text())
@@ -373,13 +377,12 @@ class ADViewer(QWidget) :
         except Exception as error:
             self.statusText.setText(str(error))    
 
-            
     def channelNameEvent(self) :
         try:
             self.provider.setChannelName(self.channelNameText.text())
         except Exception as error:
             self.statusText.setText(str(error))
-         
+
     def start(self) :
         self.isStarted = True
         self.provider.start()
@@ -397,6 +400,7 @@ class ADViewer(QWidget) :
         self.channelNameText.setEnabled(True)
         self.channel = None
         self.imageRateText.setText('0')
+
     def callback(self,arg):
         if type(arg)==type(None) : return
         if self.isClosed : return
@@ -473,4 +477,4 @@ class ADViewer(QWidget) :
             self.imageRateText.setText(str(round(self.nImages/timediff)))
             self.lasttime = self.timenow 
             self.nImages = 0
-        
+
