@@ -44,8 +44,6 @@ class NTNDA_Viewer(QWidget) :
         self.imageDict = self.dataToImage.imageDictCreate()
         self.imageDisplay = NumpyImage(flipy=False,imageSize=self.imageSize)
         self.imageDisplay.setZoomCallback(self.zoomEvent)
-        self.imageDisplay.setMousePressCallback(self.mousePressEvent)
-        self.imageDisplay.setMouseReleaseCallback(self.mouseReleaseEvent)
         self.imageDisplay.setResizeCallback(self.resizeImageEvent)
         self.scaleType = 0
         self.showLimits = False
@@ -61,7 +59,7 @@ class NTNDA_Viewer(QWidget) :
         self.startButton = QPushButton('start')
         self.startButton.setEnabled(True)
         self.startButton.clicked.connect(self.startEvent)
-        self.isStarted = False
+#        self.isStarted = False
         box.addWidget(self.startButton)
         self.stopButton = QPushButton('stop')
         self.stopButton.setEnabled(False)
@@ -351,12 +349,6 @@ class NTNDA_Viewer(QWidget) :
     def zoomEvent(self,zoomData) :
         self.zoomText.setText(str(zoomData))
         self.display()
-
-    def mousePressEvent(self,event) :
-        if self.isStarted : self.provider.stop()
-
-    def mouseReleaseEvent(self,event) :
-        if self.isStarted : self.provider.start()
         
     def resizeImageEvent(self,event,width,height) :
         self.imageSizeText.setText(str(width))
@@ -374,9 +366,7 @@ class NTNDA_Viewer(QWidget) :
             self.statusText.setText(str(error))    
 
     def closeEvent(self, event) :
-        if self.isStarted : self.stop()
-        self.isClosed = True
-        self.imageDisplay.okToClose = True
+        self.imageDisplay.setOkToClose()
         self.imageDisplay.close()
         
     def startEvent(self) :
@@ -493,7 +483,6 @@ class NTNDA_Viewer(QWidget) :
             self.statusText.setText(str(error))
          
     def start(self) :
-        self.isStarted = True
         self.provider.start()
         self.channelNameText.setEnabled(False)
         self.startButton.setEnabled(False)
@@ -502,7 +491,6 @@ class NTNDA_Viewer(QWidget) :
         self.imageSizeText.setEnabled(False)
 
     def stop(self) :
-        self.isStarted = False
         self.provider.stop()
         self.startButton.setEnabled(True)
         self.stopButton.setEnabled(False)
@@ -513,7 +501,6 @@ class NTNDA_Viewer(QWidget) :
         self.imageRateText.setText('0')
     def callback(self,arg):
         if self.isClosed : return
-        if not self.isStarted : return
         if type(arg)==type(None) : return
         if len(arg)==1 :
             value = arg.get("exception")

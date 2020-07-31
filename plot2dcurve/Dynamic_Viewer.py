@@ -80,8 +80,7 @@ class Dynamic_Viewer(QWidget) :
     def closeEvent(self, event) :
         if self.isStarted : self.stop()
         self.isClosed = True
-        self.imageDisplay.isClosed = True
-        self.imageDisplay.okToClose = True
+        self.imageDisplay.setOkToClose()
         self.imageDisplay.close()
 
     def startEvent(self) :

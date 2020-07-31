@@ -1,5 +1,34 @@
 # codecAD.py
 '''
+codecAD provides python access to the codec support provided by areaDetector/ADSupport
+It is meant for use by a callback from an NTNDArray record.
+NTNDArray is implemented in areaDetector/ADCore.
+NTNDArray has the following fields of interest to a callback:
+    value            This contains a numpy array with a scalar dtype
+    codec            This describes the codec information
+    compressedSize   The compressed size if a codec was used
+    uncompressedSize The uncompressed size of the data
+    dimension        2d or 3d array description
+    
+In order to use this code environment variable LD_LIBRARY_PATH must be defined.
+For example:
+   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/epics7/areaDetector/ADSupport/lib/linux-x86_64
+      
+Normal use is:
+...
+from codecAD import CodecAD
+...
+    self.codecAD = CodecAD()
+...
+    if self.codecAD.decompress(data,codec,compressed,uncompressed) :
+        codecName = self.codecAD.getCodecName()
+        data = self.codecAD.getData()
+        compressRatio = self.codecAD.getCompressRatio()
+    else :
+        pass
+        " note that data is not changed"
+...   
+     
 Copyright - See the COPYRIGHT that is included with this distribution.
     NTNDA_Viewer is distributed subject to a Software License Agreement found
     in file LICENSE that is included with this distribution.
@@ -7,9 +36,7 @@ Copyright - See the COPYRIGHT that is included with this distribution.
 authors
     Marty Kraimer
     Mark Rivers
-latest date 2020.07.27
-
-This provides python access to the codec support that is provided by areaDetector/ADSupport
+latest date 2020.07.30
 '''
 
 import sys
@@ -17,12 +44,16 @@ import ctypes
 import ctypes.util
 import os
 import numpy as np
+        
+class CodecAD() :
+    def __init__(self):
+        self.__codecName = 'none'
+        self.__data = None
+        self.__compressRatio = 1.0
+        self.__saveLibrary = dict()
 
-class FindLibrary(object) :
-    def __init__(self, parent=None):
-        self.save = dict()
-    def find(self,name) :
-        lib = self.save.get(name)
+    def __findLibrary(self,name) :
+        lib = self.__saveLibrary.get(name)
         if lib!=None : return lib
         result = ctypes.util.find_library(name)
         if result==None : return None
@@ -30,31 +61,63 @@ class FindLibrary(object) :
             lib = ctypes.windll.LoadLibrary(result)
         else :
             lib = ctypes.cdll.LoadLibrary(result)
-        if lib!=None : self.save.update({name : lib})
+        if lib!=None : self.__saveLibrary.update({name : lib})    
         return lib
-        
-class CodecAD() :
-    def __init__(self, parent=None):
-        self.codecName = 'none'
-        self.data = None
-        self.compressRatio = 1.0
-        self.findLibrary = FindLibrary()
 
     def getCodecName(self) :
-        return self.codecName
+        """
+        Returns
+        -------
+        codecName : str
+            codecName for the last decompress
+        """
+        return self.__codecName
 
     def getData(self) :
-        return self.data
+        """ 
+        Returns
+        -------
+        data : numpy array
+            data for the last decompress
+        """
+        return self.__data
 
     def getCompressRatio(self) :
-        return self.compressRatio
+        """ 
+        Returns
+        -------
+        compressRatio : float
+            compressRatio for the last decompress
+        """
+        return self.__compressRatio
 
     def decompress(self,data,codec,compressed,uncompressed) :
-        self.codecName = codec['name']
-        if len(self.codecName)==0 : 
-            self.data = None
-            self.codecName = 'none'
-            self.compressRatio = 1.0
+        """
+        decompress data described by codec.
+        The arguments are all provided by a callback from an NTNDArray record.
+        areaDetector/ADCore defines the NTNDArray record.
+        
+        Parameters
+        ----------
+            data :        Provided by the NTNDArray record.
+            codec:        Provided by the NTNDArray record.
+            compressed:   Provided by the NTNDArray record.
+            uncompressed: Provided by the NTNDArray record.
+   
+        Returns
+        -------
+            False
+                No decompression was done.
+                The original data is not modified.
+            True
+                decompression was done.
+                getCodecName, getData, and getCompressRatio provide the results
+        """
+        self.__codecName = codec['name']
+        if len(self.__codecName)==0 : 
+            self.__data = None
+            self.__codecName = 'none'
+            self.__compressRatio = 1.0
             return False
         typevalue = codec['parameters']
         if typevalue== 1 : dtype = "int8"; elementsize =int(1)
@@ -68,44 +131,44 @@ class CodecAD() :
         elif typevalue== 9 : dtype = "float32"; elementsize =int(4)
         elif typevalue== 10 : dtype = "float64"; elementsize =int(8)
         else : raise Exception('decompress mapIntToType failed')
-        if self.codecName=='blosc':
-            lib = self.findLibrary.find(self.codecName)
-        elif self.codecName=='jpeg' :
-            lib = self.findLibrary.find('decompressJPEG')
-        elif self.codecName=='lz4' or self.codecName=='bslz4' :
-            lib = self.findLibrary.find('bitshuffle')
+        if self.__codecName=='blosc':
+            lib = self.__findLibrary(self.__codecName)
+        elif self.__codecName=='jpeg' :
+            lib = self.__findLibrary('decompressJPEG')
+        elif self.__codecName=='lz4' or self.__codecName=='bslz4' :
+            lib = self.__findLibrary('bitshuffle')
         else : lib = None
         if lib==None : raise Exception('shared library ' +self.codecName + ' not found')
         inarray = bytearray(data)
         in_char_array = ctypes.c_ubyte * compressed
         out_char_array = ctypes.c_ubyte * uncompressed
         outarray = bytearray(uncompressed)
-        if self.codecName=='blosc' : 
+        if self.__codecName=='blosc' : 
             lib.blosc_decompress(
                  in_char_array.from_buffer(inarray),
                  out_char_array.from_buffer(outarray),uncompressed)
             data = np.array(outarray)
             data = np.frombuffer(data,dtype=dtype)
-        elif self.codecName=='lz4' :
+        elif self.__codecName=='lz4' :
             lib.LZ4_decompress_fast(
                  in_char_array.from_buffer(inarray),
                  out_char_array.from_buffer(outarray),uncompressed)
             data = np.array(outarray)
             data = np.frombuffer(data,dtype=dtype)
-        elif self.codecName=='bslz4' :
+        elif self.__codecName=='bslz4' :
             lib.bshuf_decompress_lz4(
                  in_char_array.from_buffer(inarray),
                  out_char_array.from_buffer(outarray),int(uncompressed/elementsize),
                  elementsize,int(0))
             data = np.array(outarray)
             data = np.frombuffer(data,dtype=dtype)
-        elif self.codecName=='jpeg' :
+        elif self.__codecName=='jpeg' :
             lib.decompressJPEG(
                  in_char_array.from_buffer(inarray),compressed,
                  out_char_array.from_buffer(outarray),uncompressed)
             data = np.array(outarray)
             data = data.flatten()
-        else : raise Exception(self.codecName + " is unsupported codec")
-        self.compressRatio = round(float(uncompressed/compressed))
-        self.data = data
+        else : raise Exception(self.__codecName + " is unsupported codec")
+        self.__compressRatio = round(float(uncompressed/compressed))
+        self.__data = data
         return True

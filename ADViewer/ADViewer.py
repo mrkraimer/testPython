@@ -167,8 +167,6 @@ class ADViewer(QWidget) :
 
         self.imageDisplay = NumpyImage(flipy=False,imageSize=self.imageSize)
         self.imageDisplay.setZoomCallback(self.zoomEvent)
-        self.imageDisplay.setMousePressCallback(self.mousePressEvent)
-        self.imageDisplay.setMouseReleaseCallback(self.mouseReleaseEvent)
         self.imageDisplay.setFixedWidth(self.imageSize)
         self.imageDisplay.setFixedHeight(self.imageSize)
         box.addWidget(self.imageDisplay)
@@ -305,12 +303,6 @@ class ADViewer(QWidget) :
     def zoomEvent(self,zoomData) :
         self.display()
 
-    def mousePressEvent(self,event) :
-        if self.isStarted : self.provider.stop()
-
-    def mouseReleaseEvent(self,event) :
-        if self.isStarted : self.provider.start()
-
     def display(self) :
         if self.isClosed : return
         if type(self.imageDict["image"])==type(None) : return
@@ -323,9 +315,8 @@ class ADViewer(QWidget) :
             self.statusText.setText(str(error))    
 
     def closeEvent(self, event) :
-        if self.isStarted : self.stop()
         self.isClosed = True
-        self.imageDisplay.okToClose = True
+        self.imageDisplay.setOkToClose()
         self.imageDisplay.close()
 
     def startEvent(self) :
@@ -443,8 +434,8 @@ class ADViewer(QWidget) :
             else :
                 if not self.codecIsNone :
                     self.codecIsNone = True
-                    self.codecNameText.setText('none') 
-                    self.compressRatioText.setText('1.0') 
+                    self.codecNameText.setText(self.codecAD.getCodecName()) 
+                    self.compressRatioText.setText(str(self.codecAD.getCompressRatio()))
         except Exception as error:
             self.statusText.setText(str(error))
             return

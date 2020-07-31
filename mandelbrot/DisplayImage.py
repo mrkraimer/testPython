@@ -228,7 +228,7 @@ class Viewer(QWidget) :
             self.statusText.setText(str(error))
 
     def closeEvent(self, event) :
-        self.imageDisplay.okToClose = True
+        self.imageDisplay.setOkToClose()
         self.imageDisplay.close()
 
     def startEvent(self) :
