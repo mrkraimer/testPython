@@ -1,28 +1,31 @@
 # dataToImageAD.py
-'''
+
+import numpy as np
+import math
+
+
+class DataToImageAD() :
+    '''
 dataToImageAD provides python access to the data provided by areaDetector/ADSupport
 It is meant for use by a callback from an NTNDArray record.
 NTNDArray is implemented in areaDetector/ADCore.
-NTNDArray has the following fields of interest to a callback:
+NTNDArray has the following fields of interest to DataToImageAD:
     value            This contains a numpy array with a scalar dtype
-    codec            This describes the codec information
-    compressedSize   The compressed size if a codec was used
-    uncompressedSize The uncompressed size of the data
     dimension        2d or 3d array description
       
 Normal use is:
 ...
 from dataToImageAD import DataToImageAD
 ...
-    self.codecAD = CodecAD()
+    self.dataToImageAD = DataToImageAD()
+    self.imageDict = self.dataToImage.imageDictCreate()
+    
 ...
-    if self.codecAD.decompress(data,codec,compressed,uncompressed) :
-        codecName = self.codecAD.getCodecName()
-        data = self.codecAD.getData()
-        compressRatio = self.codecAD.getCompressRatio()
-    else :
-        pass
-        " note that data is not changed"
+    try:
+        self.dataToImage.dataToImage(data,dimArray,self.imageSize,...)
+        imageDict = self.dataToImage.getImageDict()
+        self.imageDict["image"] = imageDict["image"]
+        ... other methods
 ...   
      
 Copyright - See the COPYRIGHT that is included with this distribution.
@@ -33,13 +36,7 @@ authors
     Marty Kraimer
     Mark Rivers
 latest date 2020.07.30
-'''
-
-import numpy as np
-import math
-
-
-class DataToImageAD() :
+    '''
     def __init__(self,parent=None) :
         self.__image = None
         self.__imageDict = self.imageDictCreate()

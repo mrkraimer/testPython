@@ -165,11 +165,11 @@ class ADViewer(QWidget) :
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0)
 
-        self.imageDisplay = NumpyImage(flipy=False,imageSize=self.imageSize)
-        self.imageDisplay.setZoomCallback(self.zoomEvent)
-        self.imageDisplay.setFixedWidth(self.imageSize)
-        self.imageDisplay.setFixedHeight(self.imageSize)
-        box.addWidget(self.imageDisplay)
+        self.numpyImage = NumpyImage(flipy=False,imageSize=self.imageSize)
+        self.numpyImage.setZoomCallback(self.zoomEvent)
+        self.numpyImage.setFixedWidth(self.imageSize)
+        self.numpyImage.setFixedHeight(self.imageSize)
+        box.addWidget(self.numpyImage)
 
         rightvbox = QVBoxLayout()
         remainingSize = self.imageSize
@@ -258,21 +258,21 @@ class ADViewer(QWidget) :
         self.lasttime = time.time() -2
         self.arg = None
         self.show()
-        self.imageDisplay.show()
+        self.numpyImage.show()
 
     def resetEvent(self) :
         if type(self.imageDict["image"])==type(None) : return
-        self.imageDisplay.resetZoom()
+        self.numpyImage.resetZoom()
         self.display()
 
     def zoomInEvent(self) :
-        if not self.imageDisplay.zoomIn(self.zoomScale) : 
+        if not self.numpyImage.zoomIn(self.zoomScale) : 
             self.statusText.setText('zoomIn failed')
             return
         self.display()
 
     def zoomOutEvent(self) :
-        if not self.imageDisplay.zoomOut(self.zoomScale) : 
+        if not self.numpyImage.zoomOut(self.zoomScale) : 
             self.statusText.setText('zoomOut failed')
             return   
         self.display()
@@ -308,16 +308,16 @@ class ADViewer(QWidget) :
         if type(self.imageDict["image"])==type(None) : return
         try :
             if self.setColorTable :
-                self.imageDisplay.display(self.imageDict["image"],colorTable=self.colorTable)
+                self.numpyImage.display(self.imageDict["image"],colorTable=self.colorTable)
             else :
-                self.imageDisplay.display(self.imageDict["image"])
+                self.numpyImage.display(self.imageDict["image"])
         except Exception as error:
             self.statusText.setText(str(error))    
 
     def closeEvent(self, event) :
         self.isClosed = True
-        self.imageDisplay.setOkToClose()
-        self.imageDisplay.close()
+        self.numpyImage.setOkToClose()
+        self.numpyImage.close()
 
     def startEvent(self) :
         self.start()

@@ -1,38 +1,5 @@
 # numpyImage.py
-'''
-numpyImage provides python access to the data provided by areaDetector/ADSupport
-It is meant for use by a callback from an NTNDArray record.
-NTNDArray is implemented in areaDetector/ADCore.
-NTNDArray has the following fields of interest to a callback:
-    value            This contains a numpy array with a scalar dtype
-    codec            This describes the codec information
-    compressedSize   The compressed size if a codec was used
-    uncompressedSize The uncompressed size of the data
-    dimension        2d or 3d array description
-      
-Normal use is:
-...
-from numpyImage import DataToImageAD
-...
-    self.codecAD = CodecAD()
-...
-    if self.codecAD.decompress(data,codec,compressed,uncompressed) :
-        codecName = self.codecAD.getCodecName()
-        data = self.codecAD.getData()
-        compressRatio = self.codecAD.getCompressRatio()
-    else :
-        pass
-        " note that data is not changed"
-...   
-     
-Copyright - See the COPYRIGHT that is included with this distribution.
-    NTNDA_Viewer is distributed subject to a Software License Agreement found
-    in file LICENSE that is included with this distribution.
 
-authors
-    Marty Kraimer
-latest date 2020.07.31
-'''
 from PyQt5.QtWidgets import QWidget,QRubberBand
 from PyQt5.QtCore import QPoint,QRect,QSize,QPointF
 from PyQt5.QtCore import QThread
@@ -44,6 +11,29 @@ import time
 
 
 class NumpyImage(QWidget) :
+    '''
+___
+Normal use is:
+...
+from numpyImage import NumpyImage
+...
+   self.imageSize = 600
+   self.numpyImage = NumpyImage(imageSize=self.imageSize)
+___
+numpyImage privides two main services:
+1) Converts a numpy array to a QImage and displays the resulting image.
+   See method display for details.
+2) Provides support for mouse action in the QImage.
+   See methods setZoomCallback and resetZoom for details.
+___   
+Copyright - See the COPYRIGHT that is included with this distribution.
+    NTNDA_Viewer is distributed subject to a Software License Agreement found
+    in file LICENSE that is included with this distribution.
+
+authors
+    Marty Kraimer
+latest date 2020.07.31
+    '''
     def __init__(self,imageSize=800, flipy= False):
         """
          Parameters
@@ -171,12 +161,41 @@ class NumpyImage(QWidget) :
         """
         Parameters
         ----------
-            pixarray : numpy 2d or 3d array
-                 convert pixarray to QImage and display it.
+            pixarray : numpy array
+                 pixarray that is converted to QImage and displayed.
             bytesPerLine : int
-                 If spevcified must be total bytes in row of image
+                 If specified must be total bytes in second dimension of image
             Format: int
-                 If this is not 0 then it must be valid QImage.Format
+                 If this is >0 the QImage is created as follows:
+                     if bytesPerLine==None :
+                        qimage = QImage(data,image.shape[1], image.shape[0],Format)
+                     else :
+                         qimage = QImage(data,image.shape[1], image.shape[0],bytesPerLine,Format)
+                     if colorTable!=None :
+                         qimage.setColorTable(colorTable)
+                     return qimage
+                Otherwise the QImage is created as follows:
+                     if pixarray has dtype uint8:
+                          if 2d array :
+                              if colorTable==None :
+                                  create a QImage with format QImage.Format_Grayscale8
+                              else :
+                                  create a QImage with format QImage.Format_Indexed8
+                          elif 3d array (ny,nx,nz) and nz is 3 or 4:
+                              if nz==3 :
+                                  create a QImage with format QImage.Format_RGB888
+                              else :
+                                  create a QImage with format QImage.Format_RGBA8888
+                          else :
+                              an exception is raised
+                     elif pixarray has dtype uint16:
+                         if 2d array :
+                             create a QImage with format QImage.Format_Grayscale16
+                         else :
+                             an exception is raised
+                else:
+                    an exception is raised
+                      
             colorTable: qRgb color table
                  Default is to let numpyImage decide     
         """

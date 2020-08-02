@@ -42,9 +42,9 @@ class NTNDA_Viewer(QWidget) :
         self.codecAD = CodecAD()
         self.dataToImage = DataToImageAD()
         self.imageDict = self.dataToImage.imageDictCreate()
-        self.imageDisplay = NumpyImage(flipy=False,imageSize=self.imageSize)
-        self.imageDisplay.setZoomCallback(self.zoomEvent)
-        self.imageDisplay.setResizeCallback(self.resizeImageEvent)
+        self.numpyImage = NumpyImage(flipy=False,imageSize=self.imageSize)
+        self.numpyImage.setZoomCallback(self.zoomEvent)
+        self.numpyImage.setResizeCallback(self.resizeImageEvent)
         self.scaleType = 0
         self.showLimits = False
         self.suppressBackground = False
@@ -59,7 +59,6 @@ class NTNDA_Viewer(QWidget) :
         self.startButton = QPushButton('start')
         self.startButton.setEnabled(True)
         self.startButton.clicked.connect(self.startEvent)
-#        self.isStarted = False
         box.addWidget(self.startButton)
         self.stopButton = QPushButton('stop')
         self.stopButton.setEnabled(False)
@@ -73,7 +72,7 @@ class NTNDA_Viewer(QWidget) :
         if len(self.provider.getChannelName())<1 :
             name = os.getenv('EPICS_NTNDA_VIEWER_CHANNELNAME')
             if name!= None : self.provider.setChannelName(name)
-        
+
         self.imageSizeLabel = QLabel("imageSize:")
         box.addWidget(self.imageSizeLabel)
         self.imageSizeText = QLineEdit()
@@ -82,7 +81,7 @@ class NTNDA_Viewer(QWidget) :
         self.imageSizeText.setText(str(self.imageSize))
         self.imageSizeText.returnPressed.connect(self.imageSizeEvent)
         box.addWidget(self.imageSizeText)
-        
+
         self.channelNameLabel = QLabel("channelName:")
         box.addWidget(self.channelNameLabel)
         self.channelNameText = QLineEdit()
@@ -156,7 +155,7 @@ class NTNDA_Viewer(QWidget) :
         self.imageLimitsText.setFixedWidth(100)
         showbox.addWidget(self.imageLimitsText)
         groupbox.setLayout(showbox)
-        box.addWidget(groupbox)        
+        box.addWidget(groupbox)
 
         self.resetButton = QPushButton('resetZoom')
         box.addWidget(self.resetButton)
@@ -170,7 +169,7 @@ class NTNDA_Viewer(QWidget) :
         box.addWidget(self.zoomOutButton)
         self.zoomOutButton.setEnabled(True)
         self.zoomOutButton.clicked.connect(self.zoomOutEvent)
-        
+
         showbox = QHBoxLayout()
         groupbox=QGroupBox('zoomScale')
         self.x1Button = QRadioButton('x1')
@@ -188,7 +187,7 @@ class NTNDA_Viewer(QWidget) :
         showbox.addWidget(self.x8Button)
         groupbox.setLayout(showbox)
         box.addWidget(groupbox)
-        
+
         showbox = QHBoxLayout()
         groupbox=QGroupBox('(xmin,xmax,ymin,ymax)')
         self.zoomText =  QLabel('')
@@ -196,14 +195,14 @@ class NTNDA_Viewer(QWidget) :
         showbox.addWidget(self.zoomText)
         groupbox.setLayout(showbox)
         box.addWidget(groupbox)
-        
+
         wid =  QWidget()
         wid.setLayout(box)
         self.thirdRow = wid
 # fourth row
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0)
-        
+
         showbox = QHBoxLayout()
         groupbox=QGroupBox('showLimits')
         self.showLimitsButton = QRadioButton('yes')
@@ -215,7 +214,7 @@ class NTNDA_Viewer(QWidget) :
         showbox.addWidget(self.noshowLimitsButton)
         groupbox.setLayout(showbox)
         box.addWidget(groupbox)
-        
+
         showbox = QHBoxLayout()
         groupbox=QGroupBox('suppressBackground')
         self.suppressBackgroundButton = QRadioButton('yes')
@@ -227,7 +226,7 @@ class NTNDA_Viewer(QWidget) :
         showbox.addWidget(self.nosuppressBackgroundButton)
         groupbox.setLayout(showbox)
         box.addWidget(groupbox)
-        
+
         showbox = QHBoxLayout()
         groupbox=QGroupBox('scaleType')
         self.noScaleButton = QRadioButton('noScale')
@@ -242,7 +241,7 @@ class NTNDA_Viewer(QWidget) :
         showbox.addWidget(self.manualScaleButton)
         groupbox.setLayout(showbox)
         box.addWidget(groupbox)
-        
+
         showbox = QHBoxLayout()
         groupbox=QGroupBox('manualLimits')
         showbox.addWidget(QLabel("min:"))
@@ -261,7 +260,7 @@ class NTNDA_Viewer(QWidget) :
         showbox.addWidget(self.maxLimitText)
         groupbox.setLayout(showbox)
         box.addWidget(groupbox)
-        
+
         self.colorTableButton = QPushButton('colorTable')
         self.colorTableButton.setEnabled(True)
         self.colorTableButton.clicked.connect(self.colorTableEvent)
@@ -271,7 +270,7 @@ class NTNDA_Viewer(QWidget) :
         self.nocolorTableButton.setEnabled(False)
         self.nocolorTableButton.clicked.connect(self.nocolorTableEvent)
         box.addWidget(self.nocolorTableButton)
-        
+
         showbox = QHBoxLayout()
         groupbox=QGroupBox('colorTable')
         showbox.addWidget(QLabel("red:"))
@@ -318,17 +317,17 @@ class NTNDA_Viewer(QWidget) :
     def resetEvent(self) :
         if self.imageDict['nx']==0 : return
         self.zoomText.setText('')
-        self.imageDisplay.resetZoom()
+        self.numpyImage.resetZoom()
         self.display()
 
     def zoomInEvent(self) :
-        if not self.imageDisplay.zoomIn(self.zoomScale) : 
+        if not self.numpyImage.zoomIn(self.zoomScale) : 
             self.statusText.setText('zoomIn failed')
             return
         self.display()
 
     def zoomOutEvent(self) :
-        if not self.imageDisplay.zoomOut(self.zoomScale) : 
+        if not self.numpyImage.zoomOut(self.zoomScale) : 
             self.statusText.setText('zoomOut failed')
             return   
         self.display()
@@ -352,22 +351,22 @@ class NTNDA_Viewer(QWidget) :
         
     def resizeImageEvent(self,event,width,height) :
         self.imageSizeText.setText(str(width))
-        self.imageDisplay.setImageSize(width)
+        self.numpyImage.setImageSize(width)
                  
     def display(self) :
         if self.isClosed : return
         if type(self.imageDict["image"])==type(None) : return
         try :
             if self.setColorTable :
-                self.imageDisplay.display(self.imageDict["image"],colorTable=self.colorTable)
+                self.numpyImage.display(self.imageDict["image"],colorTable=self.colorTable)
             else :
-                self.imageDisplay.display(self.imageDict["image"])
+                self.numpyImage.display(self.imageDict["image"])
         except Exception as error:
-            self.statusText.setText(str(error))    
+            self.statusText.setText(str(error))
 
     def closeEvent(self, event) :
-        self.imageDisplay.setOkToClose()
-        self.imageDisplay.close()
+        self.numpyImage.setOkToClose()
+        self.numpyImage.close()
         
     def startEvent(self) :
         self.start()
@@ -388,7 +387,7 @@ class NTNDA_Viewer(QWidget) :
             self.scaleType = 2
          else :
             self.statusText.setText('why is no scaleButton enabled?')
-         self.display()    
+         self.display()
 
     def colorTableEvent(self) :
         self.colorTableButton.setEnabled(False)
@@ -400,11 +399,11 @@ class NTNDA_Viewer(QWidget) :
         self.colorTableButton.setEnabled(True)
         self.nocolorTableButton.setEnabled(False) 
         self.setColorTable = False
-        self.display()    
+        self.display()
 
     def stopEvent(self) :
-        self.stop()        
-        
+        self.stop()
+
     def colorLimitEvent(self) :
         try :
            red = float(self.redText.text())
@@ -430,7 +429,7 @@ class NTNDA_Viewer(QWidget) :
            self.colorTable = colorTable  
            self.display()
         except Exception as error:
-            self.statusText.setText(str(error))    
+            self.statusText.setText(str(error))
 
         
     def showLimitsEvent(self) :  
@@ -443,7 +442,7 @@ class NTNDA_Viewer(QWidget) :
         self.suppressBackground = True
         
     def nosuppressBackgroundEvent(self) :  
-        self.suppressBackground = False        
+        self.suppressBackground = False
 
     def manualLimitsEvent(self) :
         try:
@@ -469,9 +468,9 @@ class NTNDA_Viewer(QWidget) :
             if value>1024 :
                 value = 1024
                 self.imageSizeText.setText(str(value))
-            self.resetEvent()    
+            self.resetEvent()
             self.imageSize = value   
-            self.imageDisplay.setImageSize(self.imageSize)
+            self.numpyImage.setImageSize(self.imageSize)
         except Exception as error:
             self.statusText.setText(str(error))
 
@@ -499,6 +498,7 @@ class NTNDA_Viewer(QWidget) :
         self.imageSizeText.setEnabled(True)
         self.channel = None
         self.imageRateText.setText('0')
+
     def callback(self,arg):
         if self.isClosed : return
         if type(arg)==type(None) : return
@@ -526,7 +526,7 @@ class NTNDA_Viewer(QWidget) :
             ndim = len(dimArray)
             if ndim!=2 and ndim!=3 :
                 self.statusText.setText('ndim not 2 or 3')
-                return            
+                return
             compressed = arg['compressedSize']
             uncompressed = arg['uncompressedSize']
             codec = arg['codec']
@@ -566,7 +566,7 @@ class NTNDA_Viewer(QWidget) :
                 self.nyText.setText(str(self.imageDict["ny"]))
             if self.imageDict["nz"]!=imageDict["nz"] :
                 self.imageDict["nz"] = imageDict["nz"]
-                self.nzText.setText(str(self.imageDict["nz"]))        
+                self.nzText.setText(str(self.imageDict["nz"]))
             if self.showLimits :
                 self.channelLimitsText.setText(str(self.dataToImage.getChannelLimits()))
                 self.imageLimitsText.setText(str(self.dataToImage.getImageLimits()))
@@ -580,4 +580,4 @@ class NTNDA_Viewer(QWidget) :
             self.imageRateText.setText(str(round(self.nImages/timediff)))
             self.lasttime = self.timenow 
             self.nImages = 0
-        
+

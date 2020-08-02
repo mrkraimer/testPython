@@ -46,6 +46,45 @@ import os
 import numpy as np
         
 class CodecAD() :
+    '''
+codecAD provides python access to the codec support provided by areaDetector/ADSupport
+It is meant for use by a callback from an NTNDArray record.
+NTNDArray is implemented in areaDetector/ADCore.
+NTNDArray has the following fields of interest to a callback:
+    value            This contains a numpy array with a scalar dtype
+    codec            This describes the codec information
+    compressedSize   The compressed size if a codec was used
+    uncompressedSize The uncompressed size of the data
+    dimension        2d or 3d array description
+    
+In order to use this code environment variable LD_LIBRARY_PATH must be defined.
+For example:
+   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/epics7/areaDetector/ADSupport/lib/linux-x86_64
+      
+Normal use is:
+...
+from codecAD import CodecAD
+...
+    self.codecAD = CodecAD()
+...
+    if self.codecAD.decompress(data,codec,compressed,uncompressed) :
+        codecName = self.codecAD.getCodecName()
+        data = self.codecAD.getData()
+        compressRatio = self.codecAD.getCompressRatio()
+    else :
+        pass
+        " note that data is not changed"
+...   
+     
+Copyright - See the COPYRIGHT that is included with this distribution.
+    NTNDA_Viewer is distributed subject to a Software License Agreement found
+    in file LICENSE that is included with this distribution.
+
+authors
+    Marty Kraimer
+    Mark Rivers
+latest date 2020.07.30
+    '''
     def __init__(self):
         self.__codecName = 'none'
         self.__data = None
