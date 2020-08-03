@@ -165,10 +165,8 @@ class ADViewer(QWidget) :
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0)
 
-        self.numpyImage = NumpyImage(flipy=False,imageSize=self.imageSize)
+        self.numpyImage = NumpyImage(flipy=False,imageSize=self.imageSize,isSeparateWindow=False)
         self.numpyImage.setZoomCallback(self.zoomEvent)
-        self.numpyImage.setFixedWidth(self.imageSize)
-        self.numpyImage.setFixedHeight(self.imageSize)
         box.addWidget(self.numpyImage)
 
         rightvbox = QVBoxLayout()

@@ -34,18 +34,21 @@ authors
     Marty Kraimer
 latest date 2020.07.31
     '''
-    def __init__(self,imageSize=800, flipy= False):
+    def __init__(self,imageSize=800, flipy= False,isSeparateWindow=True):
         """
          Parameters
         ----------
             imageSize : int
                  image width and height
             flipy : True or False
-                 should y axis (height) be flipped  
+                 should y axis (height) be flipped
+            isSeparateWindow : True or False
+                 is this a separate window or a widget within client window.  
         """
         super(QWidget, self).__init__()
         self.__imageSize = int(imageSize)
         self.__flipy = flipy
+        self.__isSeparateWindow = isSeparateWindow
         self.__imageDoneEvent = Event()
         self.__imageDoneEvent.set()
         self.__thread = self.__Worker(self.__imageSize,self.__ImageToQImage(),self.__imageDoneEvent)
@@ -202,6 +205,8 @@ latest date 2020.07.31
         if self.__firstDisplay :
             self.__firstDisplay = False
             self.setGeometry(QRect(self.__xoffset, self.__yoffset,self.__imageSize,self.__imageSize))
+            if not self.__isSeparateWindow :
+                 self.setFixedSize(self.__imageSize,self.__imageSize)
         if not self.__imageDoneEvent.isSet :
             result = self.__imageDoneEvent.wait(2.0)
             if not result : raise Exception('display timeout')
@@ -315,10 +320,8 @@ latest date 2020.07.31
         """
         This is the method that displays the QImage
         """
-        if self.__firstDisplay :
-            self.__firstDisplay = False
-            return
         if self.__mousePressed : return
+        if type(self.__image)==type(None) : return
         self.__thread.render(self,self.__image,self.__bytesPerLine,self.__Format,self.colorTable)
         self.__thread.wait()
 
@@ -355,18 +358,21 @@ latest date 2020.07.31
                     elif len(image.shape) == 3:
                         if image.shape[2] == 3:
                             nx = image.shape[1]*3
-                            qimage = QImage(data, image.shape[1], image.shape[0],nx,QImage.Format_RGB888)
+                            qimage = QImage(data, image.shape[1],\
+                                image.shape[0],nx,QImage.Format_RGB888)
                             return qimage
                         elif image.shape[2] == 4:
                             nx = image.shape[1]*4
-                            qimage = QImage(data, image.shape[1], image.shape[0],nx, QImage.Format_RGBA8888)
+                            qimage = QImage(data, image.shape[1],\
+                                image.shape[0],nx, QImage.Format_RGBA8888)
                             return qimage
                     self.error = 'nz must have length 3 or 4'
                     return None
                 if image.dtype==np.uint16 :
                     if len(image.shape) == 2:
                         nx = image.shape[1]*2
-                        qimage = QImage(data, image.shape[1], image.shape[0],nx, QImage.Format_Grayscale16)
+                        qimage = QImage(data, image.shape[1], \
+                            image.shape[0],nx, QImage.Format_Grayscale16)
                         return  qimage
                 self.error = 'unsupported dtype=' + str(image.dtype)
                 return None
@@ -396,16 +402,12 @@ latest date 2020.07.31
             self.start()
 
         def run(self):
-#            self.setPriority(QThread.IdlePriority)
-#            self.setPriority(QThread.LowestPriority)
-#            self.setPriority(QThread.LowPriority)
-#            self.setPriority(QThread.NormalPriority)
             self.setPriority(QThread.HighPriority)
-#            self.setPriority(QThread.HighestPriority)
-#            self.setPriority(QThread.TimeCriticalPriority)
-#            self.setPriority(QThread.InheritPriority)
             qimage = self.imageToQImage.toQImage(\
-                self.image,bytesPerLine=self.bytesPerLine,Format=self.Format,colorTable=self.colorTable)
+                self.image,\
+                bytesPerLine=self.bytesPerLine,\
+                Format=self.Format,\
+                colorTable=self.colorTable)
             if qimage==None :
                 self.error = self.imageToQImage.error
                 self.imageDoneEvent.set()
