@@ -3,7 +3,6 @@
 from PyQt5.QtWidgets import QWidget,QRubberBand
 from PyQt5.QtCore import QPoint,QRect,QSize,QPointF
 from PyQt5.QtCore import QThread
-from threading import Event
 from PyQt5.QtGui import QPainter,QImage
 import numpy as np
 import math
@@ -49,9 +48,7 @@ latest date 2020.07.31
         self.__imageSize = int(imageSize)
         self.__flipy = flipy
         self.__isSeparateWindow = isSeparateWindow
-        self.__imageDoneEvent = Event()
-        self.__imageDoneEvent.set()
-        self.__thread = self.__Worker(self.__imageSize,self.__ImageToQImage(),self.__imageDoneEvent)
+        self.__thread = self.__Worker(self.__imageSize,self.__ImageToQImage())
         self.__imageZoom = None
         self.__rubberBand = QRubberBand(QRubberBand.Rectangle,self)
         self.__mousePressPosition = QPoint(0,0)
@@ -207,11 +204,6 @@ latest date 2020.07.31
             self.setGeometry(QRect(self.__xoffset, self.__yoffset,self.__imageSize,self.__imageSize))
             if not self.__isSeparateWindow :
                  self.setFixedSize(self.__imageSize,self.__imageSize)
-        if not self.__imageDoneEvent.isSet :
-            result = self.__imageDoneEvent.wait(2.0)
-            if not result : raise Exception('display timeout')
-        self.__imageDoneEvent.clear()
-        
         if self.__flipy :
             self.__image = np.flip(pixarray,0)
         else :
@@ -381,12 +373,11 @@ latest date 2020.07.31
                 return None
 
     class __Worker(QThread):
-        def __init__(self,imageSize,imageToQimage,imageDoneEvent):
+        def __init__(self,imageSize,imageToQimage):
             QThread.__init__(self)
             self.error = str('')
             self.imageSize = imageSize
             self.imageToQImage = imageToQimage
-            self.imageDoneEvent = imageDoneEvent
             self.bytesPerLine = None
 
         def setImageSize(self,imageSize) :
@@ -410,7 +401,6 @@ latest date 2020.07.31
                 colorTable=self.colorTable)
             if qimage==None :
                 self.error = self.imageToQImage.error
-                self.imageDoneEvent.set()
                 return
             numx = self.image.shape[1]
             numy = self.image.shape[0]
@@ -424,7 +414,6 @@ latest date 2020.07.31
             while True :
                 if painter.end() : break
             self.image = None
-            self.imageDoneEvent.set()
 
     class __NumpyImageZoom() :
         def __init__(self,imageSize):
