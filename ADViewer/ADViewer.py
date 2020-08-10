@@ -30,7 +30,10 @@ from dataToImageAD import DataToImageAD
 class ADViewer(QWidget) :
     def __init__(self,ntnda_Channel_Provider,providerName, parent=None):
         super(QWidget, self).__init__(parent)
-        self.imageSize = 600
+        self.imageSizeOrig = 660
+        self.imageSize = self.imageSizeOrig
+        self.imageSizeResetEvent = self.imageSizeOrig
+        self.selfChangingSize = False
         self.isClosed = False
         self.provider = ntnda_Channel_Provider
         self.provider.ADViewer = self
@@ -44,6 +47,8 @@ class ADViewer(QWidget) :
         self.setColorTable = False
         self.zoomScale = 1
         self.codecIsNone = True
+        self.qsizeOrig = None
+
 # first row
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0)
@@ -66,32 +71,30 @@ class ADViewer(QWidget) :
             name = os.getenv('EPICS_NTNDA_VIEWER_CHANNELNAME')
             if name!= None : self.provider.setChannelName(name)
 
+        self.imageSizeLabel = QLabel("imageSize:")
+        box.addWidget(self.imageSizeLabel)
+        self.imageSizeText = QLineEdit()
+        self.imageSizeText.setFixedWidth(60)
+        self.imageSizeText.setEnabled(True)
+        self.imageSizeText.setText(str(self.imageSize))
+        self.imageSizeText.returnPressed.connect(self.imageSizeEvent)
+        box.addWidget(self.imageSizeText)
+
         self.channelNameLabel = QLabel("channelName:")
         box.addWidget(self.channelNameLabel)
         self.channelNameText = QLineEdit()
-        self.channelNameText.setFixedWidth(600)
+        self.channelNameText.setFixedWidth(270)
         self.channelNameText.setEnabled(True)
         self.channelNameText.setText(self.provider.getChannelName())
         self.channelNameText.editingFinished.connect(self.channelNameEvent)
         box.addWidget(self.channelNameText)
         wid =  QWidget()
         wid.setLayout(box)
+        wid.setFixedHeight(30)
         self.firstRow = wid
 # second row
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0)
-        nxLabel = QLabel('nx: ')
-        box.addWidget(nxLabel)
-        self.nxText = QLabel('     ')
-        box.addWidget(self.nxText)
-        nyLabel = QLabel('ny: ')
-        box.addWidget(nyLabel)
-        self.nyText = QLabel('     ')
-        box.addWidget(self.nyText)
-        nzLabel = QLabel('nz: ')
-        box.addWidget(nzLabel)
-        self.nzText = QLabel('   ')
-        box.addWidget(self.nzText)
 
         compressRatioLabel = QLabel('compressRatio:')
         box.addWidget(compressRatioLabel)
@@ -108,23 +111,21 @@ class ADViewer(QWidget) :
         box.addWidget(self.clearButton)
         self.statusText = QLineEdit()
         self.statusText.setText('nothing done so far                    ')
-        self.statusText.setFixedWidth(500)
+        self.statusText.setFixedWidth(495)
         box.addWidget(self.statusText)
         wid =  QWidget()
         wid.setLayout(box)
+        wid.setFixedHeight(30)
         self.secondRow = wid
 # third row
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0)
         
-        box.addWidget(QLabel("channel dtype:"))
-        self.dtypeChannelText = QLabel('      ')
-        box.addWidget(self.dtypeChannelText)
-        box.addWidget(QLabel(" "))
-        box.addWidget(QLabel("image dtype:"))
-        self.dtypeImageText = QLabel('      ')
-        box.addWidget(self.dtypeImageText)
-        
+        self.showInfoButton = QPushButton('showInfo')
+        box.addWidget(self.showInfoButton)
+        self.showInfoButton.setEnabled(True)
+        self.showInfoButton.clicked.connect(self.showInfoEvent)
+
         box.addWidget(QLabel(" "))
         self.colorTableButton = QPushButton('colorTable')
         self.colorTableButton.setEnabled(True)
@@ -160,14 +161,10 @@ class ADViewer(QWidget) :
 
         wid =  QWidget()
         wid.setLayout(box)
+        wid.setFixedHeight(30)
         self.thirdRow = wid
 # fourth row
         box = QHBoxLayout()
-        box.setContentsMargins(0,0,0,0)
-
-        self.numpyImage = NumpyImage(flipy=False,imageSize=self.imageSize,isSeparateWindow=False)
-        self.numpyImage.setZoomCallback(self.zoomEvent)
-        box.addWidget(self.numpyImage)
 
         rightvbox = QVBoxLayout()
         remainingSize = self.imageSize
@@ -178,11 +175,36 @@ class ADViewer(QWidget) :
         self.noScaleButton.toggled.connect(self.scaleEvent)
         self.autoScaleButton = QRadioButton('autoScale')
         self.autoScaleButton.toggled.connect(self.scaleEvent)
+        self.manualScaleButton = QRadioButton('manualScale')
+        self.manualScaleButton.toggled.connect(self.scaleEvent)
         vbox.addWidget(self.noScaleButton)
         vbox.addWidget(self.autoScaleButton)
+        vbox.addWidget(self.manualScaleButton)
         wid =  QWidget()
         wid.setLayout(vbox)
-        wid.setFixedHeight(60)
+        wid.setFixedHeight(80)
+        remainingSize = remainingSize - 60
+        rightvbox.addWidget(wid)
+        
+        vbox = QVBoxLayout()
+        vbox.addWidget(QLabel("manualMin"))
+        self.minLimitText = QLineEdit()
+        self.minLimitText.setFixedWidth(50)
+        self.minLimitText.setEnabled(True)
+        self.minLimitText.setText('0')
+        self.minLimitText.returnPressed.connect(self.manualLimitsEvent)
+        vbox.addWidget(self.minLimitText)
+        vbox.addWidget(QLabel("manualMax"))
+        self.maxLimitText = QLineEdit()
+        self.maxLimitText.setFixedWidth(50)
+        self.maxLimitText.setEnabled(True)
+        self.maxLimitText.setText('255')
+        self.maxLimitText.returnPressed.connect(self.manualLimitsEvent)
+        vbox.addWidget(self.maxLimitText)
+        
+        wid =  QWidget()
+        wid.setLayout(vbox)
+        wid.setFixedHeight(100)
         remainingSize = remainingSize - 60
         rightvbox.addWidget(wid)
 
@@ -241,6 +263,12 @@ class ADViewer(QWidget) :
         wid.setFixedHeight(self.imageSize)
         box.addWidget(wid)
 
+        self.numpyImage = NumpyImage(flipy=False,imageSize=self.imageSize,isSeparateWindow=False)
+        self.numpyImage.setContentsMargins(0,0,0,0)
+        self.channelInfo = self.numpyImage.channelInfoDictCreate()
+        self.numpyImage.setZoomCallback(self.zoomEvent)
+        box.addWidget(self.numpyImage)
+
         wid =  QWidget()
         wid.setLayout(box)
         self.fourthRow = wid
@@ -257,11 +285,15 @@ class ADViewer(QWidget) :
         self.arg = None
         self.show()
         self.numpyImage.show()
+        self.qsizeOrig = self.size()
 
     def resetEvent(self) :
         if type(self.imageDict["image"])==type(None) : return
         self.numpyImage.resetZoom()
         self.display()
+
+    def showInfoEvent(self) :
+        self.numpyImage.showInfo()
 
     def zoomInEvent(self) :
         if not self.numpyImage.zoomIn(self.zoomScale) : 
@@ -280,9 +312,70 @@ class ADViewer(QWidget) :
             self.scaleType = 0
          elif self.autoScaleButton.isChecked() :
             self.scaleType = 1
+         elif self.manualScaleButton.isChecked() :
+            self.scaleType = 2   
          else :
             self.statusText.setText('why is no scaleButton enabled?')
-         self.display()    
+         self.display()
+
+    def manualLimitsEvent(self) :
+        try:
+            low = int(self.minLimitText.text())
+            high = int(self.maxLimitText.text())
+            self.dataToImage.setManualLimits((low,high))
+            self.display()
+        except Exception as error:
+            self.statusText.setText(str(error))
+
+    def imageSizeEvent(self) :
+        try:
+            size = self.imageSizeText.text()
+            try :
+                value = int(size)
+            except Exception as error:
+                self.statusText.setText('value is not an integer')
+                self.imageSizeText.setText(str(self.imageSize))
+                return
+            self.selfChangingSize = True    
+            if value<128 :
+                value = 128
+                self.imageSizeText.setText(str(value))
+            if value>1024 :
+                value = 1024
+                self.imageSizeText.setText(str(value))
+            self.imageSize = value
+            self.imageSizeResetEvent = self.imageSize 
+            origwidth = self.qsizeOrig.width()
+            origheight =  self.qsizeOrig.height()
+            diff = self.imageSize - self.imageSizeOrig
+            self.numpyImage.setImageSize(self.imageSize)
+            self.resetEvent()
+            self.numpyImage.close()
+            if diff>0 :
+                newwidth = origwidth + diff
+                newheight = origheight + diff
+                self.resize(newwidth,newheight)
+            else :
+                self.resize(origwidth,origheight)
+            self.numpyImage.show()
+        except Exception as error:
+            self.statusText.setText(str(error))
+        self.selfChangingSize = False    
+
+    def resizeEvent(self, event) :
+        if self.qsizeOrig==None : return
+        if self.selfChangingSize : return
+        qsize = self.size()
+        width = qsize.width()
+        height = qsize.height()
+        origwidth = self.qsizeOrig.width()
+        origheight =  self.qsizeOrig.height()
+        diffw = width - origwidth
+        diffh = height - origheight
+        diff = diffw
+        if diffh<diff : diff = diffh
+        if diff<10 : return
+        self.imageSizeResetEvent = self.imageSizeOrig + diff
 
     def zoomScaleEvent(self) :
         if self.x1Button.isChecked() :
@@ -299,10 +392,14 @@ class ADViewer(QWidget) :
             self.statusText.setText('why is no zoomScale enabled?')
 
     def zoomEvent(self,zoomData) :
-        self.display()
-
+        if self.imageSizeResetEvent==self.imageSize :
+            self.display()
+        
     def display(self) :
         if self.isClosed : return
+        if self.imageSizeResetEvent!=self.imageSize :
+            self.imageSizeText.setText(str(self.imageSizeResetEvent))
+            self.imageSizeEvent()
         if type(self.imageDict["image"])==type(None) : return
         try :
             if self.setColorTable :
@@ -379,6 +476,7 @@ class ADViewer(QWidget) :
         self.startButton.setEnabled(False)
         self.stopButton.setEnabled(True)
         self.channelNameText.setEnabled(False)
+#        self.imageSizeText.setEnabled(False)
 
     def stop(self) :
         self.isStarted = False
@@ -387,6 +485,7 @@ class ADViewer(QWidget) :
         self.stopButton.setEnabled(False)
         self.channelNameLabel.setStyleSheet("background-color:gray")
         self.channelNameText.setEnabled(True)
+        self.imageSizeText.setEnabled(True)
         self.channel = None
         self.imageRateText.setText('0')
 
@@ -441,21 +540,30 @@ class ADViewer(QWidget) :
             self.dataToImage.dataToImage(data,dimArray,self.imageSize,scaleType=self.scaleType)
             imageDict = self.dataToImage.getImageDict()
             self.imageDict["image"] = imageDict["image"]
+            callsetChannelInfo = False
             if self.imageDict["dtypeChannel"]!=imageDict["dtypeChannel"] :
                 self.imageDict["dtypeChannel"] = imageDict["dtypeChannel"]
-                self.dtypeChannelText.setText(str(self.imageDict["dtypeChannel"]))
+                self.channelInfo["Dtype"] = self.imageDict["dtypeChannel"]
             if self.imageDict["dtypeImage"]!=imageDict["dtypeImage"] :
                 self.imageDict["dtypeImage"] = imageDict["dtypeImage"]
-                self.dtypeImageText.setText(str(self.imageDict["dtypeImage"]))
             if self.imageDict["nx"]!=imageDict["nx"] :
                 self.imageDict["nx"] = imageDict["nx"]
-                self.nxText.setText(str(self.imageDict["nx"]))
+                self.channelInfo["Width"] = self.imageDict["nx"]
+                callsetChannelInfo = True
             if self.imageDict["ny"]!=imageDict["ny"] :
                 self.imageDict["ny"] = imageDict["ny"]
-                self.nyText.setText(str(self.imageDict["ny"]))
+                self.channelInfo["Height"] = self.imageDict["ny"]
+                callsetChannelInfo = True
             if self.imageDict["nz"]!=imageDict["nz"] :
                 self.imageDict["nz"] = imageDict["nz"]
-                self.nzText.setText(str(self.imageDict["nz"]))        
+                if imageDict["nz"]==3 :
+                    self.channelInfo["ColorMode"] = str("rgb")
+                else :
+                    self.channelInfo["ColorMode"] = str("mono")
+                callsetChannelInfo = True    
+            if callsetChannelInfo :
+                self.numpyImage.setChannelInfo(self.channelInfo)
+
             self.display()
         except Exception as error:
             self.statusText.setText(str(error))
