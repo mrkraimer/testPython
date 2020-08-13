@@ -159,37 +159,34 @@ latest date 2020.07.30
                 raise Exception('ndim not 2 or 3')
         return (image,nx,ny,nz)        
         
-    def dataToImage(self,data,dimArray,imageSize,scaleType=1,showLimits=False,suppressBackground=False) :
+    def dataToImage(self,data,dimArray,imageSize,manualLimits=False,showLimits=False) :
         """
          Parameters
         -----------
             data               : data from the callback
             dimArray           : dimension from callback
             imageSize          : width and height for the generated image
-            scaleType          : (0,1,2) means (noScale,autoScale,manualScale)
+            manualLimits       : (False,True) means client (does not,does) set limits
             showLimits         : (False,True) means channelLimits and imageLimits (are not, are) updated
-            suppressBackground : (False,True) means that background (will not,will) be done
         """
         dtype = data.dtype
-        dataMin = np.min(data)
-        dataMax = np.max(data)
-        if scaleType == 0 :
-            if dtype != np.uint8 and dtype != np.uint16 :
-                raise Exception('noScale requires uint8 or uint16')
-                return
-        if scaleType == 1 :
-            displayMin = dataMin
-            displayMax = dataMax
-        else :
-            displayMin = self.__manualLimits[0]
-            displayMax = self.__manualLimits[1]
-        if scaleType != 0 :
-            suppress = suppressBackground
-            if dtype==np.uint8 or dtype==np.uint8 : suppress = False
-            if suppress :
-                xp = (displayMax/255,displayMax)
+        if dtype==np.uint8 and not manualLimits :
+            dataMin = 0
+            dataMax =255
+        else:
+            if dtype != np.uint8 :
+                dataMin = np.min(data)
+                dataMax = np.max(data)
             else :
-                xp = (displayMin, displayMax)
+                dataMin = 0
+                dataMax =255
+            if  manualLimits :
+                displayMin = self.__manualLimits[0]
+                displayMax = self.__manualLimits[1]
+            else :  
+                displayMin = dataMin
+                displayMax = dataMax
+            xp = (displayMin, displayMax)
             fp = (0.0, 255.0)
             data = (np.interp(data,xp,fp)).astype(np.uint8)
         if showLimits :
@@ -222,6 +219,4 @@ latest date 2020.07.30
             self.__imageDict["dtypeImage"] = image.dtype
             if image.dtype==np.uint8 :
                 self.__manualLimits = (0,255)
-            else :
-                self.__manualLimits = (0,65535)
         

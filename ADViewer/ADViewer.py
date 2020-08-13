@@ -26,6 +26,8 @@ sys.path.append('../codecAD/')
 from codecAD import CodecAD
 sys.path.append('../dataToImageAD/')
 from dataToImageAD import DataToImageAD
+sys.path.append('../colorTable/')
+from colorTable import ColorTable
         
 class ADViewer(QWidget) :
     def __init__(self,ntnda_Channel_Provider,providerName, parent=None):
@@ -40,11 +42,12 @@ class ADViewer(QWidget) :
         self.setWindowTitle(providerName + "_ADViewer")
         self.codecAD = CodecAD()
         self.dataToImage = DataToImageAD()
+        self.colorTable = ColorTable()
+        self.colorTable.setColorChangeCallback(self.colorChangeEvent)
+        self.colorTable.setExceptionCallback(self.colorExceptionEvent)
         self.imageDict = self.dataToImage.imageDictCreate()
-        self.scaleType = 0
+        self.manualLimits = False
         self.nImages = 0
-        self.colorTable = [qRgb(i,i,i) for i in range(256)]
-        self.setColorTable = False
         self.zoomScale = 1
         self.codecIsNone = True
         self.qsizeOrig = None
@@ -126,38 +129,10 @@ class ADViewer(QWidget) :
         self.showInfoButton.setEnabled(True)
         self.showInfoButton.clicked.connect(self.showInfoEvent)
 
-        box.addWidget(QLabel(" "))
-        self.colorTableButton = QPushButton('colorTable')
-        self.colorTableButton.setEnabled(True)
-        self.colorTableButton.clicked.connect(self.colorTableEvent)
-        self.useColorTable = False
-        box.addWidget(self.colorTableButton)
-        self.nocolorTableButton = QPushButton('nocolorTable')
-        self.nocolorTableButton.setEnabled(False)
-        self.nocolorTableButton.clicked.connect(self.nocolorTableEvent)
-        box.addWidget(self.nocolorTableButton)
-
-        box.addWidget(QLabel("red:"))
-        self.redText = QLineEdit()
-        self.redText.setFixedWidth(50)
-        self.redText.setEnabled(True)
-        self.redText.setText('1.0')
-        self.redText.returnPressed.connect(self.colorLimitEvent)
-        box.addWidget(self.redText)
-        box.addWidget(QLabel("green:"))
-        self.greenText = QLineEdit()
-        self.greenText.setFixedWidth(50)
-        self.greenText.setEnabled(True)
-        self.greenText.setText('1.0')
-        self.greenText.returnPressed.connect(self.colorLimitEvent)
-        box.addWidget(self.greenText)
-        box.addWidget(QLabel("blue:"))
-        self.blueText = QLineEdit()
-        self.blueText.setFixedWidth(50)
-        self.blueText.setEnabled(True)
-        self.blueText.setText('1.0')
-        self.blueText.returnPressed.connect(self.colorLimitEvent)
-        box.addWidget(self.blueText)
+        self.showColorTableButton = QPushButton('showColorTable')
+        self.showColorTableButton.setEnabled(True)
+        self.showColorTableButton.clicked.connect(self.showColorTableEvent)
+        box.addWidget(self.showColorTableButton)
 
         wid =  QWidget()
         wid.setLayout(box)
@@ -170,14 +145,11 @@ class ADViewer(QWidget) :
         remainingSize = self.imageSize
 
         vbox = QVBoxLayout()
-        self.noScaleButton = QRadioButton('noScale')
-        self.noScaleButton.setChecked(True)
-        self.noScaleButton.toggled.connect(self.scaleEvent)
         self.autoScaleButton = QRadioButton('autoScale')
         self.autoScaleButton.toggled.connect(self.scaleEvent)
+        self.autoScaleButton.setChecked(True)
         self.manualScaleButton = QRadioButton('manualScale')
         self.manualScaleButton.toggled.connect(self.scaleEvent)
-        vbox.addWidget(self.noScaleButton)
         vbox.addWidget(self.autoScaleButton)
         vbox.addWidget(self.manualScaleButton)
         wid =  QWidget()
@@ -295,6 +267,15 @@ class ADViewer(QWidget) :
     def showInfoEvent(self) :
         self.numpyImage.showInfo()
 
+    def colorChangeEvent(self) :
+        self.display()
+
+    def showColorTableEvent(self) :
+        self.colorTable.show()
+
+    def colorExceptionEvent(self,error) :
+        self.statusText.setText(error)
+
     def zoomInEvent(self) :
         if not self.numpyImage.zoomIn(self.zoomScale) : 
             self.statusText.setText('zoomIn failed')
@@ -308,15 +289,12 @@ class ADViewer(QWidget) :
         self.display()
 
     def scaleEvent(self) :
-         if self.noScaleButton.isChecked() :
-            self.scaleType = 0
-         elif self.autoScaleButton.isChecked() :
-            self.scaleType = 1
-         elif self.manualScaleButton.isChecked() :
-            self.scaleType = 2   
-         else :
+        if self.autoScaleButton.isChecked() :
+            self.manualLimits = False
+        elif self.manualScaleButton.isChecked() :
+            self.manualLimits = True
+        else :
             self.statusText.setText('why is no scaleButton enabled?')
-         self.display()
 
     def manualLimitsEvent(self) :
         try:
@@ -402,10 +380,10 @@ class ADViewer(QWidget) :
             self.imageSizeEvent()
         if type(self.imageDict["image"])==type(None) : return
         try :
-            if self.setColorTable :
-                self.numpyImage.display(self.imageDict["image"],colorTable=self.colorTable)
-            else :
+            if self.imageDict["nz"]==3 :
                 self.numpyImage.display(self.imageDict["image"])
+            else :
+                self.numpyImage.display(self.imageDict["image"],colorTable=self.colorTable.getColorTable())
         except Exception as error:
             self.statusText.setText(str(error))    
 
@@ -423,18 +401,6 @@ class ADViewer(QWidget) :
     def clearEvent(self) :
         self.statusText.setText('')
         self.statusText.setStyleSheet("background-color:white")
-
-    def colorTableEvent(self) :
-        self.colorTableButton.setEnabled(False)
-        self.nocolorTableButton.setEnabled(True)
-        self.setColorTable = True
-        self.display()
-
-    def nocolorTableEvent(self) :
-        self.colorTableButton.setEnabled(True)
-        self.nocolorTableButton.setEnabled(False) 
-        self.setColorTable = False
-        self.display()    
 
     def colorLimitEvent(self) :
         try :
@@ -537,7 +503,7 @@ class ADViewer(QWidget) :
             self.statusText.setText(str(error))
             return
         try:
-            self.dataToImage.dataToImage(data,dimArray,self.imageSize,scaleType=self.scaleType)
+            self.dataToImage.dataToImage(data,dimArray,self.imageSize,manualLimits=self.manualLimits)
             imageDict = self.dataToImage.getImageDict()
             self.imageDict["image"] = imageDict["image"]
             callsetChannelInfo = False
