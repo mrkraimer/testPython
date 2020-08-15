@@ -24,10 +24,12 @@ sys.path.append('../numpyImage/')
 from numpyImage import NumpyImage
 sys.path.append('../codecAD/')
 from codecAD import CodecAD
-sys.path.append('../dataToImageAD/')
-from dataToImageAD import DataToImageAD
+sys.path.append('../channelToImageAD/')
+from channelToImageAD import ChannelToImageAD
 sys.path.append('../colorTable/')
 from colorTable import ColorTable
+sys.path.append('../showInfo/')
+from showInfo import ShowInfo
         
 class ADViewer(QWidget) :
     def __init__(self,ntnda_Channel_Provider,providerName, parent=None):
@@ -41,11 +43,12 @@ class ADViewer(QWidget) :
         self.provider.ADViewer = self
         self.setWindowTitle(providerName + "_ADViewer")
         self.codecAD = CodecAD()
-        self.dataToImage = DataToImageAD()
+        self.channelToImage = ChannelToImageAD()
         self.colorTable = ColorTable()
         self.colorTable.setColorChangeCallback(self.colorChangeEvent)
         self.colorTable.setExceptionCallback(self.colorExceptionEvent)
-        self.imageDict = self.dataToImage.imageDictCreate()
+        self.channelDict = self.channelToImage.channelDictCreate()
+        self.showInfo = ShowInfo()
         self.manualLimits = False
         self.nImages = 0
         self.zoomScale = 1
@@ -237,8 +240,8 @@ class ADViewer(QWidget) :
 
         self.numpyImage = NumpyImage(flipy=False,imageSize=self.imageSize,isSeparateWindow=False)
         self.numpyImage.setContentsMargins(0,0,0,0)
-        self.channelInfo = self.numpyImage.channelInfoDictCreate()
         self.numpyImage.setZoomCallback(self.zoomEvent)
+        self.numpyImage.setMouseClickCallback(self.mouseClickEvent)
         box.addWidget(self.numpyImage)
 
         wid =  QWidget()
@@ -260,12 +263,12 @@ class ADViewer(QWidget) :
         self.qsizeOrig = self.size()
 
     def resetEvent(self) :
-        if type(self.imageDict["image"])==type(None) : return
+        if type(self.channelDict["image"])==type(None) : return
         self.numpyImage.resetZoom()
         self.display()
 
     def showInfoEvent(self) :
-        self.numpyImage.showInfo()
+        self.showInfo.show()
 
     def colorChangeEvent(self) :
         self.display()
@@ -300,7 +303,7 @@ class ADViewer(QWidget) :
         try:
             low = int(self.minLimitText.text())
             high = int(self.maxLimitText.text())
-            self.dataToImage.setManualLimits((low,high))
+            self.channelToImage.setManualLimits((low,high))
             self.display()
         except Exception as error:
             self.statusText.setText(str(error))
@@ -372,18 +375,21 @@ class ADViewer(QWidget) :
     def zoomEvent(self,zoomData) :
         if self.imageSizeResetEvent==self.imageSize :
             self.display()
+
+    def mouseClickEvent(self,event,imageDict) :
+        self.showInfo.setImageInfo(imageDict)
         
     def display(self) :
         if self.isClosed : return
         if self.imageSizeResetEvent!=self.imageSize :
             self.imageSizeText.setText(str(self.imageSizeResetEvent))
             self.imageSizeEvent()
-        if type(self.imageDict["image"])==type(None) : return
+        if type(self.channelDict["image"])==type(None) : return
         try :
-            if self.imageDict["nz"]==3 :
-                self.numpyImage.display(self.imageDict["image"])
+            if self.channelDict["nz"]==3 :
+                self.numpyImage.display(self.channelDict["image"])
             else :
-                self.numpyImage.display(self.imageDict["image"],colorTable=self.colorTable.getColorTable())
+                self.numpyImage.display(self.channelDict["image"],colorTable=self.colorTable.getColorTable())
         except Exception as error:
             self.statusText.setText(str(error))    
 
@@ -391,6 +397,10 @@ class ADViewer(QWidget) :
         self.isClosed = True
         self.numpyImage.setOkToClose()
         self.numpyImage.close()
+        self.colorTable.setOkToClose()
+        self.colorTable.close()
+        self.showInfo.setOkToClose()
+        self.showInfo.close()
 
     def startEvent(self) :
         self.start()
@@ -503,32 +513,29 @@ class ADViewer(QWidget) :
             self.statusText.setText(str(error))
             return
         try:
-            self.dataToImage.dataToImage(data,dimArray,self.imageSize,manualLimits=self.manualLimits)
-            imageDict = self.dataToImage.getImageDict()
-            self.imageDict["image"] = imageDict["image"]
-            callsetChannelInfo = False
-            if self.imageDict["dtypeChannel"]!=imageDict["dtypeChannel"] :
-                self.imageDict["dtypeChannel"] = imageDict["dtypeChannel"]
-                self.channelInfo["Dtype"] = self.imageDict["dtypeChannel"]
-            if self.imageDict["dtypeImage"]!=imageDict["dtypeImage"] :
-                self.imageDict["dtypeImage"] = imageDict["dtypeImage"]
-            if self.imageDict["nx"]!=imageDict["nx"] :
-                self.imageDict["nx"] = imageDict["nx"]
-                self.channelInfo["Width"] = self.imageDict["nx"]
-                callsetChannelInfo = True
-            if self.imageDict["ny"]!=imageDict["ny"] :
-                self.imageDict["ny"] = imageDict["ny"]
-                self.channelInfo["Height"] = self.imageDict["ny"]
-                callsetChannelInfo = True
-            if self.imageDict["nz"]!=imageDict["nz"] :
-                self.imageDict["nz"] = imageDict["nz"]
-                if imageDict["nz"]==3 :
-                    self.channelInfo["ColorMode"] = str("rgb")
-                else :
-                    self.channelInfo["ColorMode"] = str("mono")
-                callsetChannelInfo = True    
-            if callsetChannelInfo :
-                self.numpyImage.setChannelInfo(self.channelInfo)
+            self.channelToImage.channelToImage(data,dimArray,self.imageSize,manualLimits=self.manualLimits)
+            channelDict = self.channelToImage.getChannelDict()
+            self.channelDict["image"] = channelDict["image"]
+            callShowInfo = False
+            if self.channelDict["dtypeChannel"]!=channelDict["dtypeChannel"] :
+                self.channelDict["dtypeChannel"] = channelDict["dtypeChannel"]
+                callShowInfo = True
+            if self.channelDict["dtypeImage"]!=channelDict["dtypeImage"] :
+                self.channelDict["dtypeImage"] = channelDict["dtypeImage"]
+            if self.channelDict["nx"]!=channelDict["nx"] :
+                self.channelDict["nx"] = channelDict["nx"]
+                callShowInfo = True
+            if self.channelDict["ny"]!=channelDict["ny"] :
+                self.channelDict["ny"] = channelDict["ny"]
+                callShowInfo = True
+            if self.channelDict["nz"]!=channelDict["nz"] :
+                self.channelDict["nz"] = channelDict["nz"]
+                callShowInfo = True 
+            if self.channelDict["compress"]!=channelDict["compress"] :
+                self.channelDict["compress"] = channelDict["compress"]
+                callShowInfo = True       
+            if callShowInfo :
+                self.showInfo.setChannelInfo(self.channelDict)
 
             self.display()
         except Exception as error:

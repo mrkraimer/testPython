@@ -52,7 +52,7 @@ latest date 2020.07.31
         self.__imageSize = int(imageSize)
         self.__flipy = flipy
         self.__isSeparateWindow = isSeparateWindow
-        self.__imageInfo = self.__ImageInfo()
+        self.__imageDict = self.imageDictCreate()
         self.__thread = self.__Worker(self.__imageSize,self.__ImageToQImage())
         self.__imageZoom = None
         self.__rubberBand = QRubberBand(QRubberBand.Rectangle,self)
@@ -61,6 +61,7 @@ latest date 2020.07.31
         self.__clientZoomCallback = None
         self.__clientMousePressCallback = None
         self.__clientMouseReleaseCallback = None
+        self.__clientMouseClickCallback = None
         self.__clientResizeCallback = None
         self.__mousePressed = False
         self.__okToClose = False
@@ -72,36 +73,28 @@ latest date 2020.07.31
         self.__bytesPerLine = None
         self.__Format = None
         self.__colorTable = None
+        self.__expand = 1
 
-    def showInfo(self) :
-        self.__imageInfo.show()
-
-    def channelInfoDictCreate(self) :
+    def imageDictCreate(self) :
         """
         Returns
         -------
-        channelInfoDict : dict
-            channelInfoDict["Width"]      int
-            channelInfoDict["Height"]     int
-            channelInfoDict["ColorMode"]  str
-            channelInfoDict["Dtype"]      str
+        imageDict : dict
+            imageDict["image"]        None
+            imageDict["width"]        0
+            imageDict["height"]       0
+            imageDict["dtype"]        np.uint8
+            imageDict["mouseX"]       0
+            imageDict["mouseY"]       0
+            imageDict["expand"]       1
         """
-        return {
-            "Width" : 0,
-            "Height" : 0,
-            "Dtype" : "uint8",
-            "ColorMode" : "mono"
-               }
-    def setChannelInfo(self,channelInfo) :
-        """
-         Parameters
-        ----------
-           channelInfo  : channelInfoDict
-        """
-        self.__imageInfo.channelWidthText.setText(str(channelInfo["Width"]))
-        self.__imageInfo.channelHeightText.setText(str(channelInfo["Height"]))
-        self.__imageInfo.channelColorText.setText(str(channelInfo["ColorMode"]))
-        self.__imageInfo.channelTypeText.setText(str(channelInfo["Dtype"]))
+        return {"image" : None ,\
+             "width" : 0 ,
+             "height" : 0 ,
+             "dtype" : "uint8"  ,
+              "mouseX" : 0 ,
+              "mouseY" : 0 ,
+               "expand" : 1 }
 
     def setOkToClose(self) :
         """ allow image window to be closed"""
@@ -138,6 +131,15 @@ latest date 2020.07.31
                  client called when mouse is released
         """
         self.__clientMouseReleaseCallback = clientCallback
+
+    def setMouseClickCallback(self,clientCallback) :
+        """
+        Parameters
+        ----------
+            clientCallback : client method
+                 client called when mouse is released
+        """
+        self.__clientMouseClickCallback = clientCallback
 
     def setResizeCallback(self,clientCallback) :
         """
@@ -186,8 +188,6 @@ latest date 2020.07.31
                  set image width and height
         """
         self.__imageSize = imageSize
-        self.__imageInfo.imageWidthText.setText(str(self.__imageSize))
-        self.__imageInfo.imageHeightText.setText(str(self.__imageSize))
         self.__thread.setImageSize(self.__imageSize)
         if self.__imageZoom!=None :
             self.__imageZoom.setImageSize(self.__imageSize)
@@ -243,8 +243,6 @@ latest date 2020.07.31
             self.setGeometry(QRect(self.__xoffset, self.__yoffset,self.__imageSize,self.__imageSize))
             if not self.__isSeparateWindow :
                  self.setFixedSize(self.__imageSize,self.__imageSize)
-            self.__imageInfo.imageWidthText.setText(str(self.__imageSize))
-            self.__imageInfo.imageHeightText.setText(str(self.__imageSize))
         if self.__flipy :
             self.__image = np.flip(pixarray,0)
         else :
@@ -270,7 +268,6 @@ latest date 2020.07.31
         if self.__isHidden :
             self.__isHidden = False
             self.show()
-        self.__imageInfo.imageTypeText.setText(str(self.__image.dtype))
 
     def closeEvent(self,event) :
         """
@@ -285,8 +282,6 @@ latest date 2020.07.31
             self.__isHidden = True
             self.__firstDisplay = True
             return
-        self.__imageInfo.setOkToClose()
-        self.__imageInfo.close()
 
     def mousePressEvent(self,event) :
         """
@@ -336,8 +331,14 @@ latest date 2020.07.31
         sizey = ymax - ymin
         sizex = xmax -xmin
         if sizey<=3 or sizex<=3 :
-            self.__imageInfo.imagemouseXText.setText(str(xmin))
-            self.__imageInfo.imagemouseYText.setText(str(ymin))
+            if self.__clientMouseClickCallback!=None :
+                self.__imageDict["image"] = self.__image
+                self.__imageDict["width"] = xsize
+                self.__imageDict["height"] = ysize
+                self.__imageDict["mouseX"] = xmin
+                self.__imageDict["mouseY"] = ymin
+                self.__imageDict["expand"] = self.__expand
+                self.__clientMouseClickCallback(event,self.__imageDict)
             return
         if self.__imageZoom==None :
             self.__clientZoomCallback((xsize,ysize),(xmin,xmax,ymin,ymax))
@@ -365,198 +366,6 @@ latest date 2020.07.31
         if type(self.__image)==type(None) : return
         self.__thread.render(self,self.__image,self.__bytesPerLine,self.__Format,self.__colorTable)
         self.__thread.wait()
-
-    class __ImageInfo(QWidget) :
-        def __init__(self,parent=None):
-            super(QWidget, self).__init__(parent)
-            self.okToClose = False
-            self.isHidden = True
-            self.width = 150
-            self.height = 0
-            widheight = 25
-
-            masterbox = QVBoxLayout()
-
-            channelbox = QVBoxLayout()
-            channelbox.setContentsMargins(0,0,0,0)
-            channelbox.addWidget(QLabel("ChannelInfo"))
-            self.height = self.height + widheight
-
-            hbox = QHBoxLayout()
-            hbox.setContentsMargins(10,0,0,0)
-            hbox.addWidget(QLabel("Width: "))
-            self.channelWidthText = QLabel()
-            self.channelWidthText.setFixedWidth(40)
-            hbox.addWidget(self.channelWidthText)
-            wid =  QWidget()
-            wid.setLayout(hbox)
-            wid.setFixedHeight(widheight)
-            self.height = self.height + widheight
-            channelbox.addWidget(wid)
-
-            hbox = QHBoxLayout()
-            hbox.setContentsMargins(10,0,0,0)
-            hbox.addWidget(QLabel("Height: "))
-            self.channelHeightText = QLabel()
-            self.channelHeightText.setFixedWidth(40)
-            hbox.addWidget(self.channelHeightText)
-            wid =  QWidget()
-            wid.setLayout(hbox)
-            wid.setFixedHeight(widheight)
-            self.height = self.height + widheight
-            channelbox.addWidget(wid)
-
-            hbox = QHBoxLayout()
-            hbox.setContentsMargins(10,0,0,0)
-            hbox.addWidget(QLabel("Dtype: "))
-            self.channelTypeText = QLabel()
-            self.channelTypeText.setFixedWidth(40)
-            hbox.addWidget(self.channelTypeText)
-            wid =  QWidget()
-            wid.setLayout(hbox)
-            wid.setFixedHeight(widheight)
-            self.height = self.height + widheight
-            channelbox.addWidget(wid)
-
-            hbox = QHBoxLayout()
-            hbox.setContentsMargins(10,0,0,0)
-            hbox.addWidget(QLabel("ColorMode: "))
-            self.channelColorText = QLabel()
-            self.channelColorText.setFixedWidth(40)
-            hbox.addWidget(self.channelColorText)
-            wid =  QWidget()
-            wid.setLayout(hbox)
-            wid.setFixedHeight(widheight)
-            self.height = self.height + widheight
-            channelbox.addWidget(wid)
-
-            hbox = QHBoxLayout()
-            hbox.setContentsMargins(10,0,0,0)
-            hbox.addWidget(QLabel("MouseX: "))
-            self.channelmouseXText= QLabel()
-            self.channelmouseXText.setFixedWidth(40)
-            hbox.addWidget(self.channelmouseXText)
-            wid =  QWidget()
-            wid.setLayout(hbox)
-            wid.setFixedHeight(widheight)
-            self.height = self.height + widheight
-            channelbox.addWidget(wid)
-
-            hbox = QHBoxLayout()
-            hbox.setContentsMargins(10,0,0,0)
-            hbox.addWidget(QLabel("MouseY: "))
-            self.channelmouseYText= QLabel()
-            self.channelmouseYText.setFixedWidth(40)
-            hbox.addWidget(self.channelmouseYText)
-            wid =  QWidget()
-            wid.setLayout(hbox)
-            wid.setFixedHeight(widheight)
-            self.height = self.height + widheight
-            channelbox.addWidget(wid)
-
-            wid =  QWidget()
-            wid.setLayout(channelbox)
-            self.height = self.height + widheight
-            masterbox.addWidget(wid)
-
-            imagebox = QVBoxLayout()
-            imagebox.setContentsMargins(0,10,0,0)
-            imagebox.addWidget(QLabel("ImageInfo"))
-            self.height = self.height + widheight
-
-            hbox = QHBoxLayout()
-            hbox.setContentsMargins(10,0,0,0)
-            hbox.addWidget(QLabel("Width: "))
-            self.imageWidthText = QLabel()
-            self.imageWidthText.setFixedWidth(40)
-            hbox.addWidget(self.imageWidthText)
-            wid =  QWidget()
-            wid.setLayout(hbox)
-            wid.setFixedHeight(widheight)
-            self.height = self.height + widheight
-            imagebox.addWidget(wid)
-
-            hbox = QHBoxLayout()
-            hbox.setContentsMargins(10,0,0,0)
-            hbox.addWidget(QLabel("Height: "))
-            self.imageHeightText = QLabel()
-            self.imageHeightText.setFixedWidth(40)
-            hbox.addWidget(self.imageHeightText)
-            wid =  QWidget()
-            wid.setLayout(hbox)
-            wid.setFixedHeight(widheight)
-            self.height = self.height + widheight
-            imagebox.addWidget(wid)
-
-            hbox = QHBoxLayout()
-            hbox.setContentsMargins(10,0,0,0)
-            hbox.addWidget(QLabel("Dtype: "))
-            self.imageTypeText = QLabel()
-            self.imageTypeText.setFixedWidth(40)
-            hbox.addWidget(self.imageTypeText)
-            wid =  QWidget()
-            wid.setLayout(hbox)
-            wid.setFixedHeight(widheight)
-            self.height = self.height + widheight
-            imagebox.addWidget(wid)
-
-            hbox = QHBoxLayout()
-            hbox.setContentsMargins(10,0,0,0)
-            hbox.addWidget(QLabel("MouseX: "))
-            self.imagemouseXText= QLabel()
-            self.imagemouseXText.setFixedWidth(40)
-            hbox.addWidget(self.imagemouseXText)
-            wid =  QWidget()
-            wid.setLayout(hbox)
-            wid.setFixedHeight(widheight)
-            self.height = self.height + widheight
-            imagebox.addWidget(wid)
-
-            hbox = QHBoxLayout()
-            hbox.setContentsMargins(10,0,0,0)
-            hbox.addWidget(QLabel("MouseY: "))
-            self.imagemouseYText= QLabel()
-            self.imagemouseYText.setFixedWidth(40)
-            hbox.addWidget(self.imagemouseYText)
-            wid =  QWidget()
-            wid.setLayout(hbox)
-            wid.setFixedHeight(widheight)
-            self.height = self.height + widheight
-            imagebox.addWidget(wid)
-
-            wid =  QWidget()
-            wid.setLayout(imagebox)
-            masterbox.addWidget(wid)
-
-            wid =  QWidget()
-            wid.setLayout(masterbox)
-            wid.setFixedWidth(self.width)
-            wid.setFixedHeight(self.height)
-            self.firstRow = wid
-# initialize
-            layout = QGridLayout()
-            layout.setVerticalSpacing(0);
-            layout.addWidget(self.firstRow,0,0,alignment=Qt.AlignLeft)
-            self.setLayout(layout)
-
-        def setOkToClose(self) :
-            """ allow image window to be closed"""
-            self.okToClose = True
-
-        def closeEvent(self,event) :
-            """
-            This is a QWidget method.
-            It is only present to override until it is okToClose
-            """
-            if not self.okToClose :
-                rect = self.geometry()
-                old = rect.getCoords()
-                xoffset = old[0]
-                yoffset = old[1]
-                self.setGeometry(xoffset,yoffset,self.width,self.height)
-                self.hide()
-                self.isHidden = True
-                return
 
     class __ImageToQImage() :
         def __init__(self):

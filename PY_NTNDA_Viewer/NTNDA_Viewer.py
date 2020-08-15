@@ -23,10 +23,12 @@ sys.path.append('../numpyImage/')
 from numpyImage import NumpyImage
 sys.path.append('../codecAD/')
 from codecAD import CodecAD
-sys.path.append('../dataToImageAD/')
-from dataToImageAD import DataToImageAD
+sys.path.append('../channelToImageAD/')
+from channelToImageAD import ChannelToImageAD
 sys.path.append('../colorTable/')
 from colorTable import ColorTable
+sys.path.append('../showInfo/')
+from showInfo import ShowInfo
 
 import ctypes
 import ctypes.util
@@ -42,17 +44,18 @@ class NTNDA_Viewer(QWidget) :
         self.provider.NTNDA_Viewer = self
         self.setWindowTitle(providerName + "_NTNDA_Viewer")
         self.codecAD = CodecAD()
-        self.dataToImage = DataToImageAD()
+        self.channelToImage = ChannelToImageAD()
         self.colorTable = ColorTable()
         self.colorTable.setColorChangeCallback(self.colorChangeEvent)
         self.colorTable.setExceptionCallback(self.colorExceptionEvent)
-        self.imageDict = self.dataToImage.imageDictCreate()
+        self.channelDict= self.channelToImage.channelDictCreate()
         self.numpyImage = NumpyImage(flipy=False,imageSize=self.imageSize)
-        self.channelInfo = self.numpyImage.channelInfoDictCreate()
+        self.showInfo = ShowInfo()
         self.numpyImage.setZoomCallback(self.zoomEvent)
         self.numpyImage.setResizeCallback(self.resizeImageEvent)
+        self.numpyImage.setMouseClickCallback(self.mouseClickEvent)
         self.manualLimits = False
-        self.showLimits = False
+        self.showLimits= False
         self.nImages = 0
         self.zoomScale = 1
         self.codecIsNone = True
@@ -268,7 +271,7 @@ class NTNDA_Viewer(QWidget) :
         self.show()
 
     def showInfoEvent(self) :
-        self.numpyImage.showInfo()
+        self.showInfo.show()
 
     def colorChangeEvent(self) :
         self.display()
@@ -280,7 +283,7 @@ class NTNDA_Viewer(QWidget) :
         self.statusText.setText(error)
         
     def resetEvent(self) :
-        if self.imageDict['nx']==0 : return
+        if self.channelDict['nx']==0 : return
         self.zoomText.setText('')
         self.numpyImage.resetZoom()
         self.display()
@@ -319,15 +322,18 @@ class NTNDA_Viewer(QWidget) :
         self.imageSizeText.setText(str(width))
         self.numpyImage.setImageSize(width)
         self.resetEvent()
-                 
+
+    def mouseClickEvent(self,event,imageDict) :
+        self.showInfo.setImageInfo(imageDict)
+                       
     def display(self) :
         if self.isClosed : return
-        if type(self.imageDict["image"])==type(None) : return
+        if type(self.channelDict["image"])==type(None) : return
         try :
-            if self.imageDict["nz"]==3 :
-                self.numpyImage.display(self.imageDict["image"])
+            if self.channelDict["nz"]==3 :
+                self.numpyImage.display(self.channelDict["image"])
             else :
-                self.numpyImage.display(self.imageDict["image"],colorTable=self.colorTable.getColorTable())
+                self.numpyImage.display(self.channelDict["image"],colorTable=self.colorTable.getColorTable())
         except Exception as error:
             self.statusText.setText(str(error))
 
@@ -336,6 +342,8 @@ class NTNDA_Viewer(QWidget) :
         self.numpyImage.close()
         self.colorTable.setOkToClose()
         self.colorTable.close()
+        self.showInfo.setOkToClose()
+        self.showInfo.close()
 
     def startEvent(self) :
         self.start()
@@ -366,7 +374,7 @@ class NTNDA_Viewer(QWidget) :
         try:
             low = int(self.minLimitText.text())
             high = int(self.maxLimitText.text())
-            self.dataToImage.setManualLimits((low,high))
+            self.channelToImage.setManualLimits((low,high))
             self.display()
         except Exception as error:
             self.statusText.setText(str(error))
@@ -462,38 +470,34 @@ class NTNDA_Viewer(QWidget) :
             self.statusText.setText(str(error))
             return
         try:
-            self.dataToImage.dataToImage(data,dimArray,self.imageSize,\
+            self.channelToImage.channelToImage(data,dimArray,self.imageSize,\
                 manualLimits=self.manualLimits,\
                 showLimits=self.showLimits)
-            imageDict = self.dataToImage.getImageDict()
-            callsetChannelInfo = False
-            self.imageDict["image"] = imageDict["image"]
-            if self.imageDict["dtypeChannel"]!=imageDict["dtypeChannel"] :
-                self.imageDict["dtypeChannel"] = imageDict["dtypeChannel"]
-                self.channelInfo["Dtype"] = self.imageDict["dtypeChannel"]
-                callsetChannelInfo = True
-            if self.imageDict["dtypeImage"]!=imageDict["dtypeImage"] :
-                self.imageDict["dtypeImage"] = imageDict["dtypeImage"]
-            if self.imageDict["nx"]!=imageDict["nx"] :
-                self.imageDict["nx"] = imageDict["nx"]
-                self.channelInfo["Width"] = self.imageDict["nx"]
-                callsetChannelInfo = True
-            if self.imageDict["ny"]!=imageDict["ny"] :
-                self.imageDict["ny"] = imageDict["ny"]
-                self.channelInfo["Height"] = self.imageDict["ny"]
-                callsetChannelInfo = True
-            if self.imageDict["nz"]!=imageDict["nz"] :
-                self.imageDict["nz"] = imageDict["nz"]
-                if imageDict["nz"]==3 :
-                    self.channelInfo["ColorMode"] = str("rgb")
-                else :
-                    self.channelInfo["ColorMode"] = str("mono")
-                callsetChannelInfo = True
-            if callsetChannelInfo :
-                self.numpyImage.setChannelInfo(self.channelInfo)      
+            channelDict= self.channelToImage.getChannelDict()
+            callShowInfo = False
+            self.channelDict["image"] = channelDict["image"]
+            if self.channelDict["dtypeChannel"]!=channelDict["dtypeChannel"] :
+                self.channelDict["dtypeChannel"] = channelDict["dtypeChannel"]
+                callShowInfo = True
+            if self.channelDict["dtypeImage"]!=channelDict["dtypeImage"] :
+                self.channelDict["dtypeImage"] = channelDict["dtypeImage"]
+            if self.channelDict["nx"]!=channelDict["nx"] :
+                self.channelDict["nx"] = channelDict["nx"]
+                callShowInfo = True
+            if self.channelDict["ny"]!=channelDict["ny"] :
+                self.channelDict["ny"] = channelDict["ny"]
+                callShowInfo = True
+            if self.channelDict["nz"]!=channelDict["nz"] :
+                self.channelDict["nz"] = channelDict["nz"]
+                callShowInfo = True
+            if self.channelDict["compress"]!=channelDict["compress"] :
+                self.channelDict["compress"] = channelDict["compress"]
+                callShowInfo = True
+            if  callShowInfo :
+                self.showInfo.setChannelInfo(self.channelDict) 
             if self.showLimits :
-                self.channelLimitsText.setText(str(self.dataToImage.getChannelLimits()))
-                self.imageLimitsText.setText(str(self.dataToImage.getImageLimits()))
+                self.channelLimitsText.setText(str(self.channelToImage.getChannelLimits()))
+                self.imageLimitsText.setText(str(self.channelToImage.getImageLimits()))
             self.display()
         except Exception as error:
             self.statusText.setText(str(error))

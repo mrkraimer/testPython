@@ -1,30 +1,30 @@
-# dataToImageAD.py
+# channelToImageAD.py
 
 import numpy as np
 import math
 
 
-class DataToImageAD() :
+class ChannelToImageAD() :
     '''
-dataToImageAD provides python access to the data provided by areaDetector/ADSupport
+channelToImageAD provides python access to the data provided by areaDetector/ADSupport
 It is meant for use by a callback from an NTNDArray record.
 NTNDArray is implemented in areaDetector/ADCore.
-NTNDArray has the following fields of interest to DataToImageAD:
+NTNDArray has the following fields of interest to ChannelToImageAD:
     value            This contains a numpy array with a scalar dtype
     dimension        2d or 3d array description
       
 Normal use is:
 ...
-from dataToImageAD import DataToImageAD
+from channelToImageAD import ChannelToImageAD
 ...
-    self.dataToImageAD = DataToImageAD()
-    self.imageDict = self.dataToImage.imageDictCreate()
+    self.channelToImageAD = ChannelToImageAD()
+    self.channelDict = self.channelToImage.channelDictCreate()
     
 ...
     try:
-        self.dataToImage.dataToImage(data,dimArray,self.imageSize,...)
-        imageDict = self.dataToImage.getImageDict()
-        self.imageDict["image"] = imageDict["image"]
+        self.channelToImage.channelToImage(data,dimArray,self.imageSize,...)
+        channelDict = self.channelToImage.getImageDict()
+        self.channelDict["image"] = channelDict["image"]
         ... other methods
 ...   
      
@@ -39,29 +39,31 @@ latest date 2020.07.30
     '''
     def __init__(self,parent=None) :
         self.__image = None
-        self.__imageDict = self.imageDictCreate()
+        self.__channelDict = self.channelDictCreate()
         self.__channelLimits = (0,255)
         self.__imageLimits = (0,255)
         self.__manualLimits = (0,255)
 
-    def imageDictCreate(self) :
+    def channelDictCreate(self) :
         """
         Returns
         -------
-        imageDict : dict
-            imageDict["image"]        None
-            imageDict["dtypeChannel"] None
-            imageDict["dtypeImage"]   None
-            imageDict["nx"]           0
-            imageDict["ny"]           0
-            imageDict["nz"]           0
+        channelDict : dict
+            channelDict["image"]        None
+            channelDict["dtypeChannel"] None
+            channelDict["dtypeImage"]   np.uint8
+            channelDict["nx"]           0
+            channelDict["ny"]           0
+            channelDict["nz"]           0
+            channelDict["compress"]     1
         """
         return {"image" : None ,\
-             "dtypeChannel" : None ,\
-             "dtypeImage" : None  ,\
-              "nx" : 0 ,\
+             "dtypeChannel" : None ,
+             "dtypeImage" : np.uint8  ,
+              "nx" : 0 ,
               "ny" : 0 ,
-               "nz" : 0 }
+               "nz" : 0,
+               "compress" : 1 }
 
     def setManualLimits(self,manualLimits) :
         """
@@ -73,20 +75,21 @@ latest date 2020.07.30
         """
         self.__manualLimits = manualLimits
 
-    def getImageDict(self) :
+    def getChannelDict(self) :
         """ 
         Returns
         -------
-        imageDict : dict
-            imageDict["image"]        numpy 2d or 3d array for the image
-            imageDict["dtypeChannel"] dtype for data from the callback
-            imageDict["dtypeImage"]   dtype for image
-            imageDict["nx"]           nx for data from the callback
-            imageDict["ny"]           ny for data from the callback
-            imageDict["nz"]           nz (1,3) for (2d,3d) image
+        channelDict : dict
+            channelDict["image"]        numpy 2d or 3d array for the image
+            channelDict["dtypeChannel"] dtype for data from the callback
+            channelDict["dtypeImage"]   dtype for image
+            channelDict["nx"]           nx for data from the callback
+            channelDict["ny"]           ny for data from the callback
+            channelDict["nz"]           nz (1,3) for (2d,3d) image
+            channelDict["compress"]     how much channel data was compressed 
         
         """
-        return self.__imageDict
+        return self.__channelDict
  
     def getChannelLimits(self) :
         """ 
@@ -159,7 +162,7 @@ latest date 2020.07.30
                 raise Exception('ndim not 2 or 3')
         return (image,nx,ny,nz)        
         
-    def dataToImage(self,data,dimArray,imageSize,manualLimits=False,showLimits=False) :
+    def channelToImage(self,data,dimArray,imageSize,manualLimits=False,showLimits=False) :
         """
          Parameters
         -----------
@@ -202,21 +205,17 @@ latest date 2020.07.30
         nmax = 0
         if nx>nmax : nmax = nx
         if ny>nmax : nmax = ny
+        compress = 1
         if nmax > imageSize :
-            step = math.ceil(float(nmax)/imageSize)
+            compress = math.ceil(float(nmax)/imageSize)
             if nz==1 :
-                image = image[::step,::step]
+                image = image[::compress,::compress]
             else :
-                image =  image[::step,::step,::]   
-        self.__imageDict["image"] = image
-        self.__imageDict["nx"] = nx
-        self.__imageDict["ny"] = ny
-        self.__imageDict["nz"] = nz
-        self.__imageDict["dtypeChannel"] = dtype
-        self.__imageDict["dtypeImage"] = image.dtype
-        self.__imageDict["dtypeChannel"] = dtype
-        if image.dtype!=self.__imageDict["dtypeImage"] :
-            self.__imageDict["dtypeImage"] = image.dtype
-            if image.dtype==np.uint8 :
-                self.__manualLimits = (0,255)
+                image =  image[::compress,::compress,::]   
+        self.__channelDict["image"] = image
+        self.__channelDict["nx"] = nx
+        self.__channelDict["ny"] = ny
+        self.__channelDict["nz"] = nz
+        self.__channelDict["dtypeChannel"] = dtype
+        self.__channelDict["compress"] = compress
         
