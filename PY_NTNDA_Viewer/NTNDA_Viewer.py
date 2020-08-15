@@ -98,7 +98,6 @@ class NTNDA_Viewer(QWidget) :
         box.addWidget(self.channelNameText)
         wid =  QWidget()
         wid.setLayout(box)
-        wid.setFixedHeight(30)
         self.firstRow = wid
 # second row
         box = QHBoxLayout()
@@ -134,7 +133,6 @@ class NTNDA_Viewer(QWidget) :
         box.addWidget(self.statusText)
         wid =  QWidget()
         wid.setLayout(box)
-        wid.setFixedHeight(30)
         self.secondRow = wid
 # third row
         box = QHBoxLayout()
@@ -195,7 +193,6 @@ class NTNDA_Viewer(QWidget) :
 
         wid =  QWidget()
         wid.setLayout(box)
-        wid.setFixedHeight(80)
         self.thirdRow = wid
 # fourth row
         box = QHBoxLayout()
@@ -242,20 +239,11 @@ class NTNDA_Viewer(QWidget) :
         self.maxLimitText.returnPressed.connect(self.manualLimitsEvent)
         showbox.addWidget(self.maxLimitText)
         groupbox.setLayout(showbox)
-        wid.setFixedHeight(50)
         box.addWidget(groupbox)
 
         wid =  QWidget()
         wid.setLayout(box)
-        wid.setFixedHeight(70)
         self.fourthRow = wid
-# fifth row
-        box = QHBoxLayout()
-        box.setContentsMargins(0,0,0,0)
-        box.addWidget(QLabel())
-        wid =  QWidget()
-        wid.setLayout(box)
-        self.fifthRow = wid
 # initialize
         layout = QGridLayout()
         layout.setVerticalSpacing(0);
@@ -263,12 +251,14 @@ class NTNDA_Viewer(QWidget) :
         layout.addWidget(self.secondRow,1,0,alignment=Qt.AlignLeft)
         layout.addWidget(self.thirdRow,2,0,alignment=Qt.AlignLeft)
         layout.addWidget(self.fourthRow,3,0,alignment=Qt.AlignLeft)
-        layout.addWidget(self.fifthRow,4,0,alignment=Qt.AlignLeft)
         self.setLayout(layout)
         self.subscription = None
         self.lasttime = time.time() -2
         self.arg = None
         self.show()
+        self.setFixedHeight(self.height())
+        self.setFixedWidth(self.width())
+        
 
     def showInfoEvent(self) :
         self.showInfo.show()
