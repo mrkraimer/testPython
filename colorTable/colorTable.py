@@ -95,6 +95,11 @@ latest date 2020.08.11
         self.blueButton.setEnabled(True)
         self.blueButton.clicked.connect(self.__blueButtonEvent)
         lutModeBox.addWidget(self.blueButton)
+        self.juliaButton = QPushButton('julia')
+        self.juliaButton.setEnabled(True)
+        self.juliaButton.clicked.connect(self.__juliaButtonEvent)
+        lutModeBox.addWidget(self.juliaButton)
+
 
         wid =  QWidget()
         wid.setLayout(lutModeBox)
@@ -199,5 +204,9 @@ latest date 2020.08.11
 
     def __blueButtonEvent(self) :
         self.__colorTable = [qRgb(0,0,i) for i in range(256)]
+        self.__userColorChangeEvent()
+
+    def __juliaButtonEvent(self) :
+        self.__colorTable = [qRgb(i%8*32,i%16*16,i&32*8) for i in range(256)]
         self.__userColorChangeEvent()
 

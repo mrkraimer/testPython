@@ -1,7 +1,7 @@
 # showInfo.py
 
 from PyQt5.QtWidgets import QWidget,QRubberBand
-from PyQt5.QtWidgets import QLabel,QLabel
+from PyQt5.QtWidgets import QLabel,QLineEdit
 from PyQt5.QtWidgets import QGroupBox,QHBoxLayout,QVBoxLayout,QGridLayout
 from PyQt5.QtCore import QPoint,QRect,QSize,QPointF
 from PyQt5.QtCore import QThread
@@ -19,14 +19,8 @@ Normal use is:
 from showInfo import ShowInfo
 ...
     self.showInfo = ShowInfo()
-    self.imageDict = self.dataToImage.imageDictCreate()
-    
 ...
-    try:
-        self.dataToImage.dataToImage(data,dimArray,self.imageSize,...)
-        imageDict = self.dataToImage.getImageDict()
-        self.imageDict["image"] = imageDict["image"]
-        ... other methods
+    
 ...   
      
 Copyright - See the COPYRIGHT that is included with this distribution.
@@ -35,7 +29,7 @@ Copyright - See the COPYRIGHT that is included with this distribution.
 
 authors
     Marty Kraimer
-latest date 2020.08.10
+latest date 2020.08.20
     '''
     def __init__(self,parent=None):
         super(QWidget, self).__init__(parent)
@@ -43,9 +37,11 @@ latest date 2020.08.10
         self.__isHidden = True
         self.__xoffset = None
         self.__yoffset = None
-        
 
         masterbox = QVBoxLayout()
+        masterbox.setContentsMargins(0,0,0,0)
+        self.infoText = QLabel('status')
+        masterbox.addWidget(self.infoText)
 
         channelbox = QVBoxLayout()
         channelbox.setContentsMargins(0,0,0,0)
@@ -54,8 +50,7 @@ latest date 2020.08.10
         hbox = QHBoxLayout()
         hbox.setContentsMargins(10,0,0,0)
         hbox.addWidget(QLabel("nx: "))
-        self.channelnxText = QLabel()
-        self.channelnxText.setFixedWidth(40)
+        self.channelnxText = QLabel('----')
         hbox.addWidget(self.channelnxText)
         wid =  QWidget()
         wid.setLayout(hbox)
@@ -64,8 +59,7 @@ latest date 2020.08.10
         hbox = QHBoxLayout()
         hbox.setContentsMargins(10,0,0,0)
         hbox.addWidget(QLabel("ny: "))
-        self.channelnyText = QLabel()
-        self.channelnyText.setFixedWidth(40)
+        self.channelnyText = QLabel('----')
         hbox.addWidget(self.channelnyText)
         wid =  QWidget()
         wid.setLayout(hbox)
@@ -74,8 +68,7 @@ latest date 2020.08.10
         hbox = QHBoxLayout()
         hbox.setContentsMargins(10,0,0,0)
         hbox.addWidget(QLabel("nz: "))
-        self.channelnzText = QLabel()
-        self.channelnzText.setFixedWidth(40)
+        self.channelnzText = QLabel('--')
         hbox.addWidget(self.channelnzText)
         wid =  QWidget()
         wid.setLayout(hbox)
@@ -84,8 +77,7 @@ latest date 2020.08.10
         hbox = QHBoxLayout()
         hbox.setContentsMargins(10,0,0,0)
         hbox.addWidget(QLabel("dtype: "))
-        self.channeldtypeText = QLabel()
-        self.channeldtypeText.setFixedWidth(60)
+        self.channeldtypeText = QLabel('--------')
         hbox.addWidget(self.channeldtypeText)
         wid =  QWidget()
         wid.setLayout(hbox)
@@ -94,30 +86,28 @@ latest date 2020.08.10
         hbox = QHBoxLayout()
         hbox.setContentsMargins(10,0,0,0)
         hbox.addWidget(QLabel("compress: "))
-        self.channelcompressText = QLabel()
-        self.channelcompressText.setFixedWidth(40)
+        self.channelcompressText = QLabel('----')
         hbox.addWidget(self.channelcompressText)
         wid =  QWidget()
         wid.setLayout(hbox)
         channelbox.addWidget(wid)
-        channelbox.addWidget(QLabel("updates on mouseClick"))
 
+        channelbox.addWidget(QLabel("mouseClick"))
+
+        channelbox.addWidget(QLabel('channelLow'))
         hbox = QHBoxLayout()
         hbox.setContentsMargins(10,0,0,0)
-        hbox.addWidget(QLabel("mouseX: "))
-        self.channelmouseXText = QLabel()
-        self.channelmouseXText.setFixedWidth(60)
-        hbox.addWidget(self.channelmouseXText)
+        self.channellowText = QLabel("-------------")
+        hbox.addWidget(self.channellowText)
         wid =  QWidget()
         wid.setLayout(hbox)
         channelbox.addWidget(wid)
 
+        channelbox.addWidget(QLabel('channelHigh'))
         hbox = QHBoxLayout()
         hbox.setContentsMargins(10,0,0,0)
-        hbox.addWidget(QLabel("mouseY: "))
-        self.channelmouseYText = QLabel()
-        self.channelmouseYText.setFixedWidth(60)
-        hbox.addWidget(self.channelmouseYText)
+        self.channelhighText = QLabel("-------------")
+        hbox.addWidget(self.channelhighText)
         wid =  QWidget()
         wid.setLayout(hbox)
         channelbox.addWidget(wid)
@@ -125,9 +115,8 @@ latest date 2020.08.10
         hbox = QHBoxLayout()
         hbox.setContentsMargins(10,0,0,0)
         hbox.addWidget(QLabel("x: "))
-        self.channelXText = QLabel()
-        self.channelXText.setFixedWidth(60)
-        hbox.addWidget(self.channelXText)
+        self.channelmouseXText = QLabel('----')
+        hbox.addWidget(self.channelmouseXText)
         wid =  QWidget()
         wid.setLayout(hbox)
         channelbox.addWidget(wid)
@@ -135,9 +124,31 @@ latest date 2020.08.10
         hbox = QHBoxLayout()
         hbox.setContentsMargins(10,0,0,0)
         hbox.addWidget(QLabel("y: "))
-        self.channelYText = QLabel()
-        self.channelYText.setFixedWidth(60)
-        hbox.addWidget(self.channelYText)
+        self.channelmouseYText = QLabel('----')
+        hbox.addWidget(self.channelmouseYText)
+        wid =  QWidget()
+        wid.setLayout(hbox)
+        channelbox.addWidget(wid)
+
+        channelbox.addWidget(QLabel('value'))
+        hbox = QHBoxLayout()
+        hbox.setContentsMargins(10,0,0,0)
+        self.channelvalue1Text = QLabel("(-------------")
+        hbox.addWidget(self.channelvalue1Text)
+        wid =  QWidget()
+        wid.setLayout(hbox)
+        channelbox.addWidget(wid)
+        hbox = QHBoxLayout()
+        hbox.setContentsMargins(10,0,0,0)
+        self.channelvalue2Text = QLabel(",-------------")
+        hbox.addWidget(self.channelvalue2Text)
+        wid =  QWidget()
+        wid.setLayout(hbox)
+        channelbox.addWidget(wid)
+        hbox = QHBoxLayout()
+        hbox.setContentsMargins(10,0,0,0)
+        self.channelvalue3Text = QLabel(",-------------)")
+        hbox.addWidget(self.channelvalue3Text)
         wid =  QWidget()
         wid.setLayout(hbox)
         channelbox.addWidget(wid)
@@ -149,13 +160,11 @@ latest date 2020.08.10
         imagebox = QVBoxLayout()
         imagebox.setContentsMargins(0,10,0,0)
         imagebox.addWidget(QLabel("ImageInfo"))
-        imagebox.addWidget(QLabel("updates on mouseClick"))
 
         hbox = QHBoxLayout()
         hbox.setContentsMargins(10,0,0,0)
         hbox.addWidget(QLabel("width: "))
-        self.imagewidthText = QLabel()
-        self.imagewidthText.setFixedWidth(40)
+        self.imagewidthText = QLabel('----')
         hbox.addWidget(self.imagewidthText)
         wid =  QWidget()
         wid.setLayout(hbox)
@@ -164,8 +173,7 @@ latest date 2020.08.10
         hbox = QHBoxLayout()
         hbox.setContentsMargins(10,0,0,0)
         hbox.addWidget(QLabel("height: "))
-        self.imageheightText = QLabel()
-        self.imageheightText.setFixedWidth(40)
+        self.imageheightText = QLabel('----')
         hbox.addWidget(self.imageheightText)
         wid =  QWidget()
         wid.setLayout(hbox)
@@ -174,29 +182,36 @@ latest date 2020.08.10
         hbox = QHBoxLayout()
         hbox.setContentsMargins(10,0,0,0)
         hbox.addWidget(QLabel("dtype: "))
-        self.imagedtypeText = QLabel()
-        self.imagedtypeText.setFixedWidth(40)
+        self.imagedtypeText = QLabel('---------')
         hbox.addWidget(self.imagedtypeText)
         wid =  QWidget()
         wid.setLayout(hbox)
         imagebox.addWidget(wid)
 
+        imagebox.addWidget(QLabel("mouseClick"))
 
+        imagebox.addWidget(QLabel('imageLow'))
         hbox = QHBoxLayout()
         hbox.setContentsMargins(10,0,0,0)
-        hbox.addWidget(QLabel("expand: "))
-        self.imagecompressText = QLabel()
-        self.imagecompressText.setFixedWidth(40)
-        hbox.addWidget(self.imagecompressText)
+        self.imagelowText = QLabel("---")
+        hbox.addWidget(self.imagelowText)
         wid =  QWidget()
         wid.setLayout(hbox)
-        imagebox.addWidget(wid)        
+        imagebox.addWidget(wid)
+
+        imagebox.addWidget(QLabel('imageHigh'))
+        hbox = QHBoxLayout()
+        hbox.setContentsMargins(10,0,0,0)
+        self.imagehighText = QLabel("---")
+        hbox.addWidget(self.imagehighText)
+        wid =  QWidget()
+        wid.setLayout(hbox)
+        imagebox.addWidget(wid)
 
         hbox = QHBoxLayout()
         hbox.setContentsMargins(10,0,0,0)
-        hbox.addWidget(QLabel("mouseX: "))
-        self.imagemouseXText = QLabel()
-        self.imagemouseXText.setFixedWidth(40)
+        hbox.addWidget(QLabel("x: "))
+        self.imagemouseXText = QLabel('----')
         hbox.addWidget(self.imagemouseXText)
         wid =  QWidget()
         wid.setLayout(hbox)
@@ -204,34 +219,23 @@ latest date 2020.08.10
 
         hbox = QHBoxLayout()
         hbox.setContentsMargins(10,0,0,0)
-        hbox.addWidget(QLabel("mouseY: "))
-        self.imagemouseYText = QLabel()
-        self.imagemouseYText.setFixedWidth(40)
+        hbox.addWidget(QLabel("y: "))
+        self.imagemouseYText = QLabel('----')
         hbox.addWidget(self.imagemouseYText)
         wid =  QWidget()
         wid.setLayout(hbox)
         imagebox.addWidget(wid)
 
 
+        imagebox.addWidget(QLabel('value'))
         hbox = QHBoxLayout()
         hbox.setContentsMargins(10,0,0,0)
-        hbox.addWidget(QLabel("x: "))
-        self.imageXText = QLabel()
-        self.imageXText.setFixedWidth(60)
-        hbox.addWidget(self.imageXText)
+        self.imagevalueText = QLabel("(---.---.---)")
+        hbox.addWidget(self.imagevalueText)
         wid =  QWidget()
         wid.setLayout(hbox)
         imagebox.addWidget(wid)
 
-        hbox = QHBoxLayout()
-        hbox.setContentsMargins(10,0,0,0)
-        hbox.addWidget(QLabel("y: "))
-        self.imageYText = QLabel()
-        self.imageYText.setFixedWidth(60)
-        hbox.addWidget(self.imageYText)
-        wid =  QWidget()
-        wid.setLayout(hbox)
-        imagebox.addWidget(wid)        
 
         wid =  QWidget()
         wid.setLayout(imagebox)
@@ -245,8 +249,9 @@ latest date 2020.08.10
         layout.setVerticalSpacing(0);
         layout.addWidget(self.firstRow,0,0,alignment=Qt.AlignLeft)
         self.setLayout(layout)
-        self.setFixedHeight(self.height())
-        self.setFixedWidth(200)
+        height = self.height()
+        self.setFixedHeight(height+170)
+        self.setFixedWidth(320)
 
     def setOkToClose(self) :
         """ allow image window to be closed"""
@@ -267,19 +272,75 @@ latest date 2020.08.10
             return
 
     def setChannelInfo(self,channelDict) :
-        self.channelnxText.setText(str(channelDict["nx"]))
-        self.channelnyText.setText(str(channelDict["ny"]))
-        self.channelnzText.setText(str(channelDict["nz"]))
+        self.channel = channelDict["channel"]
+        self.image = channelDict["image"]
+        self.nx = channelDict["nx"]
+        self.ny = channelDict["ny"]
+        self.nz = channelDict["nz"]
+        self.compress = float(channelDict["compress"])
+        self.channelnxText.setText(str(self.nx))
+        self.channelnyText.setText(str(self.ny))
+        self.channelnzText.setText(str(self.nz))
         self.channeldtypeText.setText(str(channelDict["dtypeChannel"]))
-        self.channelcompressText.setText(str(channelDict["compress"]))
+        self.channelcompressText.setText(str(self.compress))
+        height = self.image.shape[0]
+        width = self.image.shape[1]
+        self.imagewidthText.setText(str(width))
+        self.imageheightText.setText(str(height))
+        self.imagedtypeText.setText(str(self.image.dtype))
 
     def setImageInfo(self,imageDict) :
-        self.imagewidthText.setText(str(imageDict["width"]))
-        self.imageheightText.setText(str(imageDict["height"]))
-        self.imagedtypeText.setText(str(imageDict["dtype"]))
-        self.imagemouseXText.setText(str(imageDict["mouseX"]))
-        self.imagemouseYText.setText(str(imageDict["mouseY"]))
-        image = imageDict["image"]
-        print('must calc mouse position')
+        self.__resetInfo()
+        imageMin = np.min(self.image)
+        imageMax = np.max(self.image)
+        self.imagelowText.setText(str(imageMin))
+        self.imagehighText.setText(str(imageMax))
+        channelMin = np.min(self.channel)
+        channelMax = np.max(self.channel)
+        self.channellowText.setText(str(channelMin))
+        self.channelhighText.setText(str(channelMax))
+        mouseX = int(imageDict["mouseX"])
+        mouseY = int(imageDict["mouseY"])
+        self.imagemouseXText.setText(str(mouseX))
+        self.imagemouseYText.setText(str(mouseY))
+        mouseXchannel = int(mouseX*self.compress)        
+        mouseYchannel = int(mouseY*self.compress)
+        self.channelmouseXText.setText(str(mouseXchannel))
+        self.channelmouseYText.setText(str(mouseYchannel))
+        if mouseXchannel>self.nx :
+            self.__setInfo('mouseX out of bounds')
+            return
+        if mouseYchannel>self.ny :
+            self.__setInfo('mouseY out of bounds')
+            return   
+        if self.nz==1 :
+            value = self.image[mouseY,mouseX]
+            self.imagevalueText.setText(str(value))
+            value = self.channel[mouseYchannel,mouseXchannel]
+            self.channelvalue1Text.setText(str(value))
+            self.channelvalue2Text.setText("")
+            self.channelvalue3Text.setText("")
+        elif self.nz==3 :
+            value1 = self.image[mouseY,mouseX,0]
+            value2 = self.image[mouseY,mouseX,1]
+            value3 = self.image[mouseY,mouseX,2]
+            value = "[" + str(value1) + "," + str(value2) + "," + str(value3) + "]"
+            self.imagevalueText.setText(str(value))
+            value1 = self.channel[mouseYchannel,mouseXchannel,0]
+            value2 = self.channel[mouseYchannel,mouseXchannel,1]
+            value3 = self.channel[mouseYchannel,mouseXchannel,2]
+            self.channelvalue1Text.setText("[ " +str(value1))
+            self.channelvalue2Text.setText(", " +str(value2))
+            self.channelvalue3Text.setText(", " +str(value3) + " ]")
             
-        
+        else :
+            self.infoText.setText('nz must be 1 or 3')
+
+    def __resetInfo(self) :
+        self.infoText.setStyleSheet("background-color:green")
+        self.infoText.setText('mouseClicked')
+
+    def __setInfo(self,value) :
+        self.infoText.setStyleSheet("background-color:red")
+        self.infoText.setText(str(value))
+      

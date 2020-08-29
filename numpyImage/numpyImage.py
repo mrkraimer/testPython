@@ -11,6 +11,7 @@ from PyQt5.QtCore import *
 import numpy as np
 import math
 import time
+import copy
 
 
 class NumpyImage(QWidget) :
@@ -52,49 +53,41 @@ latest date 2020.07.31
         self.__imageSize = int(imageSize)
         self.__flipy = flipy
         self.__isSeparateWindow = isSeparateWindow
-        self.__imageDict = self.imageDictCreate()
         self.__thread = self.__Worker(self.__imageSize,self.__ImageToQImage())
-        self.__imageZoom = None
+        self.__imageZoom = False
         self.__rubberBand = QRubberBand(QRubberBand.Rectangle,self)
         self.__mousePressPosition = QPoint(0,0)
         self.__mouseReleasePosition = QPoint(0,0)
         self.__clientZoomCallback = None
-        self.__clientMousePressCallback = None
-        self.__clientMouseReleaseCallback = None
         self.__clientMouseClickCallback = None
-        self.__clientResizeCallback = None
+        self.__clientExceptionCallback = None
         self.__mousePressed = False
         self.__okToClose = False
         self.__isHidden = True
-        self.__image = None
-        self.__xoffset = 10
-        self.__yoffset = 300
-        self.__firstDisplay = True
+        self.__xoffsetZoom = 10
+        self.__yoffsetZoom = 300
         self.__bytesPerLine = None
         self.__Format = None
         self.__colorTable = None
-        self.__expand = 1
+        self.__imageDict = {\
+             'image' : None,
+             'nx' : 0,
+             'ny' : 0,
+             'nz' : 0,
+             }
+             
+        self.__mouseDict = { "mouseX" : 0 ,"mouseY" : 0 }
+        self.__zoomList = list()
+        self.__zoomDict = self.__createZoomDict()
 
-    def imageDictCreate(self) :
-        """
-        Returns
-        -------
-        imageDict : dict
-            imageDict["image"]        None
-            imageDict["width"]        0
-            imageDict["height"]       0
-            imageDict["dtype"]        np.uint8
-            imageDict["mouseX"]       0
-            imageDict["mouseY"]       0
-            imageDict["expand"]       1
-        """
-        return {"image" : None ,\
-             "width" : 0 ,
-             "height" : 0 ,
-             "dtype" : "uint8"  ,
-              "mouseX" : 0 ,
-              "mouseY" : 0 ,
-               "expand" : 1 }
+    def __createZoomDict(self) :
+        return {\
+             'isZoom' : False,
+             'nx' : 0,
+             'ny' : 0,
+             'xoffset' : 0,
+             'yoffset' :0,
+           }
 
     def setOkToClose(self) :
         """ allow image window to be closed"""
@@ -112,25 +105,7 @@ latest date 2020.07.31
         """
         self.__clientZoomCallback = clientCallback
         if not clientZoom :
-            self.__imageZoom  = self.__NumpyImageZoom(self.__imageSize)
-            
-    def setMousePressCallback(self,clientCallback) :
-        """
-        Parameters
-        ----------
-            clientCallback : client method
-                 client called when mouse is pressed within image
-        """
-        self.__clientMousePressCallback = clientCallback
-            
-    def setMouseReleaseCallback(self,clientCallback) :
-        """
-        Parameters
-        ----------
-            clientCallback : client method
-                 client called when mouse is released
-        """
-        self.__clientMouseReleaseCallback = clientCallback
+            self.__imageZoom  = True
 
     def setMouseClickCallback(self,clientCallback) :
         """
@@ -141,19 +116,24 @@ latest date 2020.07.31
         """
         self.__clientMouseClickCallback = clientCallback
 
-    def setResizeCallback(self,clientCallback) :
+    def setExceptionCallback(self,clientCallback) :
         """
         Parameters
         ----------
             clientCallback : client method
-                 client is called when a resetZoom is issued.
+                 client called exceptiion occurs
         """
-        self.__clientResizeCallback = clientCallback
-        
+        self.__clientExceptionCallback = clientCallback
+
     def resetZoom(self) :
         """ reset to unzoomed image"""
-        self.__imageZoom.reset()
-        
+        self.__zoomDict['isZoom'] = False
+        self.__zoomDict['nx'] = 0
+        self.__zoomDict['ny'] = 0
+        self.__zoomDict['xoffset'] = 0
+        self.__zoomDict['yoffset'] = 0
+        self.__zoomList = list()
+
     def zoomIn(self,zoomScale):
         """
         Parameters
@@ -161,24 +141,57 @@ latest date 2020.07.31
             zoomScale : int
                  zoom in by zoomScale/255
         """
-        if self.__imageZoom==None : return False
-        result =  self.__imageZoom.zoomIn(zoomScale)
-        if result and self.__clientZoomCallback!=None :
-            self.__clientZoomCallback(self.__imageZoom.getData())
-        return result
+        nximage = self.__imageDict['nx']
+        nyimage = self.__imageDict['ny']
+        nx =  self.__zoomDict['nx']
+        ny =  self.__zoomDict['ny']
+        xoffset =  self.__zoomDict['xoffset']
+        yoffset =  self.__zoomDict['yoffset']
+        
+        zoomDict = self.__createZoomDict()
+        zoomDict['nx'] = nx
+        zoomDict['ny'] = ny
+        zoomDict['xoffset'] = xoffset
+        zoomDict['yoffset'] = yoffset
 
-    def zoomOut(self,zoomScale):
+        ratio = nx/nximage
+        xoffset = xoffset + ratio*zoomScale
+        nx = nx - (2.0*zoomScale)
+        ratio = ny/nyimage
+        yoffset = yoffset + ratio*zoomScale
+        ny = ny -(2.0*zoomScale)
+        if nx<10 or ny<10 :
+            if self.__clientExceptionCallback!=None :
+                self.__clientExceptionCallback('mouseZoom selected to small a subimage')
+            return
+        
+        self.__zoomDict['nx'] = nx
+        self.__zoomDict['ny'] = ny
+        self.__zoomDict['xoffset'] = xoffset
+        self.__zoomDict['yoffset'] = yoffset
+        self.__zoomDict['isZoom'] = True
+        self.__zoomList.append(zoomDict)
+        return True
+
+    def zoomBack(self):
         """
         Parameters
         ----------
             zoomScale : int
                  zoom out by zoomScale/255
         """
-        if self.__imageZoom==None : return False
-        result =  self.__imageZoom.zoomOut(zoomScale)
-        if result and self.__clientZoomCallback!=None :
-            self.__clientZoomCallback(self.__imageZoom.getData())
-        return result     
+        num = len(self.__zoomList)
+        if num==0 :
+            if self.__clientExceptionCallback!=None :
+                self.__clientExceptionCallback('zoomBack failed')
+                return
+            else :
+                raise Exception('zoomBack failed') 
+        self.__zoomDict = self.__zoomList[num-1]
+        self.__zoomDict['isZoom'] = True
+        self.__zoomList.pop()
+        if num==1 :
+            self.resetZoom()
 
     def setImageSize(self,imageSize) :
         """
@@ -189,12 +202,14 @@ latest date 2020.07.31
         """
         self.__imageSize = imageSize
         self.__thread.setImageSize(self.__imageSize)
-        if self.__imageZoom!=None :
-            self.__imageZoom.setImageSize(self.__imageSize)
         point = self.geometry().topLeft()
-        self.__xoffset = point.x()
-        self.__yoffset = point.y()
-        self.setGeometry(QRect(self.__xoffset, self.__yoffset,self.__imageSize,self.__imageSize))
+        self.__xoffsetZoom = point.x()
+        self.__yoffsetZoom = point.y()
+        if self.__isSeparateWindow :
+            self.hide()
+            self.setGeometry(QRect(self.__xoffsetZoom,\
+                self.__yoffsetZoom,self.__imageSize,self.__imageSize))
+            self.show()    
 
     def display(self,pixarray,bytesPerLine=None,Format=0,colorTable=None) :
         """
@@ -238,29 +253,42 @@ latest date 2020.07.31
             colorTable: qRgb color table
                  Default is to let numpyImage decide     
         """
-        if self.__firstDisplay :
-            self.__firstDisplay = False
-            self.setGeometry(QRect(self.__xoffset, self.__yoffset,self.__imageSize,self.__imageSize))
+        if type(self.__imageDict['image'])==type(None) :
             if not self.__isSeparateWindow :
                  self.setFixedSize(self.__imageSize,self.__imageSize)
-        if self.__flipy :
-            self.__image = np.flip(pixarray,0)
-        else :
-            self.__image = pixarray
-        
-        if self.__imageZoom!=None :
-            if self.__imageZoom.isZoom:
-                if len(self.__image.shape)==2 and self.__image.dtype==np.uint16 :
-                    image = np.array(self.__image,copy=True)
-                    image = image/255
-                    self.__image = image.astype(np.uint8)
-                self.__image = self.__imageZoom.createZoomImage(self.__image)
-                
             else :
-               self.__imageZoom.setFullSize(self.__image.shape[1],self.__image.shape[0])
-        else:
-            pass
-
+                 point = self.geometry().topLeft()
+                 self.__xoffsetZoom = point.x()
+                 self.__yoffsetZoom = point.y()
+                 self.setGeometry(QRect(self.__xoffsetZoom,\
+                 self.__yoffsetZoom,self.__imageSize,self.__imageSize))      
+        if self.__flipy :
+            image = np.flip(pixarray,0) 
+            self.__imageDict['image'] = np.flip(pixarray,0)
+        else :
+            image = pixarray 
+        nx = image.shape[1]
+        ny = image.shape[0]
+        nz = 1
+        if len(image.shape)==3 :
+             nz = image.shape[2]
+        if nx!=self.__imageDict['nx'] or ny!=self.__imageDict['ny'] or nz!=self.__imageDict['nz'] :
+            self.resetZoom()
+            self.__imageDict['nx'] = nx
+            self.__imageDict['ny'] = ny
+            self.__imageDict['nz'] = nz 
+        if self.__zoomDict['isZoom'] :
+            nx = self.__zoomDict['nx']
+            ny = self.__zoomDict['ny']
+            xoffset = int(self.__zoomDict['xoffset'])
+            endx = int(xoffset + nx)
+            yoffset = int(self.__zoomDict['yoffset'])
+            endy = int(yoffset + ny)
+            image = image[yoffset:endy,xoffset:endx]
+        else :
+            self.__zoomDict['nx'] = nx
+            self.__zoomDict['ny'] = ny
+        self.__imageDict['image'] = image
         self.__bytesPerLine = bytesPerLine
         self.__Format = Format
         self.__colorTable = colorTable
@@ -276,8 +304,8 @@ latest date 2020.07.31
         """
         if not self.__okToClose :
             point = self.geometry().topLeft()
-            self.__xoffset = point.x()
-            self.__yoffset = point.y()
+            self.__xoffsetZoom = point.x()
+            self.__yoffsetZoom = point.y()
             self.hide()
             self.__isHidden = True
             self.__firstDisplay = True
@@ -288,8 +316,6 @@ latest date 2020.07.31
         This is a QWidget method.
         It is one of the methods for implemention zoom
         """
-        if self.__clientMousePressCallback!=None :
-            self.__clientMousePressCallback(event)
         if self.__clientZoomCallback==None : return
         self.__mousePressed = True
         self.__mousePressPosition = QPoint(event.pos())
@@ -309,9 +335,8 @@ latest date 2020.07.31
         This is a QWidget method.
         It is one of the methods for implemention zoom
         """
-        if self.__clientMouseReleaseCallback!=None :
-            self.__clientMouseReleaseCallback(event)
         if not self.__mousePressed : return
+        self.__mousePressed = False
         self.__mouseReleasePosition = QPoint(event.pos())
         self.__rubberBand.hide()
         self.__mousePressed = False 
@@ -332,40 +357,75 @@ latest date 2020.07.31
         sizex = xmax -xmin
         if sizey<=3 or sizex<=3 :
             if self.__clientMouseClickCallback!=None :
-                self.__imageDict["image"] = self.__image
-                self.__imageDict["width"] = xsize
-                self.__imageDict["height"] = ysize
-                self.__imageDict["mouseX"] = xmin
-                self.__imageDict["mouseY"] = ymin
-                self.__imageDict["expand"] = self.__expand
-                self.__clientMouseClickCallback(event,self.__imageDict)
+                delx = self.__imageDict['nx']/xsize
+                dely = self.__imageDict['ny']/ysize
+                mouseX = int(xmin*delx)
+                mouseY = int(ymin*dely)   
+                if self.__zoomDict['isZoom'] : 
+                    nximage = self.__imageDict['nx']
+                    nyimage = self.__imageDict['ny']
+                    nx =  self.__zoomDict['nx']
+                    ny =  self.__zoomDict['ny']
+                    xoffset =  self.__zoomDict['xoffset']
+                    yoffset =  self.__zoomDict['yoffset']
+                    ratio = nx/nximage            
+                    mouseX = mouseX*ratio + xoffset
+                    ratio = ny/nyimage
+                    mouseY = mouseY*ratio + yoffset
+                self.__mouseDict['mouseX'] = mouseX
+                self.__mouseDict['mouseY'] = mouseY
+                self.__clientMouseClickCallback(self.__mouseDict)
             return
-        if self.__imageZoom==None :
+        if not self.__imageZoom :
             self.__clientZoomCallback((xsize,ysize),(xmin,xmax,ymin,ymax))
             return
-        if self.__imageZoom.newZoom(xsize,ysize,xmin,xmax,ymin,ymax,self.__image.dtype) :
-            self.__clientZoomCallback(self.__imageZoom.getData())
-
-    def resizeEvent(self,event) :
-        """
-        This is a QWidget method.
-        It used to set geometry
-        """
-        if self.__clientResizeCallback!= None :
-            time.sleep(.2)
-            imageGeometry = self.geometry().getRect()
-            xsize = imageGeometry[2]
-            ysize = imageGeometry[3]
-            self.__clientResizeCallback(event,xsize,ysize)
-
+        self.__newZoom(xsize,ysize,xmin,xmax,ymin,ymax)
+        self.__clientZoomCallback()
+            
     def paintEvent(self, ev):
         """
         This is the method that displays the QImage
         """
         if self.__mousePressed : return
-        if type(self.__image)==type(None) : return
-        self.__thread.render(self,self.__image,self.__bytesPerLine,self.__Format,self.__colorTable)
+        image = self.__imageDict['image']
+        self.__thread.render(self,image,self.__bytesPerLine,self.__Format,self.__colorTable)
         self.__thread.wait()
+
+    def __newZoom(self,xsize,ysize,xminMouse,xmaxMouse,yminMouse,ymaxMouse) :
+        nximage = self.__imageDict['nx']
+        nyimage = self.__imageDict['ny']
+        nx =  self.__zoomDict['nx']
+        ny =  self.__zoomDict['ny']
+        xoffset =  self.__zoomDict['xoffset']
+        yoffset =  self.__zoomDict['yoffset']
+        
+        zoomDict = self.__createZoomDict()
+        zoomDict['nx'] = nx
+        zoomDict['ny'] = ny
+        zoomDict['xoffset'] = xoffset
+        zoomDict['yoffset'] = yoffset
+
+        ratio = nx/nximage
+        mouseRatio = (xmaxMouse - xminMouse)/xsize
+        nx = nximage*ratio*mouseRatio
+        offsetmouse = nximage*(xminMouse/xsize)*ratio
+        xoffset = xoffset+offsetmouse
+        ratio = ny/nyimage
+        mouseRatio = (ymaxMouse - yminMouse)/ysize
+        ny = nyimage*ratio*mouseRatio
+        if nx<10 or ny<10 :
+            if self.__clientExceptionCallback!=None :
+                self.__clientExceptionCallback('mouseZoom selected to small a subimage')
+            return
+        offsetmouse = nyimage*(yminMouse/ysize)*ratio
+        yoffset = yoffset+offsetmouse
+
+        self.__zoomDict['nx'] = nx
+        self.__zoomDict['ny'] = ny
+        self.__zoomDict['xoffset'] = xoffset
+        self.__zoomDict['yoffset'] = yoffset
+        self.__zoomDict['isZoom'] = True
+        self.__zoomList.append(zoomDict)
 
     class __ImageToQImage() :
         def __init__(self):
@@ -410,12 +470,6 @@ latest date 2020.07.31
                             return qimage
                     self.error = 'nz must have length 3 or 4'
                     return None
-                if image.dtype==np.uint16 :
-                    if len(image.shape) == 2:
-                        nx = image.shape[1]*2
-                        qimage = QImage(data, image.shape[1], \
-                            image.shape[0],nx, QImage.Format_Grayscale16)
-                        return  qimage
                 self.error = 'unsupported dtype=' + str(image.dtype)
                 return None
             except Exception as error:
@@ -432,7 +486,7 @@ latest date 2020.07.31
         def setImageSize(self,imageSize) :
             self.imageSize = imageSize
 
-        def render(self,caller,image,bytesPerLine=None,Format=0,colorTable=None): 
+        def render(self,caller,image,bytesPerLine=None,Format=0,colorTable=None):
             self.error = str('')
             self.image = image
             self.caller = caller
@@ -457,97 +511,10 @@ latest date 2020.07.31
                 if numy>numx :
                     qimage = qimage.scaledToHeight(self.imageSize)
                 else :
-                    qimage = qimage.scaledToWidth(self.imageSize)
+                    qimage = qimage.scaledToWidth(self.imageSize)   
             painter = QPainter(self.caller)
             painter.drawImage(0,0,qimage)
             while True :
                 if painter.end() : break
             self.image = None
 
-    class __NumpyImageZoom() :
-        def __init__(self,imageSize):
-            self.imageSize = imageSize
-            self.isZoom = False
-            self.xmin = 0
-            self.xmax = 0
-            self.ymin = 0
-            self.ymax = 0
-            self.nx = 0
-            self.ny = 0
-
-        def setImageSize(self,imageSize) :
-            self.imageSize = imageSize
-             
-        def setFullSize(self,nx,ny) :
-            self.xmax = nx
-            self.ymax = ny
-            self.nx = nx
-            self.ny = ny
-        
-        
-        def reset(self) :
-            self.isZoom = False
-            self.xmin = 0
-            self.xmax = self.imageSize
-            self.ymin = 0
-            self.ymax = self.imageSize
-
-        def newZoom(self,xsize,ysize,xmin,xmax,ymin,ymax,dtype) :
-            xscale = float((self.xmax-self.xmin)/xsize)
-            yscale = float((self.ymax-self.ymin)/ysize)     
-            delx = (xmax-xmin)*xscale
-            dely = (ymax-ymin)*yscale
-            if delx>dely :
-                dely = delx
-            else :
-                delx = dely
-            xmin = self.xmin + int(xmin*xscale)
-            xmax = int(xmin + delx)
-            if xmax>self.nx : return False
-            ymin = self.ymin + int(ymin*yscale)
-            ymax = int(ymin + dely)
-            if ymax>self.ny : return False
-            if xmax<=xmin : return False
-            if ymax<=ymin : return False
-            self.xmin = xmin
-            self.xmax = xmax
-            self.ymin = ymin
-            self.ymax = ymax
-            self.isZoom = True
-            return True
-
-        def zoomInc(self,inc) :
-            self.isZoom = True
-            xmin = self.xmin + inc
-            if xmin<0 : return False
-            xmax = self.xmax - inc
-            if xmax>self.nx : return False
-            if xmax>self.imageSize : return False
-            if (xmax-xmin)<2.0 : return False
-            ymin = self.ymin + inc
-            if ymin<0 : return False
-            ymax = self.ymax - inc
-            if ymax>self.ny : return False
-            if ymax>self.imageSize : return False
-            if (ymax-ymin)<2.0 : return False
-            self.xmin = xmin
-            self.xmax = xmax
-            self.ymin = ymin
-            self.ymax = ymax
-            return True
-
-        def zoomIn(self,zoomScale) :
-            inc = 1*zoomScale
-            return self.zoomInc(inc)
-
-        def zoomOut(self,zoomScale) :
-            inc = -1*zoomScale
-            return self.zoomInc(inc)
-
-        def getData(self) :
-            return (self.xmin,self.xmax,self.ymin,self.ymax)
-        
-        def createZoomImage(self,image) :
-            return image[self.ymin:self.ymax,self.xmin:self.xmax]
-
-        

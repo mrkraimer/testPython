@@ -49,21 +49,25 @@ latest date 2020.07.30
         Returns
         -------
         channelDict : dict
-            channelDict["image"]        None
+            channelDict["channel"]      None
             channelDict["dtypeChannel"] None
-            channelDict["dtypeImage"]   np.uint8
             channelDict["nx"]           0
             channelDict["ny"]           0
             channelDict["nz"]           0
+            channelDict["image"]        None
+            channelDict["dtypeImage"]   np.uint8
             channelDict["compress"]     1
         """
-        return {"image" : None ,\
+        return {\
+             "channel" : None ,
              "dtypeChannel" : None ,
              "dtypeImage" : np.uint8  ,
-              "nx" : 0 ,
-              "ny" : 0 ,
-               "nz" : 0,
-               "compress" : 1 }
+             "nx" : 0 ,
+             "ny" : 0 ,
+              "nz" : 0,
+              "image" : None ,
+              "dtypeImage" : np.uint8  ,
+              "compress" : 1 }
 
     def setManualLimits(self,manualLimits) :
         """
@@ -80,12 +84,13 @@ latest date 2020.07.30
         Returns
         -------
         channelDict : dict
-            channelDict["image"]        numpy 2d or 3d array for the image
+            channelDict["channel"]      numpy 2d or 3d array for the channel
             channelDict["dtypeChannel"] dtype for data from the callback
-            channelDict["dtypeImage"]   dtype for image
             channelDict["nx"]           nx for data from the callback
             channelDict["ny"]           ny for data from the callback
             channelDict["nz"]           nz (1,3) for (2d,3d) image
+            channelDict["imagel"]       numpy 2d or 3d array for the image
+            channelDict["dtypeImage"]   dtype for image
             channelDict["compress"]     how much channel data was compressed 
         
         """
@@ -123,7 +128,7 @@ latest date 2020.07.30
         """
         return self.__manualLimits
 
-    def reshape(self,data,dimArray) :
+    def reshape(self,data,dimArray,compress=1) :
         """
          Parameters
         -----------
@@ -135,23 +140,35 @@ latest date 2020.07.30
         if ndim ==2 :
             nx = dimArray[0]["size"]
             ny = dimArray[1]["size"]
+            if compress!=1 :
+                nx = int(nx/compress)
+                ny = int(ny/compress)
             image = np.reshape(data,(ny,nx))
         elif ndim ==3 :
             if dimArray[0]["size"]==3 :
                 nz = dimArray[0]["size"]
                 nx = dimArray[1]["size"]
                 ny = dimArray[2]["size"]
+                if compress!=1 :
+                    nx = int(nx/compress)
+                    ny = int(ny/compress)
                 image = np.reshape(data,(ny,nx,nz))
             elif dimArray[1]["size"]==3 :
                 nz = dimArray[1]["size"]
                 nx = dimArray[0]["size"]
                 ny = dimArray[2]["size"]
+                if compress!=1 :
+                    nx = int(nx/compress)
+                    ny = int(ny/compress)
                 image = np.reshape(data,(ny,nz,nx))
                 image = np.swapaxes(image,2,1)
             elif dimArray[2]["size"]==3 :
                 nz = dimArray[2]["size"]
                 nx = dimArray[0]["size"]
                 ny = dimArray[1]["size"]
+                if compress!=1 :
+                    nx = int(nx/compress)
+                    ny = int(ny/compress)
                 image = np.reshape(data,(nz,ny,nx))
                 image = np.swapaxes(image,0,2)
                 image = np.swapaxes(image,0,1)
@@ -173,6 +190,12 @@ latest date 2020.07.30
             showLimits         : (False,True) means channelLimits and imageLimits (are not, are) updated
         """
         dtype = data.dtype
+        reshape = self.reshape(data,dimArray)
+        self.__channelDict["channel"] = reshape[0]
+        self.__channelDict["nx"] = reshape[1]
+        self.__channelDict["ny"] = reshape[2]
+        self.__channelDict["nz"] = reshape[3]
+        self.__channelDict["dtypeChannel"] = dtype
         if dtype==np.uint8 and not manualLimits :
             dataMin = 0
             dataMax =255
@@ -211,11 +234,8 @@ latest date 2020.07.30
             if nz==1 :
                 image = image[::compress,::compress]
             else :
-                image =  image[::compress,::compress,::]   
-        self.__channelDict["image"] = image
-        self.__channelDict["nx"] = nx
-        self.__channelDict["ny"] = ny
-        self.__channelDict["nz"] = nz
-        self.__channelDict["dtypeChannel"] = dtype
+                image =  image[::compress,::compress,::]
+        reshape = self.reshape(image,dimArray,compress=compress)     
+        self.__channelDict["image"] = image        
         self.__channelDict["compress"] = compress
         
