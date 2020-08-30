@@ -405,19 +405,20 @@ latest date 2020.07.31
         zoomDict['xoffset'] = xoffset
         zoomDict['yoffset'] = yoffset
 
-        ratio = nx/nximage
-        mouseRatio = (xmaxMouse - xminMouse)/xsize
-        nx = nximage*ratio*mouseRatio
-        offsetmouse = nximage*(xminMouse/xsize)*ratio
+        ratiox = nx/nximage
+        mouseRatiox = (xmaxMouse - xminMouse)/xsize
+        ratioy = ny/nyimage
+        mouseRatioy = (ymaxMouse - yminMouse)/ysize
+        mouseRatio = mouseRatiox
+        if mouseRatioy>mouseRatiox : mouseRatio = mouseRatioy
+        nx = nximage*ratiox*mouseRatio
+        offsetmouse = nximage*(xminMouse/xsize)*ratiox
         xoffset = xoffset+offsetmouse
-        ratio = ny/nyimage
-        mouseRatio = (ymaxMouse - yminMouse)/ysize
-        ny = nyimage*ratio*mouseRatio
+        ny = nyimage*ratioy*mouseRatio
         if nx<10 or ny<10 :
             if self.__clientExceptionCallback!=None :
                 self.__clientExceptionCallback('mouseZoom selected to small a subimage')
             return
-        offsetmouse = nyimage*(yminMouse/ysize)*ratio
         yoffset = yoffset+offsetmouse
 
         self.__zoomDict['nx'] = nx

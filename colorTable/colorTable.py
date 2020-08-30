@@ -207,6 +207,6 @@ latest date 2020.08.11
         self.__userColorChangeEvent()
 
     def __juliaButtonEvent(self) :
-        self.__colorTable = [qRgb(i%8*32,i%16*16,i&32*8) for i in range(256)]
+        self.__colorTable = [qRgb(i%8*32,i%16*16,i%32*8) for i in range(256)]
         self.__userColorChangeEvent()
 
