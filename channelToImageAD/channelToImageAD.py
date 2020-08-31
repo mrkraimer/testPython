@@ -128,47 +128,29 @@ latest date 2020.07.30
         """
         return self.__manualLimits
 
-    def reshape(self,data,dimArray,compress=1) :
-        """
-         Parameters
-        -----------
-            data     : data from the callback
-            dimArray : dimension from callback
-        """
+    def __reshapeChannel(self,data,dimArray) :
         nz = 1
         ndim = len(dimArray)
         if ndim ==2 :
             nx = dimArray[0]["size"]
             ny = dimArray[1]["size"]
-            if compress!=1 :
-                nx = int(nx/compress)
-                ny = int(ny/compress)
             image = np.reshape(data,(ny,nx))
         elif ndim ==3 :
             if dimArray[0]["size"]==3 :
                 nz = dimArray[0]["size"]
                 nx = dimArray[1]["size"]
                 ny = dimArray[2]["size"]
-                if compress!=1 :
-                    nx = int(nx/compress)
-                    ny = int(ny/compress)
                 image = np.reshape(data,(ny,nx,nz))
             elif dimArray[1]["size"]==3 :
                 nz = dimArray[1]["size"]
                 nx = dimArray[0]["size"]
                 ny = dimArray[2]["size"]
-                if compress!=1 :
-                    nx = int(nx/compress)
-                    ny = int(ny/compress)
                 image = np.reshape(data,(ny,nz,nx))
                 image = np.swapaxes(image,2,1)
             elif dimArray[2]["size"]==3 :
                 nz = dimArray[2]["size"]
                 nx = dimArray[0]["size"]
                 ny = dimArray[1]["size"]
-                if compress!=1 :
-                    nx = int(nx/compress)
-                    ny = int(ny/compress)
                 image = np.reshape(data,(nz,ny,nx))
                 image = np.swapaxes(image,0,2)
                 image = np.swapaxes(image,0,1)
@@ -177,8 +159,36 @@ latest date 2020.07.30
                 return
         else :
                 raise Exception('ndim not 2 or 3')
-        return (image,nx,ny,nz)        
-        
+        return (image,nx,ny,nz)
+
+
+    def __expandChannel(self,image) :
+        shape = image.shape
+        ny = shape[0]
+        nx = shape[1]
+        nz = 1
+        if len(shape)== 3 : nz = shape[2]
+        swaped = False
+        if ny>nx :
+            image = np.swapaxes(image,0,1)
+            swaped = True
+        numy = image.shape[1]
+        numx = image.shape[0]
+        extra = numy - numx
+        if nz==1 :
+            num = int(extra*numy)
+            extraarry = np.full((extra,numy),255,dtype=image.dtype)
+            image = np.append(image,extraarry)
+            image = image.reshape((numy,numy))
+        if nz==3 :
+            num = int(extra*numy*3)
+            extraarry = np.full((extra,numy,3),255,dtype=image.dtype)
+            image = np.append(image,extraarry)
+            image = image.reshape((numy,numy,3)) 
+        if swaped : 
+            image = np.swapaxes(image,0,1)
+        return image
+
     def channelToImage(self,data,dimArray,imageSize,manualLimits=False,showLimits=False) :
         """
          Parameters
@@ -190,11 +200,15 @@ latest date 2020.07.30
             showLimits         : (False,True) means channelLimits and imageLimits (are not, are) updated
         """
         dtype = data.dtype
-        reshape = self.reshape(data,dimArray)
-        self.__channelDict["channel"] = reshape[0]
-        self.__channelDict["nx"] = reshape[1]
-        self.__channelDict["ny"] = reshape[2]
-        self.__channelDict["nz"] = reshape[3]
+        reshape = self.__reshapeChannel(data,dimArray)
+        image = reshape[0]
+        self.__channelDict["channel"] = image
+        nx = reshape[1]
+        ny = reshape[2]
+        nz = reshape[3]
+        self.__channelDict["nx"] = nx
+        self.__channelDict["ny"] = ny
+        self.__channelDict["nz"] = nz
         self.__channelDict["dtypeChannel"] = dtype
         if dtype==np.uint8 and not manualLimits :
             dataMin = 0
@@ -214,17 +228,14 @@ latest date 2020.07.30
                 displayMax = dataMax
             xp = (displayMin, displayMax)
             fp = (0.0, 255.0)
-            data = (np.interp(data,xp,fp)).astype(np.uint8)
+            image = (np.interp(image,xp,fp)).astype(np.uint8)
         if showLimits :
             self.__channelLimits = (dataMin,dataMax) 
-            imageMin = np.min(data)
-            imageMax = np.max(data)
+            imageMin = np.min(image)
+            imageMax = np.max(image)
             self.__imageLimits = (imageMin,imageMax)
-        retval = self.reshape(data,dimArray)
-        image = retval[0]
-        nx = retval[1]
-        ny = retval[2]
-        nz = retval[3]
+        if nx!=ny :
+            image = self.__expandChannel(image)   
         nmax = 0
         if nx>nmax : nmax = nx
         if ny>nmax : nmax = ny
@@ -234,8 +245,7 @@ latest date 2020.07.30
             if nz==1 :
                 image = image[::compress,::compress]
             else :
-                image =  image[::compress,::compress,::]
-        reshape = self.reshape(image,dimArray,compress=compress)     
+                image =  image[::compress,::compress,::]       
         self.__channelDict["image"] = image        
         self.__channelDict["compress"] = compress
         
