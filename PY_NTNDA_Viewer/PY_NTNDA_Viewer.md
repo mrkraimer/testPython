@@ -29,7 +29,7 @@ Below there are instructions for
 
 When either version is started the following control window appears:
 
-![](PY_NTNDA_Viewer.jpg)
+![](PY_NTNDA_Viewer.png)
 
 
 
