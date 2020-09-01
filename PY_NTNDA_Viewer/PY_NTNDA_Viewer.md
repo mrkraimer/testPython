@@ -1,7 +1,5 @@
 # PY_NTNDA_Viewer
 
-PY_NTNDA_Viewer is Python code that is similar to the Java EPICS_NTNDA_Viewer that comes with areaDetector.
-
 Author: Marty Kraimer
 Date: 2020.09.02
 
@@ -20,10 +18,23 @@ There are currently 2 versions:
 
 Both are supported on Windows, Mac OSX, and Linux.
 
-Below there are instructions for
+## Required Python Modules
 
-1. Starting the example
-2. Installation of required Python modules.
+You must have python and pip installed.
+
+The other python modules can be installed via pip install …
+
+For example issue the command:
+
+    sudo pip install numpy
+
+The following is a list of modules required by PY_NTNDA_Viewer
+
+    numpy
+    PyQt5
+    PyQt5-sip
+    QtPy
+    p4p and/or pvapy
 
 ## User Interface
 
@@ -38,31 +49,31 @@ When start is pressed the following appears:
 
 ### First row of control window
 
-- start Clicking this button starts communication with the server
-- stop Clicking this button stops communication with the server
-- showInfo Clicking this brings up the showInfo window. See below for details.
-- showColorTable Clicking this brings up the ColorTable window. See below for details
-- channelName This is the name of the channel that provides the NTNDArray. When in stopped mode a new channel name can be specified.
+- **start** Clicking this button starts communication with the server
+- **stop** Clicking this button stops communication with the server
+- **showInfo** Clicking this brings up the showInfo window. See below for details.
+- **showColorTable** Clicking this brings up the ColorTable window. See below for details
+- **channelName** This is the name of the channel that provides the NTNDArray. When in stopped mode a new channel name can be specified.
 
 
 ### Second row of control window
 
-- imageRate This shows the number of images/second that are being displayed. Note that this is normally less than the number of images the server is producing.imageRate.
-- imageSize
-- compressRatio
-- codec
-- clear
+- **imageRate** This shows the number of images/second that are being displayed. Note that this is normally less than the number of images the server is producing.imageRate.
+- **imageSize** This specifies the size of the image window; both width and height
+- **compressRatio** If image is compressed this shows the compression ratio.
+- **codec** The compression type. **none** means no compression.
+- **clear** Clear the following status label.
 
 ### Third row of control window
 
-- autoScale
-- manualScale
-- manualMin
-- manualMax
-- resetZoom
-- zoomIn
-- x1,...,x16
-- zoomBack
+- **autoScale** image pixel values are scaled.
+- **manualScale** image pixel values are scaled via manualMin and manualMax
+- **manualMin** minimum value for manual scaling.
+- **manualMax** maximuum value for manual scaling.
+- **resetZoom** revert to full image.
+- **zoomIn** zoom into the current image.
+- **x1,...,x16** scale factor for zoomIn as multiple of 1.0/256.0
+- **zoomBack** revent to previous zoom.
 
 ## Starting the example
 
@@ -104,7 +115,7 @@ The channelName can be specified in three ways:
 
 In order to use the codec support from **areaDetector** you must have a path to
 **areaDetector/ADSupport/lib…** defined.
-The details differ between Windows and Winux or MacOSX.
+The details differ between Windows and Linux or MacOSX.
 
 An example is **exampleStartP4P**, which uses **p4p** for communication with the simDetector:
 
@@ -140,13 +151,13 @@ The following is the main window for the simDetector:
 
 The following are the controls of interest:
 
-1. All Plugins. This brings up the commonPlugin described below.
-2. Simulation setup. This brings up simDetectorSetup described below.
-3. Image mode.
-4. start and stop
-4. Data Type. All data types work. For other than uint8 you may also want to adjust gain.
-5. ColorMode. All work
-6. Gain. Suggestions are 1 for simulation mode linarRamp and 255 for simulation mode peaks.
+1. **All Plugins** This brings up the commonPlugin described below.
+2. **Simulation setup** This brings up simDetectorSetup described below.
+3. **Image mode** Usually set to continuous.
+4. **start** and **stop** start and stop acquisition
+4. **Data Type** All data types work. For other than uint8 you may also want to adjust gain.
+5. **ColorMode** All work
+6. **Gain** Suggestions are 1 for simulation mode linarRamp and 255 for simulation mode peaks.
 
 ### commonPlugins
 
@@ -154,8 +165,8 @@ The following are the controls of interest:
 
 The following are the ones of interest.
 
-1. PVA1. Must be enabled. Set Port to **CODEC1** if you want to use **CODECs**
-2. CODEC1. If you want to use codecs click on the More botton on right side of window.
+1. **PVA1** Must be enabled. Set Port to **CODEC1** if you want to use **CODECs**
+2. **CODEC1** If you want to use codecs click on the More botton on right side of window.
 
 ### NDCodec
 
@@ -164,9 +175,9 @@ The following are the ones of interest.
 This is the controller for **CODEC1**.
 The controls of interest are:
 
-1. Enable. It must be set to enable.
-2. Compressor. Select the codec support you want.
-3. Bloscc Compressor. If Compressor is **Blosc** this selects type.
+1. **Enable** It must be set to enable.
+2. **Compressor** Select the codec support you want.
+3. **Bloscc Compressor** If Compressor is **Blosc** this selects type.
 
 ### Simulation Setup
 
@@ -179,10 +190,10 @@ The options shown are the ones for the examples shown in this document.
 
 The following are the ways to change the part of the image that is displayed.
 
-1. mouse. Use the mouse to select a subimage of the current image. That is press, drag, and release.
-2. zoomIn. Clicking zooms in. x1, ..., x16 sets zoom amount as multiple of 1/256.
-3. zoomBack. Clicking reverts to previous zoom image
-4. resetZoom. Reverts to full image.
+1. **mouse** Use the mouse to select a subimage of the current image. That is press, drag, and release.
+2. **zoomIn** Clicking zooms in. x1, ..., x16 sets zoom amount as multiple of 1/256.
+3. **zoomBack** Clicking reverts to previous zoom image
+4. **resetZoom** Reverts to full image.
 
 ## showInfo
 
@@ -199,4 +210,10 @@ This provides psudo color maps for mono images.
 
 Note that when peak mode is being used julia color comes close to showing the actual edges
 of the peaks.
+
+For example if julia is selected and the image is zoomed, I see:
+
+![](zoomImage.png)
+
+Then issue mouse clicks in the image and look at showInfo to see how mouse values change.
 
