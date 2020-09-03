@@ -76,7 +76,7 @@ latest date 2020.08.11
         wid =  QWidget()
         wid.setLayout(linearModeBox)
         masterbox.addWidget(wid)  
-            
+
         lutModeBox = QVBoxLayout()
         lutModeBox.addWidget(QLabel("color mode lut"))
         self.grayButton = QPushButton('gray')
@@ -103,8 +103,8 @@ latest date 2020.08.11
 
         wid =  QWidget()
         wid.setLayout(lutModeBox)
-        masterbox.addWidget(wid)    
-             
+        masterbox.addWidget(wid)
+
         wid =  QWidget()
         wid.setLayout(masterbox)
         self.firstRow = wid
@@ -127,7 +127,7 @@ latest date 2020.08.11
 
     def setExceptionCallback(self,callback) :
         """ set a callback for exception """
-        self.__clientExceptionCallback = callback        
+        self.__clientExceptionCallback = callback
 
     def setOkToClose(self) :
         """ allow image window to be closed"""

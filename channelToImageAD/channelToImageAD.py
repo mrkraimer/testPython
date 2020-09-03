@@ -245,7 +245,7 @@ latest date 2020.07.30
             if nz==1 :
                 image = image[::compress,::compress]
             else :
-                image =  image[::compress,::compress,::]       
-        self.__channelDict["image"] = image        
+                image =  image[::compress,::compress,::]  
+        self.__channelDict["image"] = image
         self.__channelDict["compress"] = compress
-        
+

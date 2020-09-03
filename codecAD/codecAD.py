@@ -44,7 +44,7 @@ import ctypes
 import ctypes.util
 import os
 import numpy as np
-        
+
 class CodecAD() :
     '''
 codecAD provides python access to the codec support provided by areaDetector/ADSupport
@@ -100,7 +100,7 @@ latest date 2020.07.30
             lib = ctypes.windll.LoadLibrary(result)
         else :
             lib = ctypes.cdll.LoadLibrary(result)
-        if lib!=None : self.__saveLibrary.update({name : lib})    
+        if lib!=None : self.__saveLibrary.update({name : lib})
         return lib
 
     def getCodecName(self) :

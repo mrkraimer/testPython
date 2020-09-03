@@ -1,7 +1,7 @@
 # PY_NTNDA_Viewer
 
 Author: Marty Kraimer
-Date: 2020.09.02
+Date: 2020.09.03
 
 ## Overview
 
@@ -62,7 +62,7 @@ When start is pressed the following appears:
 - **imageSize** This specifies the size of the image window; both width and height
 - **compressRatio** If image is compressed this shows the compression ratio.
 - **codec** The compression type. **none** means no compression.
-- **clear** Clear the following status label.
+- **clear** Clear the following status window.
 
 ### Third row of control window
 
@@ -165,7 +165,7 @@ The following are the controls of interest:
 
 The following are the ones of interest.
 
-1. **PVA1** Must be enabled. Set Port to **CODEC1** if you want to use **CODECs**
+1. **PVA1** Must be enabled. Set Port to **CODEC1** if you want to use codecs
 2. **CODEC1** If you want to use codecs click on the More botton on right side of window.
 
 ### NDCodec
@@ -216,4 +216,38 @@ For example if julia is selected and the image is zoomed, I see:
 ![](zoomImage.png)
 
 Then issue mouse clicks in the image and look at showInfo to see how mouse values change.
+
+## Some Code Details
+
+**NtNDA_Viewer.py** creates the control window.
+It uses the following python classes:
+
+- **ChannelToImageAD** Converts the data from the NTNDAArray to an image that can be passed to the next class.
+- **NumpyImage** Displays an Image via QImage.
+- **CodecAD** Decompresses compressed data from the NTNDAArray.
+- **ColorTable** Provides psuedo color tables for monochrome images from NTNDArray
+- **ShowInfo** Implements showInfo
+
+Each provides Python documentation.
+
+To view the documentation do the following:
+
+    mrk> pwd
+    /home/epics7/testPython/PY_NTNDA_Viewer
+    mrk> ipython
+    
+    In [1]: import sys
+    In [2]: sys.path.append('../numpyImage/')
+    In [3]: from numpyImage import NumpyImage
+    In [4]: sys.path.append('../codecAD/')
+    In [5]: from codecAD import CodecAD
+    In [6]: sys.path.append('../channelToImageAD/')
+    In [7]: from channelToImageAD import ChannelToImageA
+    In [8]: sys.path.append('../colorTable/')
+    In [9]: from colorTable import ColorTable
+    In [10]: sys.path.append('../showInfo/')
+    In [11]: from showInfo import ShowInfo
+    In [12]: help(NumpyImage)
+    ...
+
 

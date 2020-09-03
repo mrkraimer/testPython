@@ -1,9 +1,7 @@
 # numpyImage.py
 
 from PyQt5.QtWidgets import QWidget,QRubberBand
-from PyQt5.QtWidgets import QLabel,QLineEdit
-from PyQt5.QtWidgets import QGroupBox,QHBoxLayout,QVBoxLayout,QGridLayout
-from PyQt5.QtCore import QPoint,QRect,QSize,QPointF
+from PyQt5.QtCore import QPoint,QRect,QSize
 from PyQt5.QtCore import QThread
 from PyQt5.QtGui import QPainter,QImage
 from PyQt5.QtCore import *
@@ -36,7 +34,7 @@ Copyright - See the COPYRIGHT that is included with this distribution.
 
 authors
     Marty Kraimer
-latest date 2020.07.31
+latest date 2020.09.03
     '''
     def __init__(self,imageSize=800, flipy= False,isSeparateWindow=True):
         """
@@ -174,12 +172,7 @@ latest date 2020.07.31
         return True
 
     def zoomBack(self):
-        """
-        Parameters
-        ----------
-            zoomScale : int
-                 zoom out by zoomScale/255
-        """
+        """ revert to previous zoom"""
         num = len(self.__zoomList)
         if num==0 :
             if self.__clientExceptionCallback!=None :
@@ -217,6 +210,11 @@ latest date 2020.07.31
         ----------
             pixarray : numpy array
                  pixarray that is converted to QImage and displayed.
+                 It must have shape of length 2 or 3 where:
+                     shape[0]=ny which is image heigth
+                     shape[1]=nx which is iaage width
+                 In shape has length 3 then
+                     shape[1]=nz which must be 2 or 3
             bytesPerLine : int
                  If specified must be total bytes in second dimension of image
             Format: int
@@ -242,11 +240,6 @@ latest date 2020.07.31
                                   create a QImage with format QImage.Format_RGBA8888
                           else :
                               an exception is raised
-                     elif pixarray has dtype uint16:
-                         if 2d array :
-                             create a QImage with format QImage.Format_Grayscale16
-                         else :
-                             an exception is raised
                 else:
                     an exception is raised
                       
@@ -415,11 +408,12 @@ latest date 2020.07.31
         offsetmouse = nximage*(xminMouse/xsize)*ratiox
         xoffset = xoffset+offsetmouse
         ny = nyimage*ratioy*mouseRatio
+        offsetmouse = nyimage*(yminMouse/ysize)*ratioy
+        yoffset = yoffset+offsetmouse
         if nx<10 or ny<10 :
             if self.__clientExceptionCallback!=None :
                 self.__clientExceptionCallback('mouseZoom selected to small a subimage')
             return
-        yoffset = yoffset+offsetmouse
 
         self.__zoomDict['nx'] = nx
         self.__zoomDict['ny'] = ny

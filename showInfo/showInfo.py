@@ -72,7 +72,7 @@ latest date 2020.08.20
         hbox.addWidget(self.channelnzText)
         wid =  QWidget()
         wid.setLayout(hbox)
-        channelbox.addWidget(wid)        
+        channelbox.addWidget(wid)
 
         hbox = QHBoxLayout()
         hbox.setContentsMargins(10,0,0,0)
@@ -226,7 +226,6 @@ latest date 2020.08.20
         wid.setLayout(hbox)
         imagebox.addWidget(wid)
 
-
         imagebox.addWidget(QLabel('value'))
         hbox = QHBoxLayout()
         hbox.setContentsMargins(10,0,0,0)
@@ -235,7 +234,6 @@ latest date 2020.08.20
         wid =  QWidget()
         wid.setLayout(hbox)
         imagebox.addWidget(wid)
-
 
         wid =  QWidget()
         wid.setLayout(imagebox)
@@ -303,7 +301,7 @@ latest date 2020.08.20
         mouseY = int(imageDict["mouseY"])
         self.imagemouseXText.setText(str(mouseX))
         self.imagemouseYText.setText(str(mouseY))
-        mouseXchannel = int(mouseX*self.compress)        
+        mouseXchannel = int(mouseX*self.compress)
         mouseYchannel = int(mouseY*self.compress)
         self.channelmouseXText.setText(str(mouseXchannel))
         self.channelmouseYText.setText(str(mouseYchannel))
