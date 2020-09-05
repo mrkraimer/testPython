@@ -54,6 +54,7 @@ latest date 2020.09.03
         self.__thread = self.__Worker(self.__imageSize,self.__ImageToQImage())
         self.__imageZoom = False
         self.__rubberBand = QRubberBand(QRubberBand.Rectangle,self)
+        self.setAttribute(Qt.WA_NoSystemBackground)
         self.__mousePressPosition = QPoint(0,0)
         self.__mouseReleasePosition = QPoint(0,0)
         self.__clientZoomCallback = None
