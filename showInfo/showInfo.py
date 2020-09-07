@@ -287,7 +287,7 @@ latest date 2020.08.20
         self.imageheightText.setText(str(height))
         self.imagedtypeText.setText(str(self.image.dtype))
 
-    def setImageInfo(self,imageDict) :
+    def setImageInfo(self,zoomDict,mouseDict) :
         self.__resetInfo()
         imageMin = np.min(self.image)
         imageMax = np.max(self.image)
@@ -297,8 +297,8 @@ latest date 2020.08.20
         channelMax = np.max(self.channel)
         self.channellowText.setText(str(channelMin))
         self.channelhighText.setText(str(channelMax))
-        mouseX = int(imageDict["mouseX"])
-        mouseY = int(imageDict["mouseY"])
+        mouseX = int(mouseDict["mouseX"])
+        mouseY = int(mouseDict["mouseY"])
         self.imagemouseXText.setText(str(mouseX))
         self.imagemouseYText.setText(str(mouseY))
         mouseXchannel = int(mouseX*self.compress)

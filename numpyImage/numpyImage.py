@@ -368,7 +368,7 @@ latest date 2020.09.03
                     mouseY = mouseY*ratio + yoffset
                 self.__mouseDict['mouseX'] = mouseX
                 self.__mouseDict['mouseY'] = mouseY
-                self.__clientMouseClickCallback(self.__mouseDict)
+                self.__clientMouseClickCallback(self.__zoomDict,self.__mouseDict)
             return
         if not self.__imageZoom :
             self.__clientZoomCallback((xsize,ysize),(xmin,xmax,ymin,ymax))

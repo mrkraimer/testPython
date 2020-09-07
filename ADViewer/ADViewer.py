@@ -270,8 +270,8 @@ class ADViewer(QWidget) :
         except Exception as error:
             self.statusText.setText(str(error))
 
-    def mouseClickEvent(self,imageDict) :
-        self.showInfo.setImageInfo(imageDict)
+    def mouseClickEvent(self,zoomDict,mouseDict) :
+        self.showInfo.setImageInfo(zoomDict,mouseDict)
 
     def exceptionEvent(self,message) :
         self.statusText.setText(message)
