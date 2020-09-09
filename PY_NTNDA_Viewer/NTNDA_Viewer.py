@@ -27,8 +27,8 @@ sys.path.append('../channelToImageAD/')
 from channelToImageAD import ChannelToImageAD
 sys.path.append('../colorTable/')
 from colorTable import ColorTable
-sys.path.append('../showInfo/')
-from showInfo import ShowInfo
+sys.path.append('../zoomImage/')
+from zoomImage import ZoomImage
 
 class NTNDA_Viewer(QWidget) :
     def __init__(self,ntnda_Channel_Provider,providerName, parent=None):
@@ -45,7 +45,7 @@ class NTNDA_Viewer(QWidget) :
         self.colorTable.setExceptionCallback(self.colorExceptionEvent)
         self.channelDict = None
         self.numpyImage = NumpyImage(flipy=False,imageSize=self.imageSize)
-        self.showInfo = ShowInfo()
+        self.zoomImage = ZoomImage()
         self.numpyImage.setZoomCallback(self.zoomEvent)
         self.numpyImage.setMouseClickCallback(self.mouseClickEvent)
         self.numpyImage.setExceptionCallback(self.exceptionEvent)
@@ -65,10 +65,15 @@ class NTNDA_Viewer(QWidget) :
         self.stopButton.clicked.connect(self.stopEvent)
         box.addWidget(self.stopButton)
 
-        self.showInfoButton = QPushButton('showInfo')
-        box.addWidget(self.showInfoButton)
-        self.showInfoButton.setEnabled(True)
-        self.showInfoButton.clicked.connect(self.showInfoEvent)
+        self.zoomChannelButton = QPushButton('zoomChannel')
+        box.addWidget(self.zoomChannelButton)
+        self.zoomChannelButton.setEnabled(True)
+        self.zoomChannelButton.clicked.connect(self.zoomChannelEvent)
+
+        self.zoomImageButton = QPushButton('zoomImage')
+        box.addWidget(self.zoomImageButton)
+        self.zoomImageButton.setEnabled(False)
+        self.zoomImageButton.clicked.connect(self.zoomImageEvent)
 
         self.showColorTableButton = QPushButton('showColorTable')
         self.showColorTableButton.setEnabled(True)
@@ -78,7 +83,7 @@ class NTNDA_Viewer(QWidget) :
         self.channelNameLabel = QLabel("channelName:")
         box.addWidget(self.channelNameLabel)
         self.channelNameText = QLineEdit()
-        self.channelNameText.setFixedWidth(560)
+        self.channelNameText.setFixedWidth(450)
         self.channelNameText.setEnabled(True)
         self.channelNameText.setText(self.provider.getChannelName())
         self.channelNameText.editingFinished.connect(self.channelNameEvent)
@@ -209,14 +214,23 @@ class NTNDA_Viewer(QWidget) :
         self.show()
         self.setFixedHeight(self.height())
         self.setFixedWidth(self.width())
+        self.zoomImage.setOrigin(1,self.width())
 
     def resetEvent(self) :
         if type(self.channelDict)==type(None) : return
         self.numpyImage.resetZoom()
         self.display()
 
-    def showInfoEvent(self) :
-        self.showInfo.show()
+    def zoomChannelEvent(self) :
+        self.zoomImage.setShowChannel(True)
+        self.zoomChannelButton.setEnabled(False)
+        self.zoomImageButton.setEnabled(True)
+        
+
+    def zoomImageEvent(self) :
+        self.zoomImage.setShowChannel(True)
+        self.zoomChannelButton.setEnabled(True)
+        self.zoomImageButton.setEnabled(False)
 
     def colorChangeEvent(self) :
         self.display()
@@ -292,7 +306,7 @@ class NTNDA_Viewer(QWidget) :
             self.statusText.setText(str(error))
 
     def mouseClickEvent(self,zoomDict,mouseDict) :
-        self.showInfo.setZoomInfo(zoomDict,mouseDict)
+        self.zoomImage.setZoomInfo(zoomDict,mouseDict)
 
     def exceptionEvent(self,message) :
         self.statusText.setText(message)
@@ -315,8 +329,7 @@ class NTNDA_Viewer(QWidget) :
         self.numpyImage.close()
         self.colorTable.setOkToClose()
         self.colorTable.close()
-        self.showInfo.setOkToClose()
-        self.showInfo.close()
+        self.zoomImage.close()
 
     def startEvent(self) :
         self.start()
@@ -400,7 +413,7 @@ class NTNDA_Viewer(QWidget) :
             self.channelToImage.channelToImage(data,dimArray,self.imageSize,\
                 manualLimits=self.manualLimits)
             self.channelDict = self.channelToImage.getChannelDict()
-            self.showInfo.setChannelInfo(self.channelDict)
+            self.zoomImage.setChannelInfo(self.channelDict)
             self.display()
         except Exception as error:
             self.statusText.setText(str(error))
