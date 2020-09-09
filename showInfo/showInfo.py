@@ -287,7 +287,7 @@ latest date 2020.08.20
         self.imageheightText.setText(str(height))
         self.imagedtypeText.setText(str(self.image.dtype))
 
-    def setImageInfo(self,zoomDict,mouseDict) :
+    def setZoomInfo(self,zoomDict,mouseDict) :
         self.__resetInfo()
         imageMin = np.min(self.image)
         imageMax = np.max(self.image)
