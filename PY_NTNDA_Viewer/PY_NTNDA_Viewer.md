@@ -1,7 +1,7 @@
 # PY_NTNDA_Viewer
 
 Author: Marty Kraimer
-Date: 2020.09.03
+Date: 2020.09.10
 
 ## Overview
 
@@ -35,6 +35,7 @@ The following is a list of modules required by PY_NTNDA_Viewer
     PyQt5-sip
     QtPy
     p4p and/or pvapy
+    mathplotlib
 
 ## User Interface
 
@@ -51,7 +52,8 @@ When start is pressed the following appears:
 
 - **start** Clicking this button starts communication with the server
 - **stop** Clicking this button stops communication with the server
-- **showInfo** Clicking this brings up the showInfo window. See below for details.
+- **zoomChannel** Clicking this button specifies that mouse clicks show channel data.
+- **zoomImage** Clicking this button specifies that mouse clicks show image data.
 - **showColorTable** Clicking this brings up the ColorTable window. See below for details
 - **channelName** This is the name of the channel that provides the NTNDArray. When in stopped mode a new channel name can be specified.
 
@@ -195,9 +197,10 @@ The following are the ways to change the part of the image that is displayed.
 3. **zoomBack** Clicking reverts to previous zoom image
 4. **resetZoom** Reverts to full image.
 
-## showInfo
+## Mouse Click in Image window
 
-![](showInfo.png)
+
+![](imageView.png)
 
 This show information about current image.
 The mouseClick information updates when the mouse is clicked in the image window.
@@ -213,9 +216,10 @@ of the peaks.
 
 For example if julia is selected and the image is zoomed, I see:
 
-![](zoomImage.png)
+![](zoomedImage.png)
 
-Then issue mouse clicks in the image and look at showInfo to see how mouse values change.
+Then issue mouse clicks in the image and look at the new widow that appears.
+Moving the mouse in the new window shows the pixel location and value.
 
 ## Some Code Details
 
@@ -226,7 +230,7 @@ It uses the following python classes:
 - **NumpyImage** Displays an Image via QImage.
 - **CodecAD** Decompresses compressed data from the NTNDAArray.
 - **ColorTable** Provides psuedo color tables for monochrome images from NTNDArray
-- **ShowInfo** Implements showInfo
+- **zoomImage** Implements the window that appears each time the mouse is clicked in the image window
 
 Each provides Python documentation.
 
@@ -235,7 +239,6 @@ To view the documentation do the following:
     mrk> pwd
     /home/epics7/testPython/PY_NTNDA_Viewer
     mrk> ipython
-    
     In [1]: import sys
     In [2]: sys.path.append('../numpyImage/')
     In [3]: from numpyImage import NumpyImage
@@ -245,8 +248,8 @@ To view the documentation do the following:
     In [7]: from channelToImageAD import ChannelToImageA
     In [8]: sys.path.append('../colorTable/')
     In [9]: from colorTable import ColorTable
-    In [10]: sys.path.append('../showInfo/')
-    In [11]: from showInfo import ShowInfo
+    In [10]: sys.path.append('../zoomImage/')
+    In [11]: from zoomImage import ZoomImage
     In [12]: help(NumpyImage)
     ...
 
