@@ -1,3 +1,4 @@
+numpy
 PyQt5==5.14.2
 pyqtgraph
 p4p
