@@ -68,7 +68,7 @@ class ZoomImage(QWidget):
         plt.get_current_fig_manager().window.setGeometry(
             self.__xoffset, self.__yoffset, 600, 600
         )
-        plt.show()
+        plt.show(block=False)
 
     def showChannel(self, value):
         self.showChannel = value

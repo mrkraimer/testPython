@@ -1,7 +1,7 @@
 # PY_NTNDA_Viewer
 
 Author: Marty Kraimer
-Date: 2020.09.10
+Date: 2020.09.11
 
 ## Overview
 
@@ -20,7 +20,7 @@ Both are supported on Windows, Mac OSX, and Linux.
 
 ## Required Python Modules
 
-You must have python and pip installed.
+You must have python3 and pip installed.
 
 The other python modules can be installed via pip install …
 
@@ -36,6 +36,12 @@ The following is a list of modules required by PY_NTNDA_Viewer
     QtPy
     p4p and/or pvapy
     mathplotlib
+
+Mac users will need to install pvapy via conda:
+
+    conda install -c epics pvapy
+    pip install -r requirements.txt
+
 
 ## User Interface
 
@@ -76,6 +82,32 @@ When start is pressed the following appears:
 - **zoomIn** zoom into the current image.
 - **x1,...,x16** scale factor for zoomIn as multiple of 1.0/256.0
 - **zoomBack** revent to previous zoom.
+
+## Brief description
+
+As mentioned above PY_NTNDA_Viewer is a viewer for images obtained from an areaDetector pvAccess channel that provides an NTNDArray.
+It accesss the following fields:
+
+- **value** The image data. All integer and float data types are supported.
+- **codec** If the data is compressed, the compression type.
+- **dimension** The data is either a 2d or 3d(color) image. The size of x and y dimensions.
+
+When started, PY_NTNDA_Viewer creates a channel monitor.
+For each monitor event the following happens:
+
+- If the data is compressed, it is decompressed
+- An image with datatype uint8 is created and with both width and height equal to imageSize
+- The image is displayed.
+
+Once an image is displayed it can be **zoomed**, i.e. You can zooom into a subimage.
+This can be done in two ways:
+
+- Via the mouse. Press the mouse somewhere in the image, drag the mouse to another position, release the mouse.
+- Via the **zoomIn** button. The amount is some multiple of 1/256.
+
+If you click the mouse in the image, then a separate window appears that also shows the current image.
+You can move the mouse in the separate window and it shows the current location and value.
+The **zoomChannel** and **zoomImage** buttons determine if the channel data or image data is displayed.
 
 ## Starting the example
 
