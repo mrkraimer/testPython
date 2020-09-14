@@ -34,6 +34,8 @@ from colorTable import ColorTable
 class FollowMouse() :
     def __init__(self,viewer):
         self.viewer = viewer
+        self.zoomDict = None
+        self.mouseDict = None
 
     def setChannelInfo(self,channelDict) :
         self.channel = channelDict["channel"]
@@ -45,8 +47,12 @@ class FollowMouse() :
         self.viewer.nxText.setText(str(self.nx))
         self.viewer.nyText.setText(str(self.ny))
         self.viewer.nzText.setText(str(self.nz))
+        if self.zoomDict!=None and self.mouseDict!=None:
+            self.setZoomInfo(self.zoomDict,self.mouseDict)
 
     def setZoomInfo(self,zoomDict,mouseDict) :
+        self.zoomDict = zoomDict
+        self.mouseDict = mouseDict
         mouseX = int(mouseDict["mouseX"])
         mouseY = int(mouseDict["mouseY"])
         mouseXchannel = int(mouseX*self.compress)
