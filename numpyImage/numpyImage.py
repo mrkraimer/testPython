@@ -60,6 +60,7 @@ class NumpyImage(QWidget):
         self.__mouseReleasePosition = QPoint(0, 0)
         self.__clientZoomCallback = None
         self.__clientMouseClickCallback = None
+        self.__clientMouseMoveCallback = None
         self.__clientExceptionCallback = None
         self.__mousePressed = False
         self.__okToClose = False
@@ -79,6 +80,7 @@ class NumpyImage(QWidget):
         self.__mouseDict = {"mouseX": 0, "mouseY": 0}
         self.__zoomList = list()
         self.__zoomDict = self.__createZoomDict()
+        self.setMouseTracking(True)
 
     def __createZoomDict(self):
         return {
@@ -115,6 +117,15 @@ class NumpyImage(QWidget):
                  client called when mouse is released
         """
         self.__clientMouseClickCallback = clientCallback
+
+    def setMouseMoveCallback(self, clientCallback):
+        """
+        Parameters
+        ----------
+            clientCallback : client method
+                 client called when mouse is released
+        """
+        self.__clientMouseMoveCallback = clientCallback        
 
     def setExceptionCallback(self, clientCallback):
         """
@@ -340,6 +351,31 @@ class NumpyImage(QWidget):
         It is one of the methods for implemention zoom
         """
         if not self.__mousePressed:
+            if self.__clientMouseMoveCallback != None:
+                imageGeometry = self.geometry().getRect()
+                xsize = imageGeometry[2]
+                ysize = imageGeometry[3]
+                pos = QPoint(event.pos())
+                xmin = pos.x()
+                ymin = pos.y()
+                delx =  self.__imageDict["nx"] / xsize
+                dely = self.__imageDict["ny"] / ysize
+                mouseX = int(xmin * delx)
+                mouseY = int(ymin * dely)
+                if self.__zoomDict["isZoom"]:
+                    nximage = self.__imageDict["nx"]
+                    nyimage = self.__imageDict["ny"]
+                    nx = self.__zoomDict["nx"]
+                    ny = self.__zoomDict["ny"]
+                    xoffset = self.__zoomDict["xoffset"]
+                    yoffset = self.__zoomDict["yoffset"]
+                    ratio = nx / nximage
+                    mouseX = mouseX * ratio + xoffset
+                    ratio = ny / nyimage
+                    mouseY = mouseY * ratio + yoffset
+                self.__mouseDict["mouseX"] = mouseX
+                self.__mouseDict["mouseY"] = mouseY
+                self.__clientMouseMoveCallback(self.__zoomDict,self.__mouseDict)
             return
         self.__rubberBand.setGeometry(
             QRect(self.__mousePressPosition, event.pos()).normalized()
