@@ -168,7 +168,6 @@ class NumpyImage(QWidget):
         self.__mousePressPosition = QPoint(0, 0)
         self.__mouseReleasePosition = QPoint(0, 0)
         self.__clientZoomCallback = None
-        self.__clientMouseClickCallback = None
         self.__clientMouseMoveCallback = None
         self.__clientExceptionCallback = exceptionCallback
         self.__mousePressed = False
@@ -218,15 +217,6 @@ class NumpyImage(QWidget):
         self.__clientZoomCallback = clientCallback
         if not clientZoom:
             self.__imageZoom = True
-
-    def setMouseClickCallback(self, clientCallback):
-        """
-        Parameters
-        ----------
-            clientCallback : client method
-                 client called when mouse is released
-        """
-        self.__clientMouseClickCallback = clientCallback
 
     def setMouseMoveCallback(self, clientCallback):
         """
@@ -528,25 +518,6 @@ class NumpyImage(QWidget):
         sizey = ymax - ymin
         sizex = xmax - xmin
         if sizey <= 3 or sizex <= 3:
-            if self.__clientMouseClickCallback != None:
-                delx = self.__imageDict["nx"] / xsize
-                dely = self.__imageDict["ny"] / ysize
-                mouseX = int(xmin * delx)
-                mouseY = int(ymin * dely)
-                if self.__zoomDict["isZoom"]:
-                    nximage = self.__imageDict["nx"]
-                    nyimage = self.__imageDict["ny"]
-                    nx = self.__zoomDict["nx"]
-                    ny = self.__zoomDict["ny"]
-                    xoffset = self.__zoomDict["xoffset"]
-                    yoffset = self.__zoomDict["yoffset"]
-                    ratio = nx / nximage
-                    mouseX = mouseX * ratio + xoffset
-                    ratio = ny / nyimage
-                    mouseY = mouseY * ratio + yoffset
-                self.__mouseDict["mouseX"] = mouseX
-                self.__mouseDict["mouseY"] = mouseY
-                self.__clientMouseClickCallback(self.__zoomDict, self.__mouseDict)
             return
         if not self.__imageZoom:
             self.__clientZoomCallback((xsize, ysize), (xmin, xmax, ymin, ymax))
@@ -558,8 +529,6 @@ class NumpyImage(QWidget):
         """
         This is the method that displays the QImage
         """
-        if self.__mousePressed:
-            return
         image = self.__imageDict["image"]
         self.__thread.render(
             self, image, self.__bytesPerLine, self.__Format, self.__colorTable
