@@ -1,6 +1,7 @@
 # numpyImage.py
 
 from PyQt5.QtWidgets import QWidget, QRubberBand
+from PyQt5.QtWidgets import QHBoxLayout,QLabel
 from PyQt5.QtCore import QPoint, QRect, QSize
 from PyQt5.QtCore import QThread
 from PyQt5.QtGui import QPainter, QImage
@@ -11,6 +12,114 @@ import math
 import time
 import copy
 
+class FollowMouse :
+    def __init__(self,exceptionCallback):
+        self.__exceptionCallback = exceptionCallback
+        self.__zoomDict = None
+        self.__mouseDict = None
+        self.__nx = 0
+        self.__ny = 0
+        self.__nz = 0
+        self.__dtype = ""
+        self.__compress = 0
+
+    def createHbox(self) :
+        box = QHBoxLayout()
+        box.setContentsMargins(0, 0, 0, 0)
+
+        nxLabel = QLabel("nx:")
+        box.addWidget(nxLabel)
+        self.nxText = QLabel()
+        self.nxText.setFixedWidth(40)
+        box.addWidget(self.nxText)
+
+        nyLabel = QLabel("ny:")
+        box.addWidget(nyLabel)
+        self.nyText = QLabel()
+        self.nyText.setFixedWidth(40)
+        box.addWidget(self.nyText)
+
+        nzLabel = QLabel("nz:")
+        box.addWidget(nzLabel)
+        self.nzText = QLabel()
+        self.nzText.setFixedWidth(40)
+        box.addWidget(self.nzText)
+
+        dtypeLabel = QLabel("dtype:")
+        box.addWidget(dtypeLabel)
+        self.dtypeText = QLabel()
+        self.dtypeText.setFixedWidth(60)
+        box.addWidget(self.dtypeText)
+
+        xLabel = QLabel("x:")
+        box.addWidget(xLabel)
+        self.xText = QLabel()
+        self.xText.setFixedWidth(40)
+        box.addWidget(self.xText)
+        
+        yLabel = QLabel("y:")
+        box.addWidget(yLabel)
+        self.yText = QLabel()
+        self.yText.setFixedWidth(40)
+        box.addWidget(self.yText)
+        
+        valueLabel = QLabel("value:")
+        box.addWidget(valueLabel)
+        self.valueText = QLabel()
+        self.valueText.setFixedWidth(500)
+        box.addWidget(self.valueText)
+        
+        wid = QWidget()
+        wid.setLayout(box)
+        return wid
+
+    def setChannelInfo(self,channelDict) :
+        self.channel = channelDict["channel"]
+        self.image = channelDict["image"]
+        change = False
+        if self.__nx!=channelDict["nx"] : change=True
+        if self.__ny!=channelDict["ny"] : change=True
+        if self.__nz!=channelDict["nz"] : change=True
+        if self.__compress!=channelDict["compress"] : change=True
+        if self.__dtype!=str(channelDict["dtypeChannel"]): change=True
+        if not change :
+            if self.__zoomDict!=None and self.__mouseDict!=None:
+                self.setZoomInfo(self.__zoomDict,self.__mouseDict)
+            return
+        self.__nx = channelDict["nx"]
+        self.__ny = channelDict["ny"]
+        self.__nz = channelDict["nz"]
+        self.__dtype = str(channelDict["dtypeChannel"])
+        self.__compress = float(channelDict["compress"])
+        self.nxText.setText(str(self.__nx))
+        self.nyText.setText(str(self.__ny))
+        self.nzText.setText(str(self.__nz))
+        self.dtypeText.setText(self.__dtype)
+
+    def setZoomInfo(self,zoomDict,mouseDict) :
+        self.__zoomDict = zoomDict
+        self.__mouseDict = mouseDict
+        mouseX = int(mouseDict["mouseX"])
+        mouseY = int(mouseDict["mouseY"])
+        mouseXchannel = int(mouseX*self.__compress)
+        mouseYchannel = int(mouseY*self.__compress)
+        if mouseXchannel>=self.__nx :
+            self.__exceptionCallback("mouseX out of bounds")
+            return
+        if mouseYchannel>=self.__ny :
+            self.__exceptionCallback("mouseY out of bounds")
+            return
+        self.xText.setText(str(mouseXchannel))
+        self.yText.setText(str(mouseYchannel))
+        value = str()
+        if self.__nz==1 :
+            value = str(self.channel[mouseYchannel,mouseXchannel])
+        elif self.__nz==3 :
+            value1 = self.channel[mouseYchannel,mouseXchannel,0]
+            value2 = self.channel[mouseYchannel,mouseXchannel,1]
+            value3 = self.channel[mouseYchannel,mouseXchannel,2]
+            value = str("[" + str(value1) + "," + str(value2) + "," + str(value3) + "]" )
+        self.valueText.setText(value)  
 
 class NumpyImage(QWidget):
     """
@@ -37,7 +146,7 @@ class NumpyImage(QWidget):
     latest date 2020.09.03
     """
 
-    def __init__(self, imageSize=800, flipy=False, isSeparateWindow=True):
+    def __init__(self, imageSize=800, flipy=False, isSeparateWindow=True,exceptionCallback=None):
         """
          Parameters
         ----------
@@ -61,7 +170,7 @@ class NumpyImage(QWidget):
         self.__clientZoomCallback = None
         self.__clientMouseClickCallback = None
         self.__clientMouseMoveCallback = None
-        self.__clientExceptionCallback = None
+        self.__clientExceptionCallback = exceptionCallback
         self.__mousePressed = False
         self.__okToClose = False
         self.__isHidden = True
@@ -81,7 +190,8 @@ class NumpyImage(QWidget):
         self.__zoomList = list()
         self.__zoomDict = self.__createZoomDict()
         self.setMouseTracking(True)
-
+        self.__followMouse = None
+        
     def __createZoomDict(self):
         return {
             "isZoom": False,
@@ -135,6 +245,10 @@ class NumpyImage(QWidget):
                  client called exceptiion occurs
         """
         self.__clientExceptionCallback = clientCallback
+
+    def createFollowMouse(self) :
+        self.__followMouse = FollowMouse(self.__clientExceptionCallback)
+        return self.__followMouse
 
     def resetZoom(self):
         """ reset to unzoomed image"""

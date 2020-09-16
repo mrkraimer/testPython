@@ -22,7 +22,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import qRgb
 
 sys.path.append("../numpyImage/")
-from numpyImage import NumpyImage
+from numpyImage import NumpyImage, FollowMouse
 
 sys.path.append("../codecAD/")
 from codecAD import CodecAD
@@ -32,10 +32,6 @@ from channelToImageAD import ChannelToImageAD
 
 sys.path.append("../colorTable/")
 from colorTable import ColorTable
-
-sys.path.append("../showInfo/")
-from showInfo import ShowInfo
-
 
 class ADViewer(QWidget):
     def __init__(self, ntnda_Channel_Provider, providerName, parent=None):
@@ -52,7 +48,15 @@ class ADViewer(QWidget):
         self.colorTable.setColorChangeCallback(self.colorChangeEvent)
         self.colorTable.setExceptionCallback(self.colorExceptionEvent)
         self.channelDict = None
-        self.showInfo = ShowInfo()
+        self.numpyImage = NumpyImage(
+            flipy=False,
+            imageSize=self.imageSize,
+            isSeparateWindow=False,
+            exceptionCallback=self.exceptionEvent
+        )
+        self.numpyImage.setContentsMargins(0, 0, 0, 0)
+        self.numpyImage.setZoomCallback(self.zoomEvent)
+        self.numpyImage.setMouseMoveCallback(self.mouseMoveEvent)
         self.manualLimits = False
         self.nImages = 0
         self.zoomScale = 1
@@ -68,11 +72,6 @@ class ADViewer(QWidget):
         self.stopButton.setEnabled(False)
         self.stopButton.clicked.connect(self.stopEvent)
         box.addWidget(self.stopButton)
-
-        self.showInfoButton = QPushButton("showInfo")
-        box.addWidget(self.showInfoButton)
-        self.showInfoButton.setEnabled(True)
-        self.showInfoButton.clicked.connect(self.showInfoEvent)
 
         self.showColorTableButton = QPushButton("showColorTable")
         self.showColorTableButton.setEnabled(True)
@@ -193,26 +192,28 @@ class ADViewer(QWidget):
         wid = QWidget()
         wid.setLayout(box)
         self.thirdRow = wid
-        # fourth row
+        # forth row
+        self.followMouse = self.numpyImage.createFollowMouse()
         box = QHBoxLayout()
-        self.numpyImage = NumpyImage(
-            flipy=False, imageSize=self.imageSize, isSeparateWindow=False
-        )
-        self.numpyImage.setContentsMargins(0, 0, 0, 0)
-        self.numpyImage.setZoomCallback(self.zoomEvent)
-        self.numpyImage.setMouseClickCallback(self.mouseClickEvent)
-        self.numpyImage.setExceptionCallback(self.exceptionEvent)
+        box.addWidget(self.followMouse.createHbox())
+        wid = QWidget()
+        wid.setLayout(box)
+        self.forthRow = wid
+        # fifth row
+        box = QHBoxLayout()
+       
         box.addWidget(self.numpyImage)
         wid = QWidget()
         wid.setLayout(box)
-        self.fourthRow = wid
+        self.fifthRow = wid
         # initialize
         layout = QGridLayout()
         layout.setVerticalSpacing(0)
         layout.addWidget(self.firstRow, 0, 0, alignment=Qt.AlignLeft)
         layout.addWidget(self.secondRow, 1, 0, alignment=Qt.AlignLeft)
         layout.addWidget(self.thirdRow, 2, 0, alignment=Qt.AlignLeft)
-        layout.addWidget(self.fourthRow, 3, 0, alignment=Qt.AlignLeft)
+        layout.addWidget(self.forthRow, 3, 0, alignment=Qt.AlignLeft)
+        layout.addWidget(self.fifthRow, 4, 0, alignment=Qt.AlignLeft)
         self.setLayout(layout)
         self.subscription = None
         self.lasttime = time.time() - 2
@@ -225,9 +226,6 @@ class ADViewer(QWidget):
             return
         self.numpyImage.resetZoom()
         self.display()
-
-    def showInfoEvent(self):
-        self.showInfo.show()
 
     def colorChangeEvent(self):
         self.display()
@@ -281,8 +279,8 @@ class ADViewer(QWidget):
         except Exception as error:
             self.statusText.setText(str(error))
 
-    def mouseClickEvent(self, zoomDict, mouseDict):
-        self.showInfo.setZoomInfo(zoomDict, mouseDict)
+    def mouseMoveEvent(self, zoomDict,mouseDict):
+        self.followMouse.setZoomInfo(zoomDict, mouseDict)
 
     def exceptionEvent(self, message):
         self.statusText.setText(message)
@@ -309,8 +307,6 @@ class ADViewer(QWidget):
         self.numpyImage.close()
         self.colorTable.setOkToClose()
         self.colorTable.close()
-        self.showInfo.setOkToClose()
-        self.showInfo.close()
 
     def startEvent(self):
         self.start()
@@ -397,7 +393,7 @@ class ADViewer(QWidget):
                 data, dimArray, self.imageSize, manualLimits=self.manualLimits
             )
             self.channelDict = self.channelToImage.getChannelDict()
-            self.showInfo.setChannelInfo(self.channelDict)
+            self.followMouse.setChannelInfo(self.channelDict)
             self.display()
         except Exception as error:
             self.statusText.setText(str(error))
