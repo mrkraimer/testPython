@@ -317,6 +317,7 @@ class NumpyImage(QWidget):
         self.__yoffsetZoom = point.y()
         if self.__isSeparateWindow:
             self.hide()
+            self.setFixedSize(self.__imageSize,self.__imageSize)
             self.setGeometry(
                 QRect(
                     self.__xoffsetZoom,
