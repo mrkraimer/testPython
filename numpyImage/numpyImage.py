@@ -317,7 +317,7 @@ class NumpyImage(QWidget):
         self.__yoffsetZoom = point.y()
         if self.__isSeparateWindow:
             self.hide()
-            self.setFixedSize(self.__imageSize,self.__imageSize)
+#            self.setFixedSize(self.__imageSize,self.__imageSize)
             self.setGeometry(
                 QRect(
                     self.__xoffsetZoom,
@@ -457,14 +457,11 @@ class NumpyImage(QWidget):
         """
         if not self.__mousePressed:
             if self.__clientMouseMoveCallback != None:
-                imageGeometry = self.geometry().getRect()
-                xsize = imageGeometry[2]
-                ysize = imageGeometry[3]
                 pos = QPoint(event.pos())
                 xmin = pos.x()
                 ymin = pos.y()
-                delx =  self.__imageDict["nx"] / xsize
-                dely = self.__imageDict["ny"] / ysize
+                delx =  self.__imageDict["nx"] / self.__imageSize
+                dely = self.__imageDict["ny"] / self.__imageSize
                 mouseX = int(xmin * delx)
                 mouseY = int(ymin * dely)
                 if self.__zoomDict["isZoom"]:
@@ -549,6 +546,11 @@ class NumpyImage(QWidget):
         zoomDict["ny"] = ny
         zoomDict["xoffset"] = xoffset
         zoomDict["yoffset"] = yoffset
+
+        adjust = self.__imageSize/xsize
+        xsize = xsize*adjust
+        adjust = self.__imageSize/ysize
+        ysize = ysize*adjust
 
         ratiox = nx / nximage
         mouseRatiox = (xmaxMouse - xminMouse) / xsize
