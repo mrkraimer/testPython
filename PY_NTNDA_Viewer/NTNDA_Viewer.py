@@ -46,13 +46,7 @@ class NTNDA_Viewer(QWidget):
         self.colorTable.setColorChangeCallback(self.colorChangeEvent)
         self.colorTable.setExceptionCallback(self.colorExceptionEvent)
         self.channelDict = None
-        self.numpyImage = NumpyImage(
-            flipy=False,
-            imageSize=self.imageSize,
-            exceptionCallback=self.exceptionEvent
-        )
-        self.numpyImage.setZoomCallback(self.zoomEvent)
-        self.numpyImage.setMouseMoveCallback(self.mouseMoveEvent)
+        self.numpyImage = None
         self.manualLimits = False
         self.nImages = 0
         self.zoomScale = 1
@@ -197,7 +191,7 @@ class NTNDA_Viewer(QWidget):
         wid.setLayout(box)
         self.thirdRow = wid
         #forth row
-        self.followMouse = self.numpyImage.createFollowMouse()
+        self.followMouse = FollowMouse(self.exceptionEvent)
         box = QHBoxLayout()
         box.addWidget(self.followMouse.createHbox())
         wid = QWidget()
@@ -219,6 +213,7 @@ class NTNDA_Viewer(QWidget):
         self.setFixedWidth(self.width())
 
     def resetEvent(self):
+        if type(self.numpyImage)==type(None) : return
         if type(self.channelDict) == type(None):
             return
         self.numpyImage.resetZoom()
@@ -235,10 +230,12 @@ class NTNDA_Viewer(QWidget):
         self.statusText.setText(error)
 
     def zoomInEvent(self):
+        if type(self.numpyImage)==type(None) : return
         self.numpyImage.zoomIn(self.zoomScale)
         self.display()
 
     def zoomBackEvent(self):
+        if type(self.numpyImage)==type(None) : return
         self.numpyImage.zoomBack()
         self.display()
 
@@ -292,9 +289,11 @@ class NTNDA_Viewer(QWidget):
             if value > 1024:
                 value = 1024
                 self.imageSizeText.setText(str(value))
-            self.resetEvent()
+            if type(self.numpyImage)!=type(None) :
+                self.numpyImage.setOkToClose()
+                self.numpyImage.close()
+                self.numpyImage = None
             self.imageSize = value
-            self.numpyImage.setImageSize(self.imageSize)
         except Exception as error:
             self.statusText.setText(str(error))
 
@@ -323,8 +322,9 @@ class NTNDA_Viewer(QWidget):
 
     def closeEvent(self, event):
         self.isClosed = True
-        self.numpyImage.setOkToClose()
-        self.numpyImage.close()
+        if type(self.numpyImage)!=type(None) :
+            self.numpyImage.setOkToClose()
+            self.numpyImage.close()
         self.colorTable.setOkToClose()
         self.colorTable.close()
 
@@ -345,7 +345,16 @@ class NTNDA_Viewer(QWidget):
             self.statusText.setText(str(error))
 
     def start(self):
+        if type(self.numpyImage)==type(None) :
+            self.numpyImage = NumpyImage(
+                flipy=False,
+                imageSize=self.imageSize,
+                exceptionCallback=self.exceptionEvent
+            )
+            self.numpyImage.setZoomCallback(self.zoomEvent)
+            self.numpyImage.setMouseMoveCallback(self.mouseMoveEvent)
         self.provider.start()
+        self.imageSizeText.setEnabled(False)
         self.channelNameText.setEnabled(False)
         self.startButton.setEnabled(False)
         self.stopButton.setEnabled(True)
@@ -356,6 +365,7 @@ class NTNDA_Viewer(QWidget):
         self.startButton.setEnabled(True)
         self.stopButton.setEnabled(False)
         self.channelNameLabel.setStyleSheet("background-color:gray")
+        self.imageSizeText.setEnabled(True)
         self.channelNameText.setEnabled(True)
         self.channel = None
         self.imageRateText.setText("0")
