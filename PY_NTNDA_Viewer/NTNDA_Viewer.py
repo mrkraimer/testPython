@@ -298,7 +298,7 @@ class NTNDA_Viewer(QWidget):
             self.statusText.setText(str(error))
 
 
-    def mouseMoveEvent(self, zoomDict,mouseDict):
+    def numpyMouseMoveEvent(self, zoomDict,mouseDict):
         self.followMouse.setZoomInfo(zoomDict, mouseDict)
 
     def exceptionEvent(self, message):
@@ -352,7 +352,7 @@ class NTNDA_Viewer(QWidget):
                 exceptionCallback=self.exceptionEvent
             )
             self.numpyImage.setZoomCallback(self.zoomEvent)
-            self.numpyImage.setMouseMoveCallback(self.mouseMoveEvent)
+            self.numpyImage.setMouseMoveCallback(self.numpyMouseMoveEvent)
         self.provider.start()
         self.imageSizeText.setEnabled(False)
         self.channelNameText.setEnabled(False)
