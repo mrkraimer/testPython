@@ -41,8 +41,6 @@ class ChannelToImageAD:
     def __init__(self, parent=None):
         self.__image = None
         self.__channelDict = self.channelDictCreate()
-        self.__channelLimits = (0, 255)
-        self.__imageLimits = (0, 255)
         self.__manualLimits = (0, 255)
 
     def channelDictCreate(self):
@@ -97,28 +95,6 @@ class ChannelToImageAD:
 
         """
         return self.__channelDict
-
-    def getChannelLimits(self):
-        """
-        Returns
-        -------
-        channelLimits : tuple
-            channelLimits[0]    lowest value of data from the callback
-            channelLimits[0]    highest value of data from the callback
-
-        """
-        return self.__channelLimits
-
-    def getImageLimits(self):
-        """
-        Returns
-        -------
-        imageLimits : tuple
-            imageLimits[0]    lowest value of data from the image
-            imageLimits[0]    highest value of data from the image
-
-        """
-        return self.__imageLimits
 
     def getManualLimits(self):
         """
@@ -191,9 +167,7 @@ class ChannelToImageAD:
             image = np.swapaxes(image, 0, 1)
         return image
 
-    def channelToImage(
-        self, data, dimArray, imageSize, manualLimits=False, showLimits=False
-    ):
+    def channelToImage(self, data, dimArray, imageSize, manualLimits=False):
         """
          Parameters
         -----------
@@ -201,7 +175,6 @@ class ChannelToImageAD:
             dimArray           : dimension from callback
             imageSize          : width and height for the generated image
             manualLimits       : (False,True) means client (does not,does) set limits
-            showLimits         : (False,True) means channelLimits and imageLimits (are not, are) updated
         """
         dtype = data.dtype
         reshape = self.__reshapeChannel(data, dimArray)
@@ -214,32 +187,21 @@ class ChannelToImageAD:
         self.__channelDict["ny"] = ny
         self.__channelDict["nz"] = nz
         self.__channelDict["dtypeChannel"] = dtype
-        if dtype == np.uint8 and not manualLimits:
-            dataMin = 0
-            dataMax = 255
+        if manualLimits:
+            displayMin = self.__manualLimits[0]
+            displayMax = self.__manualLimits[1]
         else:
-            if dtype != np.uint8:
-                dataMin = np.min(data)
-                dataMax = np.max(data)
-            else:
-                dataMin = 0
-                dataMax = 255
-            if manualLimits:
-                displayMin = self.__manualLimits[0]
-                displayMax = self.__manualLimits[1]
-            else:
-                displayMin = dataMin
-                displayMax = dataMax
+            displayMin = np.min(data)
+            displayMax = np.max(data)
+        interp = True
+        if dtype == np.uint8 :
+            if displayMin<=2 and displayMax>=250 : interp = False
+        if interp:
             xp = (displayMin, displayMax)
             fp = (0.0, 255.0)
             image = (np.interp(image, xp, fp)).astype(np.uint8)
-        if showLimits:
-            self.__channelLimits = (dataMin, dataMax)
-            imageMin = np.min(image)
-            imageMax = np.max(image)
-            self.__imageLimits = (imageMin, imageMax)
-        if nx != ny:
-            image = self.__expandChannel(image)
+#        if nx != ny:
+#            image = self.__expandChannel(image)
         nmax = 0
         if nx > nmax:
             nmax = nx

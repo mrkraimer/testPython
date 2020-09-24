@@ -1,6 +1,7 @@
 # numpyImage.py
 
 from PyQt5.QtWidgets import QWidget, QRubberBand
+from PyQt5.QtWidgets import QHBoxLayout,QLabel
 from PyQt5.QtCore import QPoint, QRect, QSize
 from PyQt5.QtCore import QThread
 from PyQt5.QtGui import QPainter, QImage
@@ -11,6 +12,114 @@ import math
 import time
 import copy
 
+class FollowMouse :
+    def __init__(self,exceptionCallback):
+        self.__exceptionCallback = exceptionCallback
+        self.__zoomDict = None
+        self.__mouseDict = None
+        self.__nx = 0
+        self.__ny = 0
+        self.__nz = 0
+        self.__dtype = ""
+        self.__compress = 0
+
+    def createHbox(self) :
+        box = QHBoxLayout()
+        box.setContentsMargins(0, 0, 0, 0)
+
+        nxLabel = QLabel("nx:")
+        box.addWidget(nxLabel)
+        self.nxText = QLabel()
+        self.nxText.setFixedWidth(40)
+        box.addWidget(self.nxText)
+
+        nyLabel = QLabel("ny:")
+        box.addWidget(nyLabel)
+        self.nyText = QLabel()
+        self.nyText.setFixedWidth(40)
+        box.addWidget(self.nyText)
+
+        nzLabel = QLabel("nz:")
+        box.addWidget(nzLabel)
+        self.nzText = QLabel()
+        self.nzText.setFixedWidth(40)
+        box.addWidget(self.nzText)
+
+        dtypeLabel = QLabel("dtype:")
+        box.addWidget(dtypeLabel)
+        self.dtypeText = QLabel()
+        self.dtypeText.setFixedWidth(60)
+        box.addWidget(self.dtypeText)
+
+        xLabel = QLabel("x:")
+        box.addWidget(xLabel)
+        self.xText = QLabel()
+        self.xText.setFixedWidth(40)
+        box.addWidget(self.xText)
+        
+        yLabel = QLabel("y:")
+        box.addWidget(yLabel)
+        self.yText = QLabel()
+        self.yText.setFixedWidth(40)
+        box.addWidget(self.yText)
+        
+        valueLabel = QLabel("value:")
+        box.addWidget(valueLabel)
+        self.valueText = QLabel()
+        self.valueText.setFixedWidth(500)
+        box.addWidget(self.valueText)
+        
+        wid = QWidget()
+        wid.setLayout(box)
+        return wid
+
+    def setChannelInfo(self,channelDict) :
+        self.channel = channelDict["channel"]
+        self.image = channelDict["image"]
+        change = False
+        if self.__nx!=channelDict["nx"] : change=True
+        if self.__ny!=channelDict["ny"] : change=True
+        if self.__nz!=channelDict["nz"] : change=True
+        if self.__compress!=channelDict["compress"] : change=True
+        if self.__dtype!=str(channelDict["dtypeChannel"]): change=True
+        if not change :
+            if self.__zoomDict!=None and self.__mouseDict!=None:
+                self.setZoomInfo(self.__zoomDict,self.__mouseDict)
+            return
+        self.__nx = channelDict["nx"]
+        self.__ny = channelDict["ny"]
+        self.__nz = channelDict["nz"]
+        self.__dtype = str(channelDict["dtypeChannel"])
+        self.__compress = float(channelDict["compress"])
+        self.nxText.setText(str(self.__nx))
+        self.nyText.setText(str(self.__ny))
+        self.nzText.setText(str(self.__nz))
+        self.dtypeText.setText(self.__dtype)
+
+    def setZoomInfo(self,zoomDict,mouseDict) :
+        self.__zoomDict = zoomDict
+        self.__mouseDict = mouseDict
+        mouseX = int(mouseDict["mouseX"])
+        mouseY = int(mouseDict["mouseY"])
+        mouseXchannel = int(mouseX*self.__compress)
+        mouseYchannel = int(mouseY*self.__compress)
+        if mouseXchannel>=self.__nx :
+            self.__exceptionCallback("mouseX out of bounds")
+            return
+        if mouseYchannel>=self.__ny :
+            self.__exceptionCallback("mouseY out of bounds")
+            return
+        self.xText.setText(str(mouseXchannel))
+        self.yText.setText(str(mouseYchannel))
+        value = str()
+        if self.__nz==1 :
+            value = str(self.channel[mouseYchannel,mouseXchannel])
+        elif self.__nz==3 :
+            value1 = self.channel[mouseYchannel,mouseXchannel,0]
+            value2 = self.channel[mouseYchannel,mouseXchannel,1]
+            value3 = self.channel[mouseYchannel,mouseXchannel,2]
+            value = str("[" + str(value1) + "," + str(value2) + "," + str(value3) + "]" )
+        self.valueText.setText(value)  
 
 class NumpyImage(QWidget):
     """
@@ -37,7 +146,7 @@ class NumpyImage(QWidget):
     latest date 2020.09.03
     """
 
-    def __init__(self, imageSize=800, flipy=False, isSeparateWindow=True):
+    def __init__(self, imageSize=800, flipy=False,exceptionCallback=None):
         """
          Parameters
         ----------
@@ -45,23 +154,19 @@ class NumpyImage(QWidget):
                  image width and height
             flipy : True or False
                  should y axis (height) be flipped
-            isSeparateWindow : True or False
-                 is this a separate window or a widget within client window.
         """
         super(QWidget, self).__init__()
         self.__imageSize = int(imageSize)
         self.__flipy = flipy
-        self.__isSeparateWindow = isSeparateWindow
-        self.__thread = self.__Worker(self.__imageSize, self.__ImageToQImage())
+        self.__thread = self.__Worker(self.__imageSize,self.__ImageToQImage())
         self.__imageZoom = False
         self.__rubberBand = QRubberBand(QRubberBand.Rectangle, self)
         self.setAttribute(Qt.WA_NoSystemBackground)
         self.__mousePressPosition = QPoint(0, 0)
         self.__mouseReleasePosition = QPoint(0, 0)
         self.__clientZoomCallback = None
-        self.__clientMouseClickCallback = None
         self.__clientMouseMoveCallback = None
-        self.__clientExceptionCallback = None
+        self.__clientExceptionCallback = exceptionCallback
         self.__mousePressed = False
         self.__okToClose = False
         self.__isHidden = True
@@ -79,16 +184,20 @@ class NumpyImage(QWidget):
 
         self.__mouseDict = {"mouseX": 0, "mouseY": 0}
         self.__zoomList = list()
-        self.__zoomDict = self.__createZoomDict()
+        self.__resetZoom = True
         self.setMouseTracking(True)
-
+        self.__width = -1
+        self.__height = -1
+        
     def __createZoomDict(self):
         return {
             "isZoom": False,
+            "width" : 0,
+            "height" : 0,
             "nx": 0,
             "ny": 0,
-            "xoffset": 0,
-            "yoffset": 0,
+            "xoffset": 0 ,
+            "yoffset": 0 ,
         }
 
     def setOkToClose(self):
@@ -109,15 +218,6 @@ class NumpyImage(QWidget):
         if not clientZoom:
             self.__imageZoom = True
 
-    def setMouseClickCallback(self, clientCallback):
-        """
-        Parameters
-        ----------
-            clientCallback : client method
-                 client called when mouse is released
-        """
-        self.__clientMouseClickCallback = clientCallback
-
     def setMouseMoveCallback(self, clientCallback):
         """
         Parameters
@@ -136,14 +236,10 @@ class NumpyImage(QWidget):
         """
         self.__clientExceptionCallback = clientCallback
 
+
     def resetZoom(self):
         """ reset to unzoomed image"""
-        self.__zoomDict["isZoom"] = False
-        self.__zoomDict["nx"] = 0
-        self.__zoomDict["ny"] = 0
-        self.__zoomDict["xoffset"] = 0
-        self.__zoomDict["yoffset"] = 0
-        self.__zoomList = list()
+        self.__resetZoom = True
 
     def zoomIn(self, zoomScale):
         """
@@ -158,20 +254,34 @@ class NumpyImage(QWidget):
         ny = self.__zoomDict["ny"]
         xoffset = self.__zoomDict["xoffset"]
         yoffset = self.__zoomDict["yoffset"]
+        width = self.__zoomDict["width"]
+        height = self.__zoomDict["height"]
 
         zoomDict = self.__createZoomDict()
         zoomDict["nx"] = nx
         zoomDict["ny"] = ny
         zoomDict["xoffset"] = xoffset
         zoomDict["yoffset"] = yoffset
+        zoomDict["width"] = width
+        zoomDict["height"] = height
 
-        ratio = nx / nximage
-        xoffset = xoffset + ratio * zoomScale
-        nx = nx - (2.0 * zoomScale)
-        ratio = ny / nyimage
-        yoffset = yoffset + ratio * zoomScale
-        ny = ny - (2.0 * zoomScale)
-        if nx < 10 or ny < 10:
+
+        ratio = nx/ny
+        if ratio>1 :
+            ratioy = 1.0
+            ratiox = ratioy/ratio
+        else :
+            ratiox = 1.0
+            ratioy = ratiox/ratio
+        orignx = nx
+        nx = nx - (2.0 * zoomScale)*ratiox
+        delx = (orignx - nx)/2
+        xoffset = xoffset + delx
+        origny = ny
+        ny = ny - (2.0 * zoomScale)*ratioy
+        dely = (origny - ny)/2
+        yoffset = yoffset + dely
+        if nx < 4 or ny < 4:
             if self.__clientExceptionCallback != None:
                 self.__clientExceptionCallback("mouseZoom selected to small a subimage")
             return
@@ -181,6 +291,8 @@ class NumpyImage(QWidget):
         self.__zoomDict["xoffset"] = xoffset
         self.__zoomDict["yoffset"] = yoffset
         self.__zoomDict["isZoom"] = True
+        self.__zoomDict["width"] = width
+        self.__zoomDict["height"] = height
         self.__zoomList.append(zoomDict)
         return True
 
@@ -199,30 +311,6 @@ class NumpyImage(QWidget):
         if num == 1:
             self.resetZoom()
 
-    def setImageSize(self, imageSize):
-        """
-        Parameters
-        ----------
-            imageSize : int
-                 set image width and height
-        """
-        self.__imageSize = imageSize
-        self.__thread.setImageSize(self.__imageSize)
-        point = self.geometry().topLeft()
-        self.__xoffsetZoom = point.x()
-        self.__yoffsetZoom = point.y()
-        if self.__isSeparateWindow:
-            self.hide()
-            self.setGeometry(
-                QRect(
-                    self.__xoffsetZoom,
-                    self.__yoffsetZoom,
-                    self.__imageSize,
-                    self.__imageSize,
-                )
-            )
-            self.show()
-
     def display(self, pixarray, bytesPerLine=None, Format=0, colorTable=None):
         """
         Parameters
@@ -230,7 +318,7 @@ class NumpyImage(QWidget):
             pixarray : numpy array
                  pixarray that is converted to QImage and displayed.
                  It must have shape of length 2 or 3 where:
-                     shape[0]=ny which is image heigth
+                     shape[0]=ny which is image height
                      shape[1]=nx which is iaage width
                  In shape has length 3 then
                      shape[1]=nz which must be 2 or 3
@@ -265,21 +353,6 @@ class NumpyImage(QWidget):
             colorTable: qRgb color table
                  Default is to let numpyImage decide
         """
-        if type(self.__imageDict["image"]) == type(None):
-            if not self.__isSeparateWindow:
-                self.setFixedSize(self.__imageSize, self.__imageSize)
-            else:
-                point = self.geometry().topLeft()
-                self.__xoffsetZoom = point.x()
-                self.__yoffsetZoom = point.y()
-                self.setGeometry(
-                    QRect(
-                        self.__xoffsetZoom,
-                        self.__yoffsetZoom,
-                        self.__imageSize,
-                        self.__imageSize,
-                    )
-                )
         if self.__flipy:
             image = np.flip(pixarray, 0)
             self.__imageDict["image"] = np.flip(pixarray, 0)
@@ -287,7 +360,7 @@ class NumpyImage(QWidget):
             image = pixarray
         nx = image.shape[1]
         ny = image.shape[0]
-        nz = 1
+        nz = 1    
         if len(image.shape) == 3:
             nz = image.shape[2]
         if (
@@ -295,10 +368,17 @@ class NumpyImage(QWidget):
             or ny != self.__imageDict["ny"]
             or nz != self.__imageDict["nz"]
         ):
-            self.resetZoom()
+            self.__resetZoom = True
             self.__imageDict["nx"] = nx
             self.__imageDict["ny"] = ny
             self.__imageDict["nz"] = nz
+
+        if self.__resetZoom :
+            self.close()
+            self.__zoomList = list()
+            self.__zoomDict = self.__createZoomDict()
+            self.__resetZoom = False
+
         if self.__zoomDict["isZoom"]:
             nx = self.__zoomDict["nx"]
             ny = self.__zoomDict["ny"]
@@ -310,10 +390,37 @@ class NumpyImage(QWidget):
         else:
             self.__zoomDict["nx"] = nx
             self.__zoomDict["ny"] = ny
+            width = self.__imageSize
+            height =self.__imageSize
+            ratio = nx/ny
+            if ratio<1.0 :
+                width = ratio*width
+            elif ratio>1.0:
+                height = height/ratio    
+            self.__zoomDict["width"] = int(width)
+            self.__zoomDict["height"] = int(height)
         self.__imageDict["image"] = image
         self.__bytesPerLine = bytesPerLine
         self.__Format = Format
         self.__colorTable = colorTable
+        width = self.__zoomDict["width"]
+        height = self.__zoomDict["height"]
+        if width!=self.width or height!=self.height :
+            self.close()
+            self.width = width
+            self.height = height
+            point = self.geometry().topLeft()
+            self.__xoffsetZoom = point.x()
+            self.__yoffsetZoom = point.y()
+            self.setGeometry(
+                QRect(
+                    self.__xoffsetZoom,
+                    self.__yoffsetZoom,
+                    self.__zoomDict["width"],
+                    self.__zoomDict["height"],
+                )
+            )
+            self.setFixedSize(self.__zoomDict["width"],self.__zoomDict["height"])
         self.update()
         if self.__isHidden:
             self.__isHidden = False
@@ -352,14 +459,18 @@ class NumpyImage(QWidget):
         """
         if not self.__mousePressed:
             if self.__clientMouseMoveCallback != None:
-                imageGeometry = self.geometry().getRect()
-                xsize = imageGeometry[2]
-                ysize = imageGeometry[3]
                 pos = QPoint(event.pos())
                 xmin = pos.x()
                 ymin = pos.y()
-                delx =  self.__imageDict["nx"] / xsize
-                dely = self.__imageDict["ny"] / ysize
+                geometry = self.geometry()
+                width = geometry.width()
+                if width!=self.__imageSize :
+                    xmin = int(xmin*self.__imageSize/width)
+                height = geometry.height()
+                if height!=self.__imageSize :
+                    ymin = int(ymin*self.__imageSize/height)
+                delx =  self.__imageDict["nx"] / self.__imageSize
+                dely = self.__imageDict["ny"] / self.__imageSize
                 mouseX = int(xmin * delx)
                 mouseY = int(ymin * dely)
                 if self.__zoomDict["isZoom"]:
@@ -414,81 +525,70 @@ class NumpyImage(QWidget):
         sizey = ymax - ymin
         sizex = xmax - xmin
         if sizey <= 3 or sizex <= 3:
-            if self.__clientMouseClickCallback != None:
-                delx = self.__imageDict["nx"] / xsize
-                dely = self.__imageDict["ny"] / ysize
-                mouseX = int(xmin * delx)
-                mouseY = int(ymin * dely)
-                if self.__zoomDict["isZoom"]:
-                    nximage = self.__imageDict["nx"]
-                    nyimage = self.__imageDict["ny"]
-                    nx = self.__zoomDict["nx"]
-                    ny = self.__zoomDict["ny"]
-                    xoffset = self.__zoomDict["xoffset"]
-                    yoffset = self.__zoomDict["yoffset"]
-                    ratio = nx / nximage
-                    mouseX = mouseX * ratio + xoffset
-                    ratio = ny / nyimage
-                    mouseY = mouseY * ratio + yoffset
-                self.__mouseDict["mouseX"] = mouseX
-                self.__mouseDict["mouseY"] = mouseY
-                self.__clientMouseClickCallback(self.__zoomDict, self.__mouseDict)
             return
         if not self.__imageZoom:
             self.__clientZoomCallback((xsize, ysize), (xmin, xmax, ymin, ymax))
             return
-        self.__newZoom(xsize, ysize, xmin, xmax, ymin, ymax)
+        self.__newZoom(xmin, xmax, ymin, ymax)
         self.__clientZoomCallback()
 
     def paintEvent(self, ev):
         """
         This is the method that displays the QImage
         """
-        if self.__mousePressed:
-            return
         image = self.__imageDict["image"]
         self.__thread.render(
             self, image, self.__bytesPerLine, self.__Format, self.__colorTable
         )
         self.__thread.wait()
 
-    def __newZoom(self, xsize, ysize, xminMouse, xmaxMouse, yminMouse, ymaxMouse):
+    def __newZoom(self,xminMouse, xmaxMouse, yminMouse, ymaxMouse):
         nximage = self.__imageDict["nx"]
         nyimage = self.__imageDict["ny"]
         nx = self.__zoomDict["nx"]
         ny = self.__zoomDict["ny"]
         xoffset = self.__zoomDict["xoffset"]
         yoffset = self.__zoomDict["yoffset"]
+        width = self.__zoomDict["width"]
+        height = self.__zoomDict["height"]
 
         zoomDict = self.__createZoomDict()
         zoomDict["nx"] = nx
         zoomDict["ny"] = ny
         zoomDict["xoffset"] = xoffset
         zoomDict["yoffset"] = yoffset
+        zoomDict["width"] = width
+        zoomDict["height"] = height
 
         ratiox = nx / nximage
-        mouseRatiox = (xmaxMouse - xminMouse) / xsize
+        mouseRatiox = (xmaxMouse - xminMouse) / width
         ratioy = ny / nyimage
-        mouseRatioy = (ymaxMouse - yminMouse) / ysize
-        mouseRatio = mouseRatiox
-        if mouseRatioy > mouseRatiox:
-            mouseRatio = mouseRatioy
-        nx = nximage * ratiox * mouseRatio
-        offsetmouse = nximage * (xminMouse / xsize) * ratiox
+        mouseRatioy = (ymaxMouse - yminMouse) / height
+        nx = nximage * ratiox * mouseRatiox
+        offsetmouse = nximage * (xminMouse / width) * ratiox
         xoffset = xoffset + offsetmouse
-        ny = nyimage * ratioy * mouseRatio
-        offsetmouse = nyimage * (yminMouse / ysize) * ratioy
+        ny = nyimage * ratioy * mouseRatioy
+        offsetmouse = nyimage * (yminMouse / height) * ratioy
         yoffset = yoffset + offsetmouse
-        if nx < 10 or ny < 10:
+        if nx < 4 or ny < 4:
             if self.__clientExceptionCallback != None:
                 self.__clientExceptionCallback("mouseZoom selected to small a subimage")
             return
-
+        width = self.__imageSize
+        height = self.__imageSize
+        ratio = nx/ny
+        if ratio>1.0 :
+            height = int(height/ratio)
+        else :
+            width = int(width*ratio)
+            
         self.__zoomDict["nx"] = nx
         self.__zoomDict["ny"] = ny
         self.__zoomDict["xoffset"] = xoffset
         self.__zoomDict["yoffset"] = yoffset
         self.__zoomDict["isZoom"] = True
+        self.__zoomDict["width"] = width
+        self.__zoomDict["height"] = height
         self.__zoomList.append(zoomDict)
 
     class __ImageToQImage:
@@ -564,7 +664,7 @@ class NumpyImage(QWidget):
                 return None
 
     class __Worker(QThread):
-        def __init__(self, imageSize, imageToQimage):
+        def __init__(self,imageSize,imageToQimage):
             QThread.__init__(self)
             self.error = str("")
             self.imageSize = imageSize
@@ -596,11 +696,14 @@ class NumpyImage(QWidget):
                 return
             numx = self.image.shape[1]
             numy = self.image.shape[0]
-            if numx != self.imageSize or numx != self.imageSize:
-                if numy > numx:
-                    qimage = qimage.scaledToHeight(self.imageSize)
-                else:
-                    qimage = qimage.scaledToWidth(self.imageSize)
+            scalex = self.imageSize
+            scaley = self.imageSize
+            ratio = numx/numy
+            if ratio<1.0 :
+                scalex = ratio*scalex
+            elif ratio>1.0:
+                scaley = scaley/ratio
+            qimage = qimage.scaled(scalex,scaley)
             painter = QPainter(self.caller)
             painter.drawImage(0, 0, qimage)
             while True:
