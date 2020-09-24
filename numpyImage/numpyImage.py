@@ -248,51 +248,46 @@ class NumpyImage(QWidget):
             zoomScale : int
                  zoom in by zoomScale/255
         """
-        nximage = self.__imageDict["nx"]
-        nyimage = self.__imageDict["ny"]
         nx = self.__zoomDict["nx"]
         ny = self.__zoomDict["ny"]
         xoffset = self.__zoomDict["xoffset"]
         yoffset = self.__zoomDict["yoffset"]
-        width = self.__zoomDict["width"]
-        height = self.__zoomDict["height"]
 
         zoomDict = self.__createZoomDict()
         zoomDict["nx"] = nx
         zoomDict["ny"] = ny
         zoomDict["xoffset"] = xoffset
         zoomDict["yoffset"] = yoffset
-        zoomDict["width"] = width
-        zoomDict["height"] = height
+        zoomDict["width"] = self.__zoomDict["width"]
+        zoomDict["height"] = self.__zoomDict["height"]
 
-
-        ratio = nx/ny
-        if ratio>1 :
-            ratioy = 1.0
-            ratiox = ratioy/ratio
+        ratio = ny/nx
+        if ratio>1.0 :
+            nxold = nx
+            nx = nx - (2.0 * zoomScale)
+            if nx<4.0 :
+                if self.__clientExceptionCallback != None:
+                    self.__clientExceptionCallback("mouseZoom selected to small a subimage")
+                return
+            xoffset = xoffset + zoomScale
+            ny = ny*nx/nxold
+            yoffset = yoffset + ratio*zoomScale
         else :
-            ratiox = 1.0
-            ratioy = ratiox/ratio
-        orignx = nx
-        nx = nx - (2.0 * zoomScale)*ratiox
-        delx = (orignx - nx)/2
-        xoffset = xoffset + delx
-        origny = ny
-        ny = ny - (2.0 * zoomScale)*ratioy
-        dely = (origny - ny)/2
-        yoffset = yoffset + dely
-        if nx < 4 or ny < 4:
-            if self.__clientExceptionCallback != None:
-                self.__clientExceptionCallback("mouseZoom selected to small a subimage")
-            return
+            nyold = ny
+            ny = ny - (2.0 * zoomScale)
+            if ny<4.0 :
+                if self.__clientExceptionCallback != None:
+                    self.__clientExceptionCallback("mouseZoom selected to small a subimage")
+                return
+            yoffset = yoffset + zoomScale
+            nx = nx*ny/nyold
+            xoffset = xoffset + zoomScale/ratio
 
         self.__zoomDict["nx"] = nx
         self.__zoomDict["ny"] = ny
         self.__zoomDict["xoffset"] = xoffset
         self.__zoomDict["yoffset"] = yoffset
         self.__zoomDict["isZoom"] = True
-        self.__zoomDict["width"] = width
-        self.__zoomDict["height"] = height
         self.__zoomList.append(zoomDict)
         return True
 
