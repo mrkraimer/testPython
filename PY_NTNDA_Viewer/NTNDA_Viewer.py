@@ -12,6 +12,7 @@ latest date 2020.07.21
 """
 
 import sys, time
+import os
 import numpy as np
 from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit
 from PyQt5.QtWidgets import QPushButton, QHBoxLayout, QGridLayout
@@ -90,7 +91,7 @@ class NTNDA_Viewer(QWidget):
         box.addWidget(self.imageRateText)
         if len(self.provider.getChannelName()) < 1:
             name = os.getenv("EPICS_NTNDA_VIEWER_CHANNELNAME")
-            if name != None:
+            if name is not None:
                 self.provider.setChannelName(name)
 
         self.imageSizeLabel = QLabel("imageSize:")
@@ -213,12 +214,12 @@ class NTNDA_Viewer(QWidget):
         self.setFixedWidth(self.width())
 
     def resetEvent(self):
-        if type(self.numpyImage)==type(None) : return
-        if type(self.channelDict) == type(None):
+        if self.numpyImage is None:
+            return
+        if self.channelDict is None:
             return
         self.numpyImage.resetZoom()
         self.display()
-
 
     def colorChangeEvent(self):
         self.display()
@@ -230,12 +231,14 @@ class NTNDA_Viewer(QWidget):
         self.statusText.setText(error)
 
     def zoomInEvent(self):
-        if type(self.numpyImage)==type(None) : return
+        if self.numpyImage is None:
+            return
         self.numpyImage.zoomIn(self.zoomScale)
         self.display()
 
     def zoomBackEvent(self):
-        if type(self.numpyImage)==type(None) : return
+        if self.numpyImage is None:
+            return
         self.numpyImage.zoomBack()
         self.display()
 
@@ -289,7 +292,7 @@ class NTNDA_Viewer(QWidget):
             if value > 1024:
                 value = 1024
                 self.imageSizeText.setText(str(value))
-            if type(self.numpyImage)!=type(None) :
+            if self.numpyImage is not None:
                 self.numpyImage.setOkToClose()
                 self.numpyImage.close()
                 self.numpyImage = None
@@ -307,7 +310,7 @@ class NTNDA_Viewer(QWidget):
     def display(self):
         if self.isClosed:
             return
-        if type(self.channelDict) == type(None):
+        if self.channelDict is None:
             return
         try:
             if self.channelDict["nz"] == 3:
@@ -322,7 +325,7 @@ class NTNDA_Viewer(QWidget):
 
     def closeEvent(self, event):
         self.isClosed = True
-        if type(self.numpyImage)!=type(None) :
+        if self.numpyImage is not None:
             self.numpyImage.setOkToClose()
             self.numpyImage.close()
         self.colorTable.setOkToClose()
@@ -345,7 +348,7 @@ class NTNDA_Viewer(QWidget):
             self.statusText.setText(str(error))
 
     def start(self):
-        if type(self.numpyImage)==type(None) :
+        if self.numpyImage is None:
             self.numpyImage = NumpyImage(
                 flipy=False,
                 imageSize=self.imageSize,
@@ -371,17 +374,17 @@ class NTNDA_Viewer(QWidget):
         self.imageRateText.setText("0")
 
     def callback(self, arg):
-        if type(arg) == type(None):
+        if arg is None:
             return
         if self.isClosed:
             return
         if len(arg) == 1:
             value = arg.get("exception")
-            if value != None:
+            if value is not None:
                 self.statusText.setText(str(value))
                 return
             value = arg.get("status")
-            if value != None:
+            if value is not None:
                 if value == "disconnected":
                     self.channelNameLabel.setStyleSheet("background-color:red")
                     self.statusText.setText("disconnected")
