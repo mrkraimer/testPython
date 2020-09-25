@@ -191,7 +191,7 @@ class NTNDA_Viewer(QWidget):
         wid = QWidget()
         wid.setLayout(box)
         self.thirdRow = wid
-        #forth row
+        # forth row
         self.followMouse = FollowMouse(self.exceptionEvent)
         box = QHBoxLayout()
         box.addWidget(self.followMouse.createHbox())
@@ -300,8 +300,7 @@ class NTNDA_Viewer(QWidget):
         except Exception as error:
             self.statusText.setText(str(error))
 
-
-    def numpyMouseMoveEvent(self, zoomDict,mouseDict):
+    def numpyMouseMoveEvent(self, zoomDict, mouseDict):
         self.followMouse.setZoomInfo(zoomDict, mouseDict)
 
     def exceptionEvent(self, message):
@@ -352,7 +351,7 @@ class NTNDA_Viewer(QWidget):
             self.numpyImage = NumpyImage(
                 flipy=False,
                 imageSize=self.imageSize,
-                exceptionCallback=self.exceptionEvent
+                exceptionCallback=self.exceptionEvent,
             )
             self.numpyImage.setZoomCallback(self.zoomEvent)
             self.numpyImage.setMouseMoveCallback(self.numpyMouseMoveEvent)

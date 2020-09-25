@@ -194,14 +194,15 @@ class ChannelToImageAD:
             displayMin = np.min(data)
             displayMax = np.max(data)
         interp = True
-        if dtype == np.uint8 :
-            if displayMin<=2 and displayMax>=250 : interp = False
+        if dtype == np.uint8:
+            if displayMin <= 2 and displayMax >= 250:
+                interp = False
         if interp:
             xp = (displayMin, displayMax)
             fp = (0.0, 255.0)
             image = (np.interp(image, xp, fp)).astype(np.uint8)
-#        if nx != ny:
-#            image = self.__expandChannel(image)
+        #        if nx != ny:
+        #            image = self.__expandChannel(image)
         nmax = 0
         if nx > nmax:
             nmax = nx
