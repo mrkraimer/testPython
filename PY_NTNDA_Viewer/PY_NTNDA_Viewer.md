@@ -57,7 +57,6 @@ When start is pressed the following appears:
 
 - **start** Clicking this button starts communication with the server
 - **stop** Clicking this button stops communication with the server
-- **zoomChannel** Clicking this button specifies that mouse clicks show channel data.
 - **showColorTable** Clicking this brings up the ColorTable window. See below for details
 - **channelName** This is the name of the channel that provides the NTNDArray. When in stopped mode a new channel name can be specified.
 
@@ -78,7 +77,7 @@ When start is pressed the following appears:
 - **manualMax** maximuum value for manual scaling.
 - **resetZoom** revert to full image.
 - **zoomIn** zoom into the current image.
-- **x1,...,x16** scale factor for zoomIn as multiple of 1.0/256.0
+- **x1,...,x16** scale factor for zoomIn.
 - **zoomBack** revent to previous zoom.
 
 ### Forth row of control window
@@ -265,7 +264,7 @@ Moving the mouse in the new window shows the pixel location and value.
 It uses the following python classes:
 
 - **ChannelToImageAD** Converts the data from the NTNDAArray to an image that can be passed to the next class.
-- **NumpyImage** Displays an Image via QImage.
+- **NumpyImage** Displays an Image via QImage. It also has class **FollowMouse**.
 - **CodecAD** Decompresses compressed data from the NTNDAArray.
 - **ColorTable** Provides psuedo color tables for monochrome images from NTNDArray
 
