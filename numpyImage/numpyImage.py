@@ -50,7 +50,6 @@ class FollowMouse:
         self.__ny = 0
         self.__nz = 0
         self.__dtype = ""
-        self.__compress = 0
 
     def createHbox(self):
         """ create a horizontal widget for nx,ny,nx,dtype,x.x.value"""
@@ -114,8 +113,6 @@ class FollowMouse:
             change = True
         if self.__nz != channelDict["nz"]:
             change = True
-        if self.__compress != channelDict["compress"]:
-            change = True
         if self.__dtype != str(channelDict["dtypeChannel"]):
             change = True
         if not change:
@@ -126,7 +123,6 @@ class FollowMouse:
         self.__ny = channelDict["ny"]
         self.__nz = channelDict["nz"]
         self.__dtype = str(channelDict["dtypeChannel"])
-        self.__compress = float(channelDict["compress"])
         self.nxText.setText(str(self.__nx))
         self.nyText.setText(str(self.__ny))
         self.nzText.setText(str(self.__nz))
@@ -138,8 +134,8 @@ class FollowMouse:
         self.__mouseDict = mouseDict
         mouseX = int(mouseDict["mouseX"])
         mouseY = int(mouseDict["mouseY"])
-        mouseXchannel = int(mouseX * self.__compress)
-        mouseYchannel = int(mouseY * self.__compress)
+        mouseXchannel = int(mouseX)
+        mouseYchannel = int(mouseY)
         if mouseXchannel >= self.__nx:
             self.__exceptionCallback("mouseX out of bounds")
             return

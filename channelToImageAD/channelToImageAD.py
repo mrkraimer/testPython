@@ -55,7 +55,6 @@ class ChannelToImageAD:
             channelDict["nz"]           0
             channelDict["image"]        None
             channelDict["dtypeImage"]   np.uint8
-            channelDict["compress"]     1
         """
         return {
             "channel": None,
@@ -66,7 +65,6 @@ class ChannelToImageAD:
             "nz": 0,
             "image": None,
             "dtypeImage": np.uint8,
-            "compress": 1,
         }
 
     def setManualLimits(self, manualLimits):
@@ -91,7 +89,6 @@ class ChannelToImageAD:
             channelDict["nz"]           nz (1,3) for (2d,3d) image
             channelDict["imagel"]       numpy 2d or 3d array for the image
             channelDict["dtypeImage"]   dtype for image
-            channelDict["compress"]     how much channel data was compressed
 
         """
         return self.__channelDict
@@ -139,34 +136,6 @@ class ChannelToImageAD:
             raise Exception("ndim not 2 or 3")
         return (image, nx, ny, nz)
 
-    def __expandChannel(self, image):
-        shape = image.shape
-        ny = shape[0]
-        nx = shape[1]
-        nz = 1
-        if len(shape) == 3:
-            nz = shape[2]
-        swaped = False
-        if ny > nx:
-            image = np.swapaxes(image, 0, 1)
-            swaped = True
-        numy = image.shape[1]
-        numx = image.shape[0]
-        extra = numy - numx
-        if nz == 1:
-            num = int(extra * numy)
-            extraarry = np.full((extra, numy), 255, dtype=image.dtype)
-            image = np.append(image, extraarry)
-            image = image.reshape((numy, numy))
-        if nz == 3:
-            num = int(extra * numy * 3)
-            extraarry = np.full((extra, numy, 3), 255, dtype=image.dtype)
-            image = np.append(image, extraarry)
-            image = image.reshape((numy, numy, 3))
-        if swaped:
-            image = np.swapaxes(image, 0, 1)
-        return image
-
     def channelToImage(self, data, dimArray, imageSize, manualLimits=False):
         """
          Parameters
@@ -201,19 +170,10 @@ class ChannelToImageAD:
             xp = (displayMin, displayMax)
             fp = (0.0, 255.0)
             image = (np.interp(image, xp, fp)).astype(np.uint8)
-        #        if nx != ny:
-        #            image = self.__expandChannel(image)
+
         nmax = 0
         if nx > nmax:
             nmax = nx
         if ny > nmax:
             nmax = ny
-        compress = 1
-        if nmax > imageSize:
-            compress = math.ceil(float(nmax) / imageSize)
-            if nz == 1:
-                image = image[::compress, ::compress]
-            else:
-                image = image[::compress, ::compress, ::]
         self.__channelDict["image"] = image
-        self.__channelDict["compress"] = compress
