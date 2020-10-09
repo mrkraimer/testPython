@@ -94,6 +94,7 @@ class PVAPYProvider(QObject):
             self.monitordata = arg
 
     def monitorCallback(self):
+        if not self.isStarted: return
         arg = dict()
         val = self.monitordata["value"][0]
         if len(val) != 1:

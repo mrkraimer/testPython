@@ -39,7 +39,6 @@ class ChannelToImageAD:
     """
 
     def __init__(self, parent=None):
-        self.__image = None
         self.__channelDict = self.channelDictCreate()
         self.__manualLimits = (0, 255)
 
