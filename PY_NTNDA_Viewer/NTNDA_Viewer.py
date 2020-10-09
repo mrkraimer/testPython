@@ -7,7 +7,7 @@ Copyright - See the COPYRIGHT that is included with this distribution.
 authors
     Marty Kraimer
     Mark Rivers
-latest date 2020.07.21
+latest date 2020.10.09
     original development started 2019.12
 """
 
@@ -38,6 +38,7 @@ class NTNDA_Viewer(QWidget):
         super(QWidget, self).__init__(parent)
         self.imageSize = 800
         self.isClosed = False
+        self.isStarted = False
         self.provider = ntnda_Channel_Provider
         self.provider.NTNDA_Viewer = self
         self.setWindowTitle(providerName + "_NTNDA_Viewer")
@@ -278,27 +279,26 @@ class NTNDA_Viewer(QWidget):
             self.statusText.setText(str(error))
 
     def imageSizeEvent(self):
+        size = self.imageSizeText.text()
         try:
-            size = self.imageSizeText.text()
-            try:
-                value = int(size)
-            except Exception as error:
-                self.statusText.setText("value is not an integer")
-                self.imageSizeText.setText(str(self.imageSize))
-                return
-            if value < 128:
-                value = 128
-                self.imageSizeText.setText(str(value))
-            if value > 1024:
-                value = 1024
-                self.imageSizeText.setText(str(value))
-            if self.numpyImage is not None:
-                self.numpyImage.setOkToClose()
-                self.numpyImage.close()
-                self.numpyImage = None
-            self.imageSize = value
+            value = int(size)
         except Exception as error:
-            self.statusText.setText(str(error))
+            self.statusText.setText("value is not an integer")
+            self.imageSizeText.setText(str(self.imageSize))
+            return
+        isStarted = self.isStarted    
+        if value < 128:
+            value = 128
+        if isStarted:
+            self.stop()
+        if self.numpyImage is not None:
+            self.numpyImage.setOkToClose()
+            self.numpyImage.close()
+            self.numpyImage = None
+        self.imageSizeText.setText(str(value))
+        self.imageSize = value
+        if isStarted: 
+            self.start()
 
     def numpyMouseMoveEvent(self, zoomDict, mouseDict):
         self.followMouse.setZoomInfo(zoomDict, mouseDict)
@@ -332,9 +332,11 @@ class NTNDA_Viewer(QWidget):
 
     def startEvent(self):
         self.start()
+        self.isStarted = True
 
     def stopEvent(self):
         self.stop()
+        self.isStarted = False
 
     def clearEvent(self):
         self.statusText.setText("")
@@ -356,7 +358,7 @@ class NTNDA_Viewer(QWidget):
             self.numpyImage.setZoomCallback(self.zoomEvent)
             self.numpyImage.setMouseMoveCallback(self.numpyMouseMoveEvent)
         self.provider.start()
-        self.imageSizeText.setEnabled(False)
+#        self.imageSizeText.setEnabled(False)
         self.channelNameText.setEnabled(False)
         self.startButton.setEnabled(False)
         self.stopButton.setEnabled(True)
