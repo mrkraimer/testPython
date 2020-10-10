@@ -81,20 +81,15 @@ class PVAPYProvider(QObject):
         arg = self.connectdata
         self.callViewerCallback(arg)
         self.callbackDoneEvent.set()
-        self.connectdata = None
 
     def pvapymonitorcallback(self, arg):
-        if self.monitordata == None:
-            self.monitordata = arg
-            self.monitorCallbacksignal.emit()
-            self.callbackDoneEvent.wait()
-            self.callbackDoneEvent.clear()
-        else:
-            self.monitordata = arg
+        self.monitordata = arg
+        self.monitorCallbacksignal.emit()
+        self.callbackDoneEvent.wait()
+        self.callbackDoneEvent.clear()
 
     def monitorCallback(self):
         if not self.isStarted:
-            self.monitordata = None
             self.callbackDoneEvent.set()
             return
         arg = dict()
@@ -102,7 +97,6 @@ class PVAPYProvider(QObject):
         if len(val) != 1:
             arg["exception"] = "value length not 1"
             self.callViewerCallback(arg)
-            self.monitordata = None
             self.callbackDoneEvent.set()
             return
         element = None
@@ -111,7 +105,6 @@ class PVAPYProvider(QObject):
         if element == None:
             arg["exception"] = "value is not numpy  array"
             self.callViewerCallback(arg)
-            self.monitordata = None
             self.callbackDoneEvent.set()
             return
         value = val[element]
@@ -131,7 +124,6 @@ class PVAPYProvider(QObject):
         arg["compressedSize"] = self.monitordata["compressedSize"]
         arg["uncompressedSize"] = self.monitordata["uncompressedSize"]
         self.callViewerCallback(arg)
-        self.monitordata = None
         self.callbackDoneEvent.set()
 
 
