@@ -38,7 +38,6 @@ class PVAPYProvider(QObject):
     def setChannelName(self, channelName):
         if self.channel != None and self.isStarted:
             self.stop()
-        self.channel = None
         self.firstStart = True
         self.channelName = channelName
 
@@ -94,7 +93,10 @@ class PVAPYProvider(QObject):
             self.monitordata = arg
 
     def monitorCallback(self):
-        if not self.isStarted: return
+        if not self.isStarted:
+            self.monitordata = None
+            self.callbackDoneEvent.set()
+            return
         arg = dict()
         val = self.monitordata["value"][0]
         if len(val) != 1:
