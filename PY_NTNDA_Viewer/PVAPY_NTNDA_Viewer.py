@@ -28,9 +28,11 @@ class PVAPYProvider(QObject):
         self.isConnected = False
         self.firstStart = True
         self.connectCallbacksignal.connect(self.connectionCallback)
+        self.ConnectDoneEvent = Event()
+        self.ConnectDoneEvent.clear()
         self.monitorCallbacksignal.connect(self.monitorCallback)
-        self.callbackDoneEvent = Event()
-        self.callbackDoneEvent.clear()
+        self.monitorDoneEvent = Event()
+        self.monitorDoneEvent.clear()
         self.channelName = "13SIM1:Pva1:Image"
         self.channel = None
         self.isStarted = False
@@ -74,30 +76,30 @@ class PVAPYProvider(QObject):
             data["exception"] = "bad pvapy connection callback =" + str(arg)
         self.connectdata = data
         self.connectCallbacksignal.emit()
-        self.callbackDoneEvent.wait()
-        self.callbackDoneEvent.clear()
+        result = self.ConnectDoneEvent.wait(1.0)
+        self.ConnectDoneEvent.clear()
 
     def connectionCallback(self):
         arg = self.connectdata
         self.callViewerCallback(arg)
-        self.callbackDoneEvent.set()
+        self.ConnectDoneEvent.set()
 
     def pvapymonitorcallback(self, arg):
         self.monitordata = arg
         self.monitorCallbacksignal.emit()
-        self.callbackDoneEvent.wait()
-        self.callbackDoneEvent.clear()
+        self.monitorDoneEvent.wait()
+        self.monitorDoneEvent.clear()
 
     def monitorCallback(self):
         if not self.isStarted:
-            self.callbackDoneEvent.set()
+            self.monitorDoneEvent.set()
             return
         arg = dict()
         val = self.monitordata["value"][0]
         if len(val) != 1:
             arg["exception"] = "value length not 1"
             self.callViewerCallback(arg)
-            self.callbackDoneEvent.set()
+            self.monitorDoneEvent.set()
             return
         element = None
         for x in val:
@@ -105,7 +107,7 @@ class PVAPYProvider(QObject):
         if element == None:
             arg["exception"] = "value is not numpy  array"
             self.callViewerCallback(arg)
-            self.callbackDoneEvent.set()
+            self.monitorDoneEvent.set()
             return
         value = val[element]
         arg["value"] = value
@@ -124,7 +126,7 @@ class PVAPYProvider(QObject):
         arg["compressedSize"] = self.monitordata["compressedSize"]
         arg["uncompressedSize"] = self.monitordata["uncompressedSize"]
         self.callViewerCallback(arg)
-        self.callbackDoneEvent.set()
+        self.monitorDoneEvent.set()
 
 
 if __name__ == "__main__":

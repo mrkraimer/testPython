@@ -358,7 +358,6 @@ class NTNDA_Viewer(QWidget):
             self.numpyImage.setZoomCallback(self.zoomEvent)
             self.numpyImage.setMouseMoveCallback(self.numpyMouseMoveEvent)
         self.provider.start()
-#        self.imageSizeText.setEnabled(False)
         self.channelNameText.setEnabled(False)
         self.startButton.setEnabled(False)
         self.stopButton.setEnabled(True)
@@ -369,7 +368,6 @@ class NTNDA_Viewer(QWidget):
         self.startButton.setEnabled(True)
         self.stopButton.setEnabled(False)
         self.channelNameLabel.setStyleSheet("background-color:gray")
-        self.imageSizeText.setEnabled(True)
         self.channelNameText.setEnabled(True)
         self.channel = None
         self.imageRateText.setText("0")
