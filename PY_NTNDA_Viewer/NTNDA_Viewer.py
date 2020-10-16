@@ -21,7 +21,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import qRgb
 
 sys.path.append("../numpyImage/")
-from numpyImage import NumpyImage, FollowMouse
+from numpyImage import NumpyImage, FollowMouse, Plot3d
 
 sys.path.append("../codecAD/")
 from codecAD import CodecAD
@@ -47,6 +47,8 @@ class NTNDA_Viewer(QWidget):
         self.colorTable = ColorTable()
         self.colorTable.setColorChangeCallback(self.colorChangeEvent)
         self.colorTable.setExceptionCallback(self.colorExceptionEvent)
+        self.plot3d = Plot3d()
+        
         self.channelDict = None
         self.numpyImage = None
         self.manualLimits = False
@@ -69,6 +71,11 @@ class NTNDA_Viewer(QWidget):
         self.showColorTableButton.setEnabled(True)
         self.showColorTableButton.clicked.connect(self.showColorTableEvent)
         box.addWidget(self.showColorTableButton)
+
+        self.plot3dButton = QPushButton("plot3d")
+        self.plot3dButton.setEnabled(True)
+        self.plot3dButton.clicked.connect(self.plot3dEvent)
+        box.addWidget(self.plot3dButton)
 
         self.channelNameLabel = QLabel("channelName:")
         box.addWidget(self.channelNameLabel)
@@ -225,6 +232,9 @@ class NTNDA_Viewer(QWidget):
     def colorChangeEvent(self):
         self.display()
 
+    def plot3dEvent(self) :
+        self.plot3d.plot(self.channelDict["image"])
+
     def showColorTableEvent(self):
         self.colorTable.show()
 
@@ -302,6 +312,7 @@ class NTNDA_Viewer(QWidget):
 
     def numpyMouseMoveEvent(self, zoomDict, mouseDict):
         self.followMouse.setZoomInfo(zoomDict, mouseDict)
+        self.plot3d.setZoomDict(zoomDict)
 
     def exceptionEvent(self, message):
         self.statusText.setText(message)

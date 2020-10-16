@@ -7,11 +7,43 @@ from PyQt5.QtCore import QThread
 from PyQt5.QtGui import QPainter, QImage
 from PyQt5.QtCore import *
 
+from mpl_toolkits.mplot3d import Axes3D
+
+import matplotlib.pyplot as plt
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator, FormatStrFormatter
+
+from PyQt5.QtGui import QColor, qRgb
+
 import numpy as np
 import math
 import time
 import copy
 
+class Plot3d() :
+    def __init__(self):
+        self.__colorTable = [qRgb(i, i, i) for i in range(256)]
+        self.__zoomDict = None
+    def setZoomDict(self,zoomDict) :
+        self.__zoomDict = zoomDict
+    def plot(self,image) :
+        if self.__zoomDict!=None:
+            xoffset = self.__zoomDict["xoffset"]
+            nx = int(self.__zoomDict["nx"] + xoffset)
+            xoffset = int(xoffset)
+            yoffset = self.__zoomDict["yoffset"]
+            ny = int(self.__zoomDict["ny"] + yoffset)
+            yoffset = int(yoffset)
+            image = image[yoffset:ny,xoffset:nx]
+        xx, yy = np.mgrid[yoffset:ny,xoffset:nx]
+        fig = plt.figure()
+        ax = fig.gca(projection='3d')
+        ax.set_xlabel('y')
+        ax.set_ylabel('x')
+        ax.set_zlabel('value')
+        ax.plot_surface(xx,yy ,image )
+        plt.show()
+        
 
 class FollowMouse:
     """
