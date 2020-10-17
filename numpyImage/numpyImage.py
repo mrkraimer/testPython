@@ -359,11 +359,12 @@ class NumpyImage(QWidget):
         ny = int(self.__zoomDict["ny"] + yoffset)
         yoffset = int(yoffset)
         image = image[yoffset:ny,xoffset:nx]
-        xx, yy = np.mgrid[yoffset:ny,xoffset:nx]
+        image = np.transpose(image)
+        xx, yy = np.mgrid[xoffset:nx,yoffset:ny]
         fig = plt.figure()
         ax = fig.gca(projection='3d')
-        ax.set_xlabel('y')
-        ax.set_ylabel('x')
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
         ax.set_zlabel('value')
         ax.plot_surface(xx,yy ,image )
         plt.show()
