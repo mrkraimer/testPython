@@ -358,15 +358,43 @@ class NumpyImage(QWidget):
         yoffset = self.__zoomDict["yoffset"]
         ny = int(self.__zoomDict["ny"] + yoffset)
         yoffset = int(yoffset)
-        image = image[yoffset:ny,xoffset:nx]
-        image = np.transpose(image)
-        xx, yy = np.mgrid[xoffset:nx,yoffset:ny]
-        fig = plt.figure()
-        ax = fig.gca(projection='3d')
-        ax.set_xlabel('x')
-        ax.set_ylabel('y')
-        ax.set_zlabel('value')
-        ax.plot_surface(xx,yy ,image )
+        ndim = len(image.shape)
+        if ndim==2:
+            image = image[yoffset:ny,xoffset:nx]
+            image = np.transpose(image)
+            xx, yy = np.mgrid[xoffset:nx,yoffset:ny]
+            fig = plt.figure()
+            ax = fig.gca(projection='3d')
+            ax.set_xlabel('x')
+            ax.set_ylabel('y')
+            ax.set_zlabel('value')
+            ax.plot_surface(xx,yy ,image,cmap=cm.coolwarm )
+        elif ndim==3 :
+            xx, yy = np.mgrid[xoffset:nx,yoffset:ny]
+            sizey = image.shape[0]
+            sizex = image.shape[1]
+            image = image.flatten()
+            imagered = image[::3]
+            imagered = np.reshape(imagered,(sizey,sizex))
+            imagered = imagered[yoffset:ny,xoffset:nx]
+            imagered = np.transpose(imagered)
+            imagegreen = image[1::3]
+            imagegreen = np.reshape(imagegreen,(sizey,sizex))
+            imagegreen = imagegreen[yoffset:ny,xoffset:nx]
+            imagegreen = np.transpose(imagegreen)
+            imageblue = image[2::3]
+            imageblue = np.reshape(imageblue,(sizey,sizex))
+            imageblue = imageblue[yoffset:ny,xoffset:nx]
+            imageblue = np.transpose(imageblue)
+            fig, ax = plt.subplots( ncols=3, subplot_kw={'projection': '3d'})
+            ax[0].plot_surface(xx,yy ,imagered,cmap=cm.Reds )
+            ax[1].plot_surface(xx,yy ,imagegreen,cmap=cm.Greens )
+            ax[2].plot_surface(xx,yy ,imageblue,cmap=cm.Blues )
+            fig.tight_layout()
+        else :
+            if self.__clientExceptionCallback != None:
+                self.__clientExceptionCallback("ndim bad")
+            return
         plt.show()
 
     def display(self, pixarray, bytesPerLine=None, Format=0, colorTable=None):
