@@ -34,7 +34,7 @@ from colorTable import ColorTable
 
 
 class NTNDA_Viewer(QWidget):
-    def __init__(self, ntnda_Channel_Provider, providerName,qapplication,parent=None):
+    def __init__(self, ntnda_Channel_Provider, providerName, qapplication, parent=None):
         super(QWidget, self).__init__(parent)
         self.imageSize = 800
         self.isClosed = False
@@ -48,7 +48,7 @@ class NTNDA_Viewer(QWidget):
         self.colorTable = ColorTable()
         self.colorTable.setColorChangeCallback(self.colorChangeEvent)
         self.colorTable.setExceptionCallback(self.colorExceptionEvent)
-        
+
         self.channelDict = None
         self.numpyImage = None
         self.manualLimits = False
@@ -232,8 +232,15 @@ class NTNDA_Viewer(QWidget):
     def colorChangeEvent(self):
         self.display()
 
-    def plot3dEvent(self) :
+    def plot3dEvent(self):
         if self.numpyImage is None:
+            self.statusText.setText("no image")
+            return
+        if self.channelDict is None:
+            self.statusText.setText("no channel")
+            return
+        if self.channelDict["image"] is None:
+            self.statusText.setText("no image")
             return
         self.numpyImage.plot3d(self.channelDict["image"])
 
@@ -298,7 +305,7 @@ class NTNDA_Viewer(QWidget):
             self.statusText.setText("value is not an integer")
             self.imageSizeText.setText(str(self.imageSize))
             return
-        isStarted = self.isStarted    
+        isStarted = self.isStarted
         if value < 128:
             value = 128
         if isStarted:
@@ -309,7 +316,7 @@ class NTNDA_Viewer(QWidget):
             self.numpyImage = None
         self.imageSizeText.setText(str(value))
         self.imageSize = value
-        if isStarted: 
+        if isStarted:
             self.start()
 
     def numpyMouseMoveEvent(self, zoomDict, mouseDict):
@@ -335,6 +342,7 @@ class NTNDA_Viewer(QWidget):
             self.statusText.setText(str(error))
 
     def closeEvent(self, event):
+        if self.isStarted: self.stop()
         self.isClosed = True
         if self.numpyImage is not None:
             self.numpyImage.setOkToClose()

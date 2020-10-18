@@ -20,6 +20,7 @@ import math
 import time
 import copy
 
+
 class FollowMouse:
     """
     Normal use is:
@@ -351,7 +352,8 @@ class NumpyImage(QWidget):
         if num == 1:
             self.resetZoom()
 
-    def plot3d(self,image) :
+    def plot3d(self, image):
+        """ generate a 3d image"""
         xoffset = self.__zoomDict["xoffset"]
         nx = int(self.__zoomDict["nx"] + xoffset)
         xoffset = int(xoffset)
@@ -359,43 +361,43 @@ class NumpyImage(QWidget):
         ny = int(self.__zoomDict["ny"] + yoffset)
         yoffset = int(yoffset)
         ndim = len(image.shape)
-        if ndim==2:
-            image = image[yoffset:ny,xoffset:nx]
+        if ndim == 2:
+            image = image[yoffset:ny, xoffset:nx]
             image = np.transpose(image)
-            xx, yy = np.mgrid[xoffset:nx,yoffset:ny]
+            xx, yy = np.mgrid[xoffset:nx, yoffset:ny]
             fig = plt.figure()
-            ax = fig.gca(projection='3d')
-            ax.set_xlabel('x')
-            ax.set_ylabel('y')
-            ax.set_zlabel('value')
-            ax.plot_surface(xx,yy ,image,cmap=cm.coolwarm )
-        elif ndim==3 :
-            xx, yy = np.mgrid[xoffset:nx,yoffset:ny]
-            sizex = int(nx-xoffset)
-            sizey = int(ny-yoffset)
-            image = image[yoffset:ny,xoffset:nx,::]
+            ax = fig.gca(projection="3d")
+            ax.set_xlabel("x")
+            ax.set_ylabel("y")
+            ax.set_zlabel("value")
+            ax.plot_surface(xx, yy, image, cmap=cm.coolwarm)
+        elif ndim == 3:
+            xx, yy = np.mgrid[xoffset:nx, yoffset:ny]
+            sizex = int(nx - xoffset)
+            sizey = int(ny - yoffset)
+            image = image[yoffset:ny, xoffset:nx, ::]
             imagered = image.flatten()
             imagered = imagered[::3]
-            imagered = np.reshape(imagered,(sizey,sizex))
+            imagered = np.reshape(imagered, (sizey, sizex))
             imagered = np.transpose(imagered)
             imagegreen = image.flatten()
             imagegreen = imagegreen[::3]
-            imagegreen = np.reshape(imagegreen,(sizey,sizex))
+            imagegreen = np.reshape(imagegreen, (sizey, sizex))
             imagegreen = np.transpose(imagegreen)
             imageblue = image.flatten()
             imageblue = imageblue[::3]
-            imageblue = np.reshape(imageblue,(sizey,sizex))
+            imageblue = np.reshape(imageblue, (sizey, sizex))
             imageblue = np.transpose(imageblue)
-            fig, ax = plt.subplots( ncols=3, subplot_kw={'projection': '3d'})
-            for i in range(3) :
-                ax[i].set_xlabel('x')
-                ax[i].set_ylabel('y')
-                ax[i].set_zlabel('value')
-            ax[0].plot_surface(xx,yy ,imagered,cmap=cm.Reds )
-            ax[1].plot_surface(xx,yy ,imagegreen,cmap=cm.Greens )
-            ax[2].plot_surface(xx,yy ,imageblue,cmap=cm.Blues )
+            fig, ax = plt.subplots(ncols=3, subplot_kw={"projection": "3d"})
+            for i in range(3):
+                ax[i].set_xlabel("x")
+                ax[i].set_ylabel("y")
+                ax[i].set_zlabel("value")
+            ax[0].plot_surface(xx, yy, imagered, cmap=cm.Reds)
+            ax[1].plot_surface(xx, yy, imagegreen, cmap=cm.Greens)
+            ax[2].plot_surface(xx, yy, imageblue, cmap=cm.Blues)
             fig.tight_layout()
-        else :
+        else:
             if self.__clientExceptionCallback != None:
                 self.__clientExceptionCallback("ndim bad")
             return
