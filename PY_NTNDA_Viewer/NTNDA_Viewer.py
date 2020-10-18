@@ -34,12 +34,13 @@ from colorTable import ColorTable
 
 
 class NTNDA_Viewer(QWidget):
-    def __init__(self, ntnda_Channel_Provider, providerName, parent=None):
+    def __init__(self, ntnda_Channel_Provider, providerName,qapplication,parent=None):
         super(QWidget, self).__init__(parent)
         self.imageSize = 800
         self.isClosed = False
         self.isStarted = False
         self.provider = ntnda_Channel_Provider
+        self.qapplication = qapplication
         self.provider.NTNDA_Viewer = self
         self.setWindowTitle(providerName + "_NTNDA_Viewer")
         self.codecAD = CodecAD()
@@ -340,6 +341,7 @@ class NTNDA_Viewer(QWidget):
             self.numpyImage.close()
         self.colorTable.setOkToClose()
         self.colorTable.close()
+        self.qapplication.closeAllWindows()
 
     def startEvent(self):
         self.start()

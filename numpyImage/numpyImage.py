@@ -371,22 +371,26 @@ class NumpyImage(QWidget):
             ax.plot_surface(xx,yy ,image,cmap=cm.coolwarm )
         elif ndim==3 :
             xx, yy = np.mgrid[xoffset:nx,yoffset:ny]
-            sizey = image.shape[0]
-            sizex = image.shape[1]
-            image = image.flatten()
-            imagered = image[::3]
+            sizex = int(nx-xoffset)
+            sizey = int(ny-yoffset)
+            image = image[yoffset:ny,xoffset:nx,::]
+            imagered = image.flatten()
+            imagered = imagered[::3]
             imagered = np.reshape(imagered,(sizey,sizex))
-            imagered = imagered[yoffset:ny,xoffset:nx]
             imagered = np.transpose(imagered)
-            imagegreen = image[1::3]
+            imagegreen = image.flatten()
+            imagegreen = imagegreen[::3]
             imagegreen = np.reshape(imagegreen,(sizey,sizex))
-            imagegreen = imagegreen[yoffset:ny,xoffset:nx]
             imagegreen = np.transpose(imagegreen)
-            imageblue = image[2::3]
+            imageblue = image.flatten()
+            imageblue = imageblue[::3]
             imageblue = np.reshape(imageblue,(sizey,sizex))
-            imageblue = imageblue[yoffset:ny,xoffset:nx]
             imageblue = np.transpose(imageblue)
             fig, ax = plt.subplots( ncols=3, subplot_kw={'projection': '3d'})
+            for i in range(3) :
+                ax[i].set_xlabel('x')
+                ax[i].set_ylabel('y')
+                ax[i].set_zlabel('value')
             ax[0].plot_surface(xx,yy ,imagered,cmap=cm.Reds )
             ax[1].plot_surface(xx,yy ,imagegreen,cmap=cm.Greens )
             ax[2].plot_surface(xx,yy ,imageblue,cmap=cm.Blues )
