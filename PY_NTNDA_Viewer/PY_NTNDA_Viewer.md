@@ -266,7 +266,7 @@ If you have zoomed to the following:
 
 ![](image1.png)
 
-And then click plot3d the followimg appears:
+And then click plot3d the following appears:
 
 ![](plot3d.png)
 
