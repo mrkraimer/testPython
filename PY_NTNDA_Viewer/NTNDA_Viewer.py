@@ -239,10 +239,10 @@ class NTNDA_Viewer(QWidget):
         if self.channelDict is None:
             self.statusText.setText("no channel")
             return
-        if self.channelDict["image"] is None:
-            self.statusText.setText("no image")
+        if self.channelDict["channel"] is None:
+            self.statusText.setText("no channel")
             return
-        self.numpyImage.plot3d(self.channelDict["image"])
+        self.numpyImage.plot3d(self.channelDict["channel"])
 
     def showColorTableEvent(self):
         self.colorTable.show()
