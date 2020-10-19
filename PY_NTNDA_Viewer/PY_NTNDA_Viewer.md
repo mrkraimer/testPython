@@ -1,7 +1,7 @@
 # PY_NTNDA_Viewer
 
 Author: Marty Kraimer
-Date: 2020.09.24
+Date: 2020.10.19
 
 ## Overview
 
@@ -31,6 +31,7 @@ For example issue the command:
 The following is a list of modules required by PY_NTNDA_Viewer
 
     numpy
+    matplotlib
     PyQt5
     PyQt5-sip
     QtPy
@@ -58,6 +59,7 @@ When start is pressed the following appears:
 - **start** Clicking this button starts communication with the server
 - **stop** Clicking this button stops communication with the server
 - **showColorTable** Clicking this brings up the ColorTable window. See below for details
+- **plpt3d** Clicking on this brings up 3d image window. See bwlow for details.
 - **channelName** This is the name of the channel that provides the NTNDArray. When in stopped mode a new channel name can be specified.
 
 
@@ -257,6 +259,22 @@ For example if julia is selected and the image is zoomed, I see:
 
 Then issue mouse clicks in the image and look at the new widow that appears.
 Moving the mouse in the new window shows the pixel location and value.
+
+## plot3d
+
+If you have zoomed to the following:
+
+![](image1.png)
+
+And then click plot3d the followimg appears:
+
+![](plot3d.png)
+
+Use the mouse to grab the bottom corner of the axes and moving the mouse other views appear.
+For example
+
+[](plot3d1.png)
+
 
 ## Some Code Details
 
