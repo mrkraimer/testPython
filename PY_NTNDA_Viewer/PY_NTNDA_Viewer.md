@@ -273,7 +273,7 @@ And then click plot3d the following appears:
 Use the mouse to grab the bottom corner of the axes and moving the mouse other views appear.
 For example
 
-[](plot3d1.png)
+![](plot3d1.png)
 
 
 ## Some Code Details
