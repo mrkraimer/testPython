@@ -385,11 +385,11 @@ class NumpyImage(QWidget):
             imagered = np.reshape(imagered, (sizey, sizex))
             imagered = np.transpose(imagered)
             imagegreen = image.flatten()
-            imagegreen = imagegreen[::3]
+            imagegreen = imagegreen[1::3]
             imagegreen = np.reshape(imagegreen, (sizey, sizex))
             imagegreen = np.transpose(imagegreen)
             imageblue = image.flatten()
-            imageblue = imageblue[::3]
+            imageblue = imageblue[2::3]
             imageblue = np.reshape(imageblue, (sizey, sizex))
             imageblue = np.transpose(imageblue)
             fig, ax = plt.subplots(ncols=3,tight_layout=True, subplot_kw={"projection": "3d"})
