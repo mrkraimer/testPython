@@ -361,18 +361,22 @@ class NumpyImage(QWidget):
         ny = int(self.__zoomDict["ny"] + yoffset)
         yoffset = int(yoffset)
         ndim = len(image.shape)
+        if ndim<2 or ndim>3 :
+            if self.__clientExceptionCallback != None:
+                message = "ndim = " + str(ndim) + " ; Must be 2 or 3"
+                self.__clientExceptionCallback(message)
+            return
+        xx, yy = np.mgrid[xoffset:nx, yoffset:ny]
         if ndim == 2:
             image = image[yoffset:ny, xoffset:nx]
             image = np.transpose(image)
-            xx, yy = np.mgrid[xoffset:nx, yoffset:ny]
             fig = plt.figure()
             ax = fig.gca(projection="3d")
             ax.set_xlabel("x")
             ax.set_ylabel("y")
             ax.set_zlabel("value")
-            ax.plot_surface(xx, yy, image, cmap=cm.coolwarm)
+            ax.plot_surface(xx, yy, image, cmap=cm.Greys)
         elif ndim == 3:
-            xx, yy = np.mgrid[xoffset:nx, yoffset:ny]
             sizex = int(nx - xoffset)
             sizey = int(ny - yoffset)
             image = image[yoffset:ny, xoffset:nx, ::]
@@ -388,7 +392,7 @@ class NumpyImage(QWidget):
             imageblue = imageblue[::3]
             imageblue = np.reshape(imageblue, (sizey, sizex))
             imageblue = np.transpose(imageblue)
-            fig, ax = plt.subplots(ncols=3, subplot_kw={"projection": "3d"})
+            fig, ax = plt.subplots(ncols=3,tight_layout=True, subplot_kw={"projection": "3d"})
             for i in range(3):
                 ax[i].set_xlabel("x")
                 ax[i].set_ylabel("y")
@@ -396,11 +400,6 @@ class NumpyImage(QWidget):
             ax[0].plot_surface(xx, yy, imagered, cmap=cm.Reds)
             ax[1].plot_surface(xx, yy, imagegreen, cmap=cm.Greens)
             ax[2].plot_surface(xx, yy, imageblue, cmap=cm.Blues)
-            fig.tight_layout()
-        else:
-            if self.__clientExceptionCallback != None:
-                self.__clientExceptionCallback("ndim bad")
-            return
         plt.show()
 
     def display(self, pixarray, bytesPerLine=None, Format=0, colorTable=None):

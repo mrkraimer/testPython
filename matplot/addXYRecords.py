@@ -7,7 +7,7 @@ timeStamp = PvTimeStamp()
 structValue = PvObject({'value':{'timeStamp':timeStamp,'value':[DOUBLE]}})
 addRecordValue = PvObject({'argument':{'recordName':STRING,'union':()}})
 addRecordValue['argument.union'] = structValue;
-chan = Channel("PVRaddRecord")
+chan = Channel("TPYaddRecord")
 addRecordValue['argument.recordName'] = 'x';
 result = chan.putGet(addRecordValue,'putField(argument)getField(result)')
 print(result)
