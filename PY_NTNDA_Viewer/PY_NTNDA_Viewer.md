@@ -1,7 +1,7 @@
 # PY_NTNDA_Viewer
 
 Author: Marty Kraimer
-Date: 2020.10.19
+Date: 2020.10.28
 
 ## Overview
 
@@ -275,6 +275,18 @@ For example
 
 ![](plot3d1.png)
 
+Now change medm color mode to RGB1 and then zoom to :
+
+![](image3.png)
+
+And then click plot3d the following appears:
+
+![](plot3d2.png)
+
+Other views appear by using the mouse to grab the bottom corner of the axes and moving the mouse.
+For example
+
+![](plot3d3.png)
 
 ## Some Code Details
 
