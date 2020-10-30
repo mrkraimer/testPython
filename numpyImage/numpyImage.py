@@ -400,7 +400,7 @@ class NumpyImage(QWidget):
             ax[0].plot_surface(xx, yy, imagered, cmap=cm.Reds)
             ax[1].plot_surface(xx, yy, imagegreen, cmap=cm.Greens)
             ax[2].plot_surface(xx, yy, imageblue, cmap=cm.Blues)
-        plt.show()
+        plt.show(block=False)
 
     def display(self, pixarray, bytesPerLine=None, Format=0, colorTable=None):
         """
