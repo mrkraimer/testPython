@@ -23,18 +23,19 @@ class MandelbrotCreatePython :
         xmax = float(arg[1])
         ymin = float(arg[2])
         ymax = float(arg[3])
-        imageSize = int(arg[4])
-        xinc = (xmax-xmin)/imageSize
-        yinc = (ymax-ymin)/imageSize
+        nx = int(arg[4])
+        ny = int(arg[5])
+        xinc = (xmax-xmin)/nx
+        yinc = (ymax-ymin)/ny
         nz = int(3)
-        if len(arg)==6 : nz = int(arg[5])
+        if len(arg)==7 : nz = int(arg[6])
         if nz==1 :
-            pixarray = np.full((imageSize,imageSize),255,dtype="uint8")
+            pixarray = np.full((ny,nx),255,dtype="uint8")
         else :
-            pixarray = np.full((imageSize,imageSize,nz),255,dtype="uint8")
-        for i in range(imageSize) :
+            pixarray = np.full((ny,nx,nz),255,dtype="uint8")
+        for i in range(ny) :
             y = ymin + i*yinc
-            for j in range(imageSize) :
+            for j in range(nx) :
                 x = xmin + j*xinc
                 intensity = self.calcIntensity(x,y)
                 if nz == 1 :

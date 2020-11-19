@@ -13,13 +13,15 @@ sys.path.append('../numpyImage/')
 from numpyImage import NumpyImage
 
 class CurrentValues() :
-    def __init__(self):
+    def __init__(self,imagesize):
         self.pixeltype = pixeltype = "uint8"
         self.pixelmax = 256
         self.xmin = float(-2.5)
         self.xmax = float(1.5)
         self.ymin = float(-2.0)
         self.ymax = float(2.0)
+        self.ny = imagesize
+        self.nx = imagesize
         self.nz = 3
     def show(self) :
         print('self.xmin=',self.xmin,' self.xmax=',self.xmax)
@@ -34,7 +36,7 @@ class Viewer(QWidget) :
         self.imageSize = 800
         self.isClosed = False
         self.setWindowTitle("Viewer")
-        self.currentValues = CurrentValues()
+        self.currentValues = CurrentValues(self.imageSize)
         self.imageDisplay = NumpyImage(flipy=False,imageSize=self.imageSize)
         self.imageDisplay.setZoomCallback(self.zoomEvent,clientZoom=True)
 # first row
@@ -291,13 +293,22 @@ class Viewer(QWidget) :
         xhigh = mouseLocation[1]
         ylow = mouseLocation[2]
         yhigh = mouseLocation[3]
+        
         nx = xhigh - xlow
         ny = yhigh - ylow
-        npts = max(nx,ny)
+        width = self.imageSize
+        height = self.imageSize
+        ratio = nx / ny
+        if ratio > 1.0:
+            height = int(height / ratio)
+        else:
+            width = int(width * ratio)
+        self.currentValues.nx = width
+        self.currentValues.ny = height
         self.currentValues.xmin = xminPre + xincPre*xlow
-        self.currentValues.xmax = self.currentValues.xmin+ xincPre*npts
+        self.currentValues.xmax = self.currentValues.xmin+ xincPre*nx
         self.currentValues.ymin = yminPre + yincPre*ylow
-        self.currentValues.ymax = self.currentValues.ymin + yincPre*npts
+        self.currentValues.ymax = self.currentValues.ymin + yincPre*ny
 
     def generateImage(self) :
         isConnected = self.mandelbrot.checkConnected()
@@ -308,7 +319,7 @@ class Viewer(QWidget) :
         QApplication.processEvents()
         arg = (self.currentValues.xmin,self.currentValues.xmax,\
               self.currentValues.ymin,self.currentValues.ymax,\
-              self.imageSize,\
+              self.currentValues.nx,self.currentValues.ny,\
               self.currentValues.nz)
         try :
             self.pixarray = self.mandelbrot.createImage(arg)
@@ -338,7 +349,7 @@ class Viewer(QWidget) :
         self.ymaxText.setText(format(self.currentValues.ymax,'10.4e'))
 
     def reset(self) :
-        self.currentValues = CurrentValues()
+        self.currentValues = CurrentValues(self.imageSize)
         self.start()
 
     def zoomEvent(self,imageSize,mouseLocation) :

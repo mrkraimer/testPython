@@ -35,22 +35,24 @@ class MandelbrotCreate() :
         xmax = arg[1]
         ymin = arg[2]
         ymax = arg[3]
-        imageSize = arg[4]
-        nz = arg[5]
+        nx =  arg[4]
+        ny =  arg[5]
+        nz = arg[6]
         argxmin = 'argument.xmin=' + str(xmin)
         argxmax = 'argument.xmax=' + str(xmax)
         argymin = 'argument.ymin=' + str(ymin)
         argymax = 'argument.ymax=' + str(ymax)
-        argimageSize = 'argument.imageSize=' + str(imageSize)
+        argnx = 'argument.nx=' + str(nx)
+        argny = 'argument.ny=' + str(ny)
         argnz = 'argument.nz=' + str(nz)
-        args = [argxmin,argxmax,argymin,argymax,argimageSize,argnz]
+        args = [argxmin,argxmax,argymin,argymax,argnx,argny,argnz]
         result = self.channel.parsePutGet(args,"putField(argument)getField(result)",True)
         val =  result['result.value']
         val = np.array(val,dtype='uint8')
         if nz==3 :
-            image = np.reshape(val,(imageSize,imageSize,3))
+            image = np.reshape(val,(ny,nx,3))
         else :
-            image = np.reshape(val,(imageSize,imageSize))
+            image = np.reshape(val,(ny,nx))
         return image
         
 if __name__ == '__main__':
