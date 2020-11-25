@@ -5,6 +5,14 @@ from PyQt5.QtWidgets import QRubberBand
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import QObject,QPoint,QRect,QSize
+from PyQt5.QtWidgets import QApplication
+
+from mpl_toolkits.mplot3d import Axes3D
+
+import matplotlib.pyplot as plt
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator, FormatStrFormatter
+from PyQt5.QtGui import QColor, qRgb
 
 import sys,time
 import numpy as np
@@ -57,6 +65,9 @@ class Viewer(QWidget) :
         self.colorModeButton.setEnabled(True)
         self.colorModeButton.clicked.connect(self.colorModeEvent)
         self.colorModeButton.setFixedWidth(40)
+        self.plot3dButton = QPushButton("plot3d")
+        self.plot3dButton.setEnabled(True)
+        self.plot3dButton.clicked.connect(self.plot3dEvent)
         self.zoomButton = QPushButton('zoom')
         self.zoomButton.setEnabled(True)
         self.zoomButton.clicked.connect(self.zoomStartEvent)
@@ -81,6 +92,7 @@ class Viewer(QWidget) :
         box.addWidget(timeLabel)
         box.addWidget(self.timeText)
         box.addWidget(self.colorModeButton)
+        box.addWidget(self.plot3dButton)
         box.addWidget(self.zoomButton)
         box.addWidget(self.stopZoomButton)
         box.addWidget(self.clearButton)
@@ -207,7 +219,51 @@ class Viewer(QWidget) :
     def clearEvent(self) :
         self.statusText.setText('')
         self.statusText.setStyleSheet("background-color:white")
-            
+
+    def plot3dEvent(self):
+        if self.pixarray is None:
+            self.statusText.setText("no image")
+            return  
+        xoffset = self.currentValues.xmin
+        nx = self.currentValues.nx
+        yoffset = self.currentValues.ymin
+        ny = self.currentValues.ny
+        nz = self.currentValues.nz
+        image = self.pixarray
+        xx, yy = np.mgrid[0:nx, 0:ny]
+        if nz==1 :
+            image = image.flatten()
+            for i in range(len(image)) :
+                image[i] = 255 - image[i]
+            image = np.reshape(image, (ny, nx))
+            image = np.transpose(image)
+            fig = plt.figure()
+            ax = fig.gca(projection="3d")
+            ax.set_xlabel("x")
+            ax.set_ylabel("y")
+            ax.set_zlabel("value")
+            ax.plot_surface(xx, yy, image, cmap=cm.Greys)
+        else :
+            image = image.flatten()
+            imagered = image[0::3]
+            imagered = np.reshape(imagered, (ny, nx))
+            imagered = np.transpose(imagered)
+            imagegreen = image[1::3]
+            imagegreen = np.reshape(imagegreen, (ny, nx))
+            imagegreen = np.transpose(imagegreen)
+            imageblue = image[2::3]
+            imageblue = np.reshape(imageblue, (ny, nx))
+            imageblue = np.transpose(imageblue)
+            fig, ax = plt.subplots(ncols=3,tight_layout=True, subplot_kw={"projection": "3d"})
+            for i in range(3):
+                ax[i].set_xlabel("indx")
+                ax[i].set_ylabel("indy")
+                ax[i].set_zlabel("value")
+            ax[0].plot_surface(xx, yy, imagered, cmap=cm.Reds)
+            ax[1].plot_surface(xx, yy, imagegreen, cmap=cm.Greens)
+            ax[2].plot_surface(xx, yy, imageblue, cmap=cm.Blues)
+        plt.show(block=False)
+
     def stopZoomEvent(self) :
         self.stopZoom = True
 
@@ -232,6 +288,7 @@ class Viewer(QWidget) :
     def closeEvent(self, event) :
         self.imageDisplay.setOkToClose()
         self.imageDisplay.close()
+        QApplication.closeAllWindows()
 
     def startEvent(self) :
         self.start()
@@ -316,7 +373,6 @@ class Viewer(QWidget) :
             self.statusText.setText('generating image')
         else :
             self.statusText.setText('generating image even though not connected')
-        QApplication.processEvents()
         arg = (self.currentValues.xmin,self.currentValues.xmax,\
               self.currentValues.ymin,self.currentValues.ymax,\
               self.currentValues.nx,self.currentValues.ny,\
