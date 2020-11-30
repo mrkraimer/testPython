@@ -785,6 +785,7 @@ class NumpyImage(QWidget):
             if qimage == None:
                 self.error = self.imageToQImage.error
                 return
+                
             numx = self.image.shape[1]
             numy = self.image.shape[0]
             scalex = self.imageSize
@@ -794,10 +795,7 @@ class NumpyImage(QWidget):
                 scalex = ratio * scalex
             elif ratio > 1.0:
                 scaley = scaley / ratio
-            qimage = qimage.scaled(scalex, scaley)
+            qimagescaled = qimage.scaled(scalex, scaley)
             painter = QPainter(self.caller)
-            painter.drawImage(0, 0, qimage)
-            while True:
-                if painter.end():
-                    break
-            self.image = None
+            painter.drawImage(0, 0, qimagescaled)
+
