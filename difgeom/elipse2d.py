@@ -16,6 +16,7 @@ class Ellipse() :
         pass
  
     def show(self,xmin,ymax,nrot) : 
+        plt.close('all')
         min = 0.0
         max = 2*np.pi
         npts = 500
