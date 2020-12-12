@@ -24,13 +24,13 @@ class Ellipse() :
         plt.ylim(-limit,limit)
         x = xmax*np.cos(t*nrot)
         y = ymax*np.sin(t*nrot)
-
-        plt.xlim(-limit,limit)
-        plt.ylim(-limit,limit)
-        plt.axes().set_aspect('equal')
-        plt.plot(x, y,scalex=False,scaley=False)
-        plt.xlabel("value")
-        plt.title("ellipse")
+        
+        fig, ax = plt.subplots(ncols=1,tight_layout=True,subplot_kw={"projection": "3d"})
+        ax.set_xlabel("x")
+        ax.set_ylabel("y")
+        ax.set_zlabel("z")
+        ax.set_title("ellipse")
+        ax.plot3D(x, y, t, 'black')
 
         dx = -xmax*nrot*np.sin(t*nrot)
         dy = ymax*nrot*np.cos(t*nrot)
@@ -41,10 +41,11 @@ class Ellipse() :
         deom = (dx*dx + dy*dy)**(3/2)
         curvature = num/deom
         radius = 1.0/curvature
-        f, ax = plt.subplots()
-        ax.plot(t,radius)
-        ax.set_title('radius of curvature')
-        ax.set(xlabel="radians")
+        f, ax1 = plt.subplots()
+        ax1.plot(t,radius)
+        ax1.set_title('radius of curvature')
+        ax1.set(xlabel="radians")
+        plt.close(1)
         plt.show()
 
 class Viewer(QWidget) :
