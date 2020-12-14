@@ -11,7 +11,7 @@ class Ellipse() :
     def __init__(self):
         pass
  
-    def show(self,xmin,ymax,nrot) : 
+    def show(self,xmax,ymax,nrot) :
         plt.close('all')
         min = 0.0
         max = 2*np.pi
