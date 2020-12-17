@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QWidget,QLabel,QLineEdit
 from PyQt5.QtWidgets import QPushButton,QHBoxLayout
 
-class Ellipse() :
+class Helix() :
     def __init__(self):
         pass
  
@@ -29,7 +29,7 @@ class Ellipse() :
         ax.set_xlabel("x")
         ax.set_ylabel("y")
         ax.set_zlabel("z")
-        ax.set_title("ellipse")
+        ax.set_title("helix")
         ax.plot3D(x, y, t, 'black')
 
         dx = -xmax*nrot*np.sin(t*nrot)
@@ -54,7 +54,7 @@ class Viewer(QWidget) :
         self.xmax = xmax
         self.ymax = ymax
         self.nrot = nrot
-        self.ellipse = Ellipse()
+        self.helix = Helix()
         self.displayButton = QPushButton('display')
         self.displayButton.setEnabled(True)
         self.displayButton.clicked.connect(self.display)
@@ -105,7 +105,7 @@ class Viewer(QWidget) :
             self.statusText.setText(str(error))
 
     def display(self):
-        self.ellipse.show(self.xmax,self.ymax,self.nrot)
+        self.helix.show(self.xmax,self.ymax,self.nrot)
 
     def closeEvent(self, event) :
         QApplication.closeAllWindows()
