@@ -147,10 +147,10 @@ class Viewer(QWidget) :
         rateGroupBox.setLayout(ratelayout)
 
         xminLabel = QLabel('xmin')
-        self.xminText = QLabel(format(self.currentValues.xmin,'10.4e'))
-        self.xminText.setFixedWidth(100)
+        self.xminText = QLabel(format(self.currentValues.xmin,'10.6e'))
+        self.xminText.setFixedWidth(140)
         xminGroupBox = QGroupBox()
-        xminGroupBox.setFixedWidth(120)
+        xminGroupBox.setFixedWidth(160)
         xminlayout = QVBoxLayout()
         xminlayout.addWidget(xminLabel)
         xminlayout.addWidget(self.xminText)
@@ -158,30 +158,30 @@ class Viewer(QWidget) :
         
 
         xmaxLabel = QLabel('xmax')
-        self.xmaxText = QLabel(format(self.currentValues.xmax,'10.4e'))
-        self.xmaxText.setFixedWidth(100)
+        self.xmaxText = QLabel(format(self.currentValues.xmax,'10.6e'))
+        self.xmaxText.setFixedWidth(140)
         xmaxGroupBox = QGroupBox()
-        xmaxGroupBox.setFixedWidth(120)
+        xmaxGroupBox.setFixedWidth(160)
         xmaxlayout = QVBoxLayout()
         xmaxlayout.addWidget(xmaxLabel)
         xmaxlayout.addWidget(self.xmaxText)
         xmaxGroupBox.setLayout(xmaxlayout)
 
         yminLabel = QLabel('ymin')
-        self.yminText = QLabel(format(self.currentValues.ymin,'10.4e'))
-        self.yminText.setFixedWidth(100)
+        self.yminText = QLabel(format(self.currentValues.ymin,'10.6e'))
+        self.yminText.setFixedWidth(140)
         yminGroupBox = QGroupBox()
-        yminGroupBox.setFixedWidth(120)
+        yminGroupBox.setFixedWidth(160)
         yminlayout = QVBoxLayout()
         yminlayout.addWidget(yminLabel)
         yminlayout.addWidget(self.yminText)
         yminGroupBox.setLayout(yminlayout)
 
         ymaxLabel = QLabel('ymax')
-        self.ymaxText = QLabel(format(self.currentValues.ymax,'10.4e'))
-        self.ymaxText.setFixedWidth(100)
+        self.ymaxText = QLabel(format(self.currentValues.ymax,'10.6e'))
+        self.ymaxText.setFixedWidth(140)
         ymaxGroupBox = QGroupBox()
-        ymaxGroupBox.setFixedWidth(120)
+        ymaxGroupBox.setFixedWidth(160)
         ymaxlayout = QVBoxLayout()
         ymaxlayout.addWidget(ymaxLabel)
         ymaxlayout.addWidget(self.ymaxText)
@@ -399,10 +399,15 @@ class Viewer(QWidget) :
         self.resetButton.setEnabled(True)
 
     def updateXYtext(self) :
-        self.xminText.setText(format(self.currentValues.xmin,'10.4e'))
-        self.xmaxText.setText(format(self.currentValues.xmax,'10.4e'))
-        self.yminText.setText(format(self.currentValues.ymin,'10.4e'))
-        self.ymaxText.setText(format(self.currentValues.ymax,'10.4e'))
+        self.xminText.setText(format(self.currentValues.xmin,'10.6e'))
+        self.xmaxText.setText(format(self.currentValues.xmax,'10.6e'))
+        ymin = self.currentValues.ymin
+        ymax = self.currentValues.ymax
+        temp = ymax
+        ymax = -ymin
+        ymin = -temp
+        self.yminText.setText(format(ymin,'10.6e'))
+        self.ymaxText.setText(format(ymax,'10.6e'))
 
     def reset(self) :
         self.currentValues = CurrentValues(self.imageSize)
