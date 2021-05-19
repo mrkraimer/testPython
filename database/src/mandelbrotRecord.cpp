@@ -91,16 +91,24 @@ void MandelbrotRecord::createImage()
     int ny = pvArgument->getSubField<PVInt>("ny")->get();
     double xinc = (xmax-xmin)/nx;
     double yinc = (ymax-ymin)/ny;
+    double scaley = 1.0;
+    double scalex = 1.0;
+    double ratio = yinc/xinc;
+    if(ratio>1.0) {
+        scalex = ratio;
+    } else {
+        scaley = 1.0/ratio;
+    }
     int nz = pvArgument->getSubField<PVInt>("nz")->get();
     size_t num = ny*nx*nz;
     epics::pvData::shared_vector<uint8_t> value(num,255);
     for(int indy=0; indy<ny; ++indy)
     {
-        double y = ymin + indy*yinc;
+        double y = ymin + indy*yinc*scaley;
         for(int indx=0; indx<nx; ++indx)
         {
              int indpix = indy*nx*nz + indx*nz;
-             double x = xmin + indx*xinc;
+             double x = xmin + indx*xinc*scalex;
              int  intensity = calcIntensity(x,y);
              if(nz==1) {
                 // Color scheme is grayscale
