@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QWidget,QLabel,QLineEdit
 from PyQt5.QtWidgets import QPushButton,QHBoxLayout
 
-class Helix() :
+class Cone() :
     def __init__(self):
         pass
  
@@ -22,18 +22,18 @@ class Helix() :
         if ymax>xmax : limit = ymax
         plt.xlim(-limit,limit)
         plt.ylim(-limit,limit)
-        x = xmax*np.cos(t*nrot)
-        y = ymax*np.sin(t*nrot)
+        x = xmax*t*np.cos(t*nrot)
+        y = ymax*t*np.sin(t*nrot)
         
         fig, ax = plt.subplots(ncols=1,tight_layout=True,subplot_kw={"projection": "3d"})
         ax.set_xlabel("x")
         ax.set_ylabel("y")
         ax.set_zlabel("z")
-        ax.set_title("helix")
+        ax.set_title("cone")
         ax.plot3D(x, y, t, 'black')
 
-        dx = -xmax*nrot*np.sin(t*nrot)
-        dy = ymax*nrot*np.cos(t*nrot)
+        dx = -xmax*nrot*np.sin(t*nrot) + xmax*np.cos(t*nrot)
+        dy = ymax*nrot*np.cos(t*nrot) + ymax*np.sin(t*nrot)
         dz = np.full((npts),inc)
         d2x = -xmax*nrot*nrot*np.cos(t*nrot)
         d2y = -ymax*nrot*nrot*np.sin(t*nrot)
@@ -54,7 +54,7 @@ class Viewer(QWidget) :
         self.xmax = xmax
         self.ymax = ymax
         self.nrot = nrot
-        self.helix = Helix()
+        self.cone = Cone()
         self.displayButton = QPushButton('display')
         self.displayButton.setEnabled(True)
         self.displayButton.clicked.connect(self.display)
@@ -105,7 +105,7 @@ class Viewer(QWidget) :
             self.statusText.setText(str(error))
 
     def display(self):
-        self.helix.show(self.xmax,self.ymax,self.nrot)
+        self.cone.show(self.xmax,self.ymax,self.nrot)
 
     def closeEvent(self, event) :
         QApplication.closeAllWindows()
@@ -117,8 +117,8 @@ if __name__ == "__main__":
     ymax = 2
     nrot = 1
     nargs = len(sys.argv)
-    if nargs >= 2: a = float(sys.argv[1])
-    if nargs >= 3: b = float(sys.argv[2])
-    if nargs >= 4: c = float(sys.argv[3])
+    if nargs >= 2: xmax = float(sys.argv[1])
+    if nargs >= 3: ymax = float(sys.argv[2])
+    if nargs >= 4: nrot = float(sys.argv[3])
     viewer = Viewer(xmax,ymax,nrot)
     sys.exit(app.exec_())
