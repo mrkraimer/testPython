@@ -32,14 +32,19 @@ class Cone() :
         ax.set_title("cone")
         ax.plot3D(x, y, t, 'black')
 
-        dx = -xmax*nrot*np.sin(t*nrot) + xmax*np.cos(t*nrot)
-        dy = ymax*nrot*np.cos(t*nrot) + ymax*np.sin(t*nrot)
+        dx = xmax*np.cos(t*nrot) -t*xmax*nrot*np.sin(t*nrot)
+        dy = ymax*np.sin(t*nrot) + t*ymax*nrot*np.cos(t*nrot)
         dz = np.full((npts),inc)
-        d2x = -xmax*nrot*nrot*np.cos(t*nrot)
-        d2y = -ymax*nrot*nrot*np.sin(t*nrot)
+        d2x = -t*xmax*np.sin(t*nrot) - xmax*nrot*np.sin(t*nrot) - t*xmax*nrot*np.cos(t*nrot)
+        d2y = t*ymax*np.cos(t*nrot) + ymax*nrot*np.cos(t*nrot) -t*ymax*nrot*np.sin(t*nrot)
+        d2z = inc
+        
+        num = (d2z*dy - d2y*dz)**2 + (d2x*dz - d2z*dx)**2 +(d2y*dx - d2x*dy)**2
+        num = num**(1/2)
 
-        num = dx*d2y - d2x*dy
-        deom = (dx*dx + dy*dy + dz*dz)**(3/2)
+        deom = (dx*dx + dy*dy + dz*dz)
+        deom = deom**(3/2)
+        dem = deom**3
         curvature = num/deom
         f, ax1 = plt.subplots()
         ax1.plot(t,curvature)
