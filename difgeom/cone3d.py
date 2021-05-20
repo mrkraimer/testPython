@@ -44,7 +44,6 @@ class Cone() :
 
         deom = (dx*dx + dy*dy + dz*dz)
         deom = deom**(3/2)
-        dem = deom**3
         curvature = num/deom
         f, ax1 = plt.subplots()
         ax1.plot(t,curvature)
