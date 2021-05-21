@@ -49,6 +49,11 @@ class Helix() :
         ax1.plot(t,curvature)
         ax1.set_title('curvature')
         ax1.set(xlabel="radians")
+        radius = 1/curvature
+        f, ax = plt.subplots()
+        ax.plot(t,radius)
+        ax.set_title('radius of curvature')
+        ax.set(xlabel="radians")
         plt.close(1)
         plt.show()
 

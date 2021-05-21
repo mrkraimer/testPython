@@ -14,7 +14,7 @@ class Cone() :
     def show(self,xmax,ymax,nrot) :
         plt.close('all')
         min = 0.0
-        max = 2*np.pi
+        max = 2*np.pi*nrot
         npts = 500
         inc = (max-min)/npts
         t = np.arange(min, max, inc)
@@ -22,8 +22,8 @@ class Cone() :
         if ymax>xmax : limit = ymax
         plt.xlim(-limit,limit)
         plt.ylim(-limit,limit)
-        x = xmax*t*np.cos(t*nrot)
-        y = ymax*t*np.sin(t*nrot)
+        x = xmax*t*np.cos(t)
+        y = ymax*t*np.sin(t)
         
         fig, ax = plt.subplots(ncols=1,tight_layout=True,subplot_kw={"projection": "3d"})
         ax.set_xlabel("x")
@@ -32,12 +32,12 @@ class Cone() :
         ax.set_title("cone")
         ax.plot3D(x, y, t, 'black')
 
-        dx = xmax*np.cos(t*nrot) -t*xmax*nrot*np.sin(t*nrot)
-        dy = ymax*np.sin(t*nrot) + t*ymax*nrot*np.cos(t*nrot)
-        dz = np.full((npts),inc)
-        d2x = -t*xmax*np.sin(t*nrot) - xmax*nrot*np.sin(t*nrot) - t*xmax*nrot*np.cos(t*nrot)
-        d2y = t*ymax*np.cos(t*nrot) + ymax*nrot*np.cos(t*nrot) -t*ymax*nrot*np.sin(t*nrot)
-        d2z = inc
+        dx = xmax*np.cos(t) -t*xmax*np.sin(t)
+        dy = ymax*np.sin(t) + t*ymax*np.cos(t)
+        dz = np.ones(npts)
+        d2x = - xmax*np.sin(t) - xmax*np.sin(t) - xmax*np.cos(t)
+        d2y = ymax*np.cos(t)  + ymax*np.cos(t) + -t*ymax*np.sin(t)
+        d2z = np.zeros(npts)
         
         num = (d2z*dy - d2y*dz)**2 + (d2x*dz - d2z*dx)**2 +(d2y*dx - d2x*dy)**2
         num = num**(1/2)
@@ -49,6 +49,11 @@ class Cone() :
         ax1.plot(t,curvature)
         ax1.set_title('curvature')
         ax1.set(xlabel="radians")
+        radius = 1/curvature
+        f, ax = plt.subplots()
+        ax.plot(t,radius)
+        ax.set_title('radius of curvature')
+        ax.set(xlabel="radians")
         plt.close(1)
         plt.show()
 
@@ -118,7 +123,7 @@ class Viewer(QWidget) :
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     xmax = 1
-    ymax = 2
+    ymax = 1
     nrot = 1
     nargs = len(sys.argv)
     if nargs >= 2: xmax = float(sys.argv[1])
