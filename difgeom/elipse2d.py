@@ -14,7 +14,7 @@ class Ellipse() :
     def show(self,xmax,ymax,nrot) : 
         plt.close('all')
         min = 0.0
-        max = 2*np.pi
+        max = 2*np.pi*nrot
         npts = 500
         inc = (max-min)/npts
         t = np.arange(min, max, inc)
@@ -22,8 +22,8 @@ class Ellipse() :
         if ymax>xmax : limit = ymax
         plt.xlim(-limit,limit)
         plt.ylim(-limit,limit)
-        x = xmax*np.cos(t*nrot)
-        y = ymax*np.sin(t*nrot)
+        x = xmax*np.cos(t)
+        y = ymax*np.sin(t)
 
         plt.xlim(-limit,limit)
         plt.ylim(-limit,limit)
@@ -32,15 +32,19 @@ class Ellipse() :
         plt.xlabel("value")
         plt.title("ellipse")
 
-        dx = -xmax*nrot*np.sin(t*nrot)
-        dy = ymax*nrot*np.cos(t*nrot)
-        d2x = -xmax*nrot*nrot*np.cos(t*nrot)
-        d2y = -ymax*nrot*nrot*np.sin(t*nrot)
+        dx = -xmax*np.sin(t)
+        dy = ymax*np.cos(t)
+        d2x = -xmax*np.cos(t)
+        d2y = -ymax*np.sin(t)
 
-        num = dx*d2y - d2x*dy
+        num = np.absolute(dx*d2y - d2x*dy)
         deom = (dx*dx + dy*dy)**(3/2)
         curvature = num/deom
-        radius = 1.0/curvature
+        f, ax = plt.subplots()
+        ax.plot(t,curvature)
+        ax.set_title('curvature')
+        ax.set(xlabel="radians")
+        radius = 1/curvature
         f, ax = plt.subplots()
         ax.plot(t,radius)
         ax.set_title('radius of curvature')
@@ -113,7 +117,7 @@ class Viewer(QWidget) :
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     xmax = 1
-    ymax = 2
+    ymax = 1
     nrot = 1
     nargs = len(sys.argv)
     if nargs >= 2: a = float(sys.argv[1])
