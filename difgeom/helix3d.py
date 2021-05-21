@@ -14,7 +14,7 @@ class Helix() :
     def show(self,xmax,ymax,nrot) :
         plt.close('all')
         min = 0.0
-        max = 2*np.pi
+        max = 2*np.pi*nrot
         npts = 500
         inc = (max-min)/npts
         t = np.arange(min, max, inc)
@@ -22,8 +22,8 @@ class Helix() :
         if ymax>xmax : limit = ymax
         plt.xlim(-limit,limit)
         plt.ylim(-limit,limit)
-        x = xmax*np.cos(t*nrot)
-        y = ymax*np.sin(t*nrot)
+        x = xmax*np.cos(t)
+        y = ymax*np.sin(t)
         
         fig, ax = plt.subplots(ncols=1,tight_layout=True,subplot_kw={"projection": "3d"})
         ax.set_xlabel("x")
@@ -32,15 +32,19 @@ class Helix() :
         ax.set_title("helix")
         ax.plot3D(x, y, t, 'black')
 
-        dx = -xmax*nrot*np.sin(t*nrot)
-        dy = ymax*nrot*np.cos(t*nrot)
-        dz = np.full((npts),inc)
-        d2x = -xmax*nrot*nrot*np.cos(t*nrot)
-        d2y = -ymax*nrot*nrot*np.sin(t*nrot)
-
-        num = dx*d2y - d2x*dy
-        deom = (dx*dx + dy*dy + dz*dz)**(3/2)
+        dx = -xmax*np.sin(t)
+        dy = ymax*np.cos(t)
+        dz = np.ones(npts)
+        d2x = -xmax*np.cos(t)
+        d2y = -ymax*np.sin(t)
+        d2z = np.zeros(npts)
+        
+        num = (d2z*dy - d2y*dz)**2 + (d2x*dz - d2z*dx)**2 + (d2y*dx - d2x*dy)**2
+        num = num**(1/2)
+        deom = (dx*dx + dy*dy + dz*dz)
+        deom = deom**(3/2)
         curvature = num/deom
+        curvature = curvature*np.pi
         f, ax1 = plt.subplots()
         ax1.plot(t,curvature)
         ax1.set_title('curvature')
@@ -114,7 +118,7 @@ class Viewer(QWidget) :
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     xmax = 1
-    ymax = 2
+    ymax = 1
     nrot = 1
     nargs = len(sys.argv)
     if nargs >= 2: a = float(sys.argv[1])
