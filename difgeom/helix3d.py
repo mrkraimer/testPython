@@ -11,10 +11,12 @@ class Helix() :
     def __init__(self):
         pass
  
-    def show(self,xmax,ymax,b) :
+    def show(self,xmax,ymax,nrot) :
         plt.close('all')
         npts = 500
-        t = np.linspace(0,b*npts,npts)
+        inc = 1/nrot
+        stop = nrot*2*np.pi
+        t = np.linspace(0,stop,npts)
         limit = xmax
         if ymax>xmax : limit = ymax
         plt.xlim(-limit,limit)
@@ -31,7 +33,7 @@ class Helix() :
 
         dx = -xmax*np.sin(t)
         dy = ymax*np.cos(t)
-        dz = np.full(npts,b)
+        dz = np.full(npts,inc)
         d2x = -xmax*np.cos(t)
         d2y = -ymax*np.sin(t)
         d2z = np.zeros(npts)
@@ -55,11 +57,11 @@ class Helix() :
         plt.show()
 
 class Viewer(QWidget) :
-    def __init__(self,xmax,ymax,b,parent=None):
+    def __init__(self,xmax,ymax,nrot,parent=None):
         super(QWidget, self).__init__(parent)
         self.xmax = xmax
         self.ymax = ymax
-        self.b = b
+        self.nrot = nrot
         self.helix = Helix()
         self.displayButton = QPushButton('display')
         self.displayButton.setEnabled(True)
@@ -77,17 +79,20 @@ class Viewer(QWidget) :
         self.ymaxText.setText(str(self.ymax))
         self.ymaxText.editingFinished.connect(self.ymaxEvent)
 
-        bLabel = QLabel("b:")
-        self.bText = QLineEdit()
-        self.bText.setEnabled(True)
-        self.bText.setText(str(self.b))
-        self.bText.editingFinished.connect(self.bEvent)
+        nrotLabel = QLabel("nrot:")
+        self.nrotText = QLineEdit()
+        self.nrotText.setEnabled(True)
+        self.nrotText.setText(str(self.nrot))
+        self.nrotText.editingFinished.connect(self.nrotEvent)
         
         box = QHBoxLayout()
         box.addWidget(self.displayButton)
+        box.addWidget(xmaxLabel)
         box.addWidget(self.xmaxText)
+        box.addWidget(ymaxLabel)
         box.addWidget(self.ymaxText)
-        box.addWidget(self.bText)
+        box.addWidget(nrotLabel)
+        box.addWidget(self.nrotText)
         self.setLayout(box)
         self.show()
         
@@ -104,14 +109,14 @@ class Viewer(QWidget) :
         except Exception as error:
             self.statusText.setText(str(error))
 
-    def bEvent(self) :
+    def nrotEvent(self) :
         try:
-            self.b = float(self.bText.text())
+            self.nrot = float(self.nrotText.text())
         except Exception as error:
             self.statusText.setText(str(error))
 
     def display(self):
-        self.helix.show(self.xmax,self.ymax,self.b)
+        self.helix.show(self.xmax,self.ymax,self.nrot)
 
     def closeEvent(self, event) :
         QApplication.closeAllWindows()
@@ -121,10 +126,10 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     xmax = 1
     ymax = 1
-    b = .1
+    nrot = 1
     nargs = len(sys.argv)
-    if nargs >= 2: a = float(sys.argv[1])
-    if nargs >= 3: b = float(sys.argv[2])
-    if nargs >= 4: c = float(sys.argv[3])
-    viewer = Viewer(xmax,ymax,b)
+    if nargs >= 2: xmax = float(sys.argv[1])
+    if nargs >= 3: ymax = float(sys.argv[2])
+    if nargs >= 4: nrot = float(sys.argv[3])
+    viewer = Viewer(xmax,ymax,nrot)
     sys.exit(app.exec_())
