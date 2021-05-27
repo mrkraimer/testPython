@@ -29,7 +29,7 @@ class Helix() :
         ax.set_ylabel("y")
         ax.set_zlabel("z")
         ax.set_title("helix")
-        ax.plot3D(x, y, t, 'black')
+        ax.plot3D(x, y, t/nrot, 'black')
 
         dx = -xmax*np.sin(t)
         dy = ymax*np.cos(t)
