@@ -13,28 +13,31 @@ class Cone() :
  
     def show(self,xmax,ymax,nrot) :
         plt.close('all')
-        min = 0.0
-        max = 2*np.pi*nrot
         npts = 500
-        inc = (max-min)/npts
-        t = np.arange(min, max, inc)
+        inc = 1/nrot
+        stop = nrot*2*np.pi
+        t = np.linspace(0,stop,npts)
+        xmax = xmax/stop
+        ymax = ymax/stop
         limit = xmax
         if ymax>xmax : limit = ymax
         plt.xlim(-limit,limit)
         plt.ylim(-limit,limit)
         x = xmax*t*np.cos(t)
         y = ymax*t*np.sin(t)
+        print('maxx=',np.amax(x),' maxy=',np.amax(y),' minx=',np.amin(x),' miny=',np.amin(y))
+        
         
         fig, ax = plt.subplots(ncols=1,tight_layout=True,subplot_kw={"projection": "3d"})
         ax.set_xlabel("x")
         ax.set_ylabel("y")
         ax.set_zlabel("z")
         ax.set_title("cone")
-        ax.plot3D(x, y, t, 'black')
+        ax.plot3D(x, y, t/nrot, 'black')
 
         dx = xmax*np.cos(t) -t*xmax*np.sin(t)
         dy = ymax*np.sin(t) + t*ymax*np.cos(t)
-        dz = np.ones(npts)
+        dz = np.full(npts,inc)
         d2x = - xmax*np.sin(t) - xmax*np.sin(t) - xmax*np.cos(t)
         d2y = ymax*np.cos(t)  + ymax*np.cos(t) + -t*ymax*np.sin(t)
         d2z = np.zeros(npts)
@@ -88,8 +91,11 @@ class Viewer(QWidget) :
         
         box = QHBoxLayout()
         box.addWidget(self.displayButton)
+        box.addWidget(xmaxLabel)
         box.addWidget(self.xmaxText)
+        box.addWidget(ymaxLabel)
         box.addWidget(self.ymaxText)
+        box.addWidget(nrotLabel)
         box.addWidget(self.nrotText)
         self.setLayout(box)
         self.show()
