@@ -82,8 +82,11 @@ class Viewer(QWidget) :
         
         box = QHBoxLayout()
         box.addWidget(self.displayButton)
+        box.addWidget(xmaxLabel)
         box.addWidget(self.xmaxText)
+        box.addWidget(ymaxLabel)
         box.addWidget(self.ymaxText)
+        box.addWidget(nrotLabel)
         box.addWidget(self.nrotText)
         self.setLayout(box)
         self.show()
