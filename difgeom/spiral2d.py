@@ -38,12 +38,6 @@ class Spiral() :
         d2x = - maxx*np.sin(t) - maxx*np.sin(t) - maxx*np.cos(t)
         d2y = maxy*np.cos(t)  + maxy*np.cos(t) + -t*maxy*np.sin(t)
         
-#        scale = 1/2
-#        dx=dx*scale
-#        dy=dy*scale
-#        d2x=d2x*scale
-#        d2y=d2y*scale
-
         num = np.absolute(dx*d2y - d2x*dy)
         deom = (dx*dx + dy*dy)**(3/2)
         curvature = num/deom
