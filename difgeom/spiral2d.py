@@ -28,7 +28,7 @@ class Spiral() :
         x = maxx*t*np.cos(t)
         maxy = ymax/rmax
         y = maxy*t*np.sin(t)
-        #plt.axes().set_aspect('equal')
+        plt.axes().set_aspect('equal')
         plt.plot(x, y,scalex=False,scaley=False)
         plt.xlabel("value")
         plt.title("spiral")
