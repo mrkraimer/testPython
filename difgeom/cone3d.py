@@ -13,34 +13,37 @@ class Cone() :
  
     def show(self,xmax,ymax,nrot) :
         plt.close('all')
+        # r is radians
         npts = 500
-        inc = 1/nrot
-        stop = nrot*2*np.pi
-        t = np.linspace(0,stop,npts)
-        xmax = xmax/stop
-        ymax = ymax/stop
+        rmax = 2*np.pi*nrot
+        dr = rmax/npts
+        t = np.arange(0, rmax, dr)
         limit = xmax
         if ymax>xmax : limit = ymax
         plt.xlim(-limit,limit)
         plt.ylim(-limit,limit)
-        x = xmax*t*np.cos(t)
-        y = ymax*t*np.sin(t)
-        print('maxx=',np.amax(x),' maxy=',np.amax(y),' minx=',np.amin(x),' miny=',np.amin(y))
+        #x = xmax*(t/rmax)*np.cos(t)
+        #x = (xmax/rmax)*t*np.cos(t)
+        maxx = xmax/rmax
+        x = maxx*t*np.cos(t)
+        maxy = ymax/rmax
+        y = maxy*t*np.sin(t)
+        z = np.arange(0, 1, 1/npts)
         
-        
+
         fig, ax = plt.subplots(ncols=1,tight_layout=True,subplot_kw={"projection": "3d"})
         ax.set_xlabel("x")
         ax.set_ylabel("y")
         ax.set_zlabel("z")
         ax.set_title("cone")
-        ax.plot3D(x, y, t/nrot, 'black')
+        ax.plot3D(x, y, z, 'black')
 
-        dx = xmax*np.cos(t) -t*xmax*np.sin(t)
-        dy = ymax*np.sin(t) + t*ymax*np.cos(t)
-        dz = np.full(npts,inc)
-        d2x = - xmax*np.sin(t) - xmax*np.sin(t) - xmax*np.cos(t)
-        d2y = ymax*np.cos(t)  + ymax*np.cos(t) + -t*ymax*np.sin(t)
-        d2z = np.zeros(npts)
+        dx = np.gradient(x)
+        dy = np.gradient(y)
+        dz = np.gradient(z)
+        d2x = np.gradient(dx)
+        d2y = np.gradient(dy)
+        d2z = np.gradient(dz)
         
         num = (d2z*dy - d2y*dz)**2 + (d2x*dz - d2z*dx)**2 +(d2y*dx - d2x*dy)**2
         num = num**(1/2)
@@ -48,6 +51,10 @@ class Cone() :
         deom = (dx*dx + dy*dy + dz*dz)
         deom = deom**(3/2)
         curvature = num/deom
+        curvature[0] = curvature[2]
+        curvature[1] = curvature[2]
+        curvature[npts-1] = curvature[npts-3]
+        curvature[npts-2] = curvature[npts-3]
         f, ax1 = plt.subplots()
         ax1.plot(t,curvature)
         ax1.set_title('curvature')
