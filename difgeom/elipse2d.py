@@ -14,7 +14,7 @@ class Ellipse() :
     def show(self,xmax,ymax,nrot) : 
         plt.close('all')
         # r is radians
-        npts = 50
+        npts = 500
         rmax = 2*np.pi*nrot
         dr = rmax/npts
         t = np.arange(0, rmax, dr)
@@ -38,10 +38,6 @@ class Ellipse() :
         num = np.absolute(dx*d2y - d2x*dy)
         deom = (dx*dx + dy*dy)**(3/2)
         curvature = num/deom
-        curvature[0] = curvature[2]
-        curvature[1] = curvature[2]
-        curvature[npts-1] = curvature[npts-3]
-        curvature[npts-2] = curvature[npts-3]
         f, ax = plt.subplots()
         ax.plot(t,curvature)
         ax.set_title('curvature')
