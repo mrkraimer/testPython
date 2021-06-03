@@ -51,10 +51,6 @@ class Cone() :
         deom = (dx*dx + dy*dy + dz*dz)
         deom = deom**(3/2)
         curvature = num/deom
-        curvature[0] = curvature[2]
-        curvature[1] = curvature[2]
-        curvature[npts-1] = curvature[npts-3]
-        curvature[npts-2] = curvature[npts-3]
         f, ax1 = plt.subplots()
         ax1.plot(t,curvature)
         ax1.set_title('curvature')

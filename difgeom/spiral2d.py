@@ -41,10 +41,6 @@ class Spiral() :
         num = np.absolute(dx*d2y - d2x*dy)
         deom = (dx*dx + dy*dy)**(3/2)
         curvature = num/deom
-        curvature[0] = curvature[2]
-        curvature[1] = curvature[2]
-        curvature[npts-1] = curvature[npts-3]
-        curvature[npts-2] = curvature[npts-3]
         ax.plot(t,curvature)
         ax.set_title("curvature")
         ax.set(xlabel="radians")
