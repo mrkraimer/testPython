@@ -13,33 +13,35 @@ class Ellipse() :
  
     def show(self,xmax,ymax,nrot) : 
         plt.close('all')
-        min = 0.0
-        max = 2*np.pi*nrot
-        npts = 500
-        inc = (max-min)/npts
-        t = np.arange(min, max, inc)
+        # r is radians
+        npts = 50
+        rmax = 2*np.pi*nrot
+        dr = rmax/npts
+        t = np.arange(0, rmax, dr)
         limit = xmax
         if ymax>xmax : limit = ymax
-        plt.xlim(-limit,limit)
-        plt.ylim(-limit,limit)
-        x = xmax*np.cos(t)
-        y = ymax*np.sin(t)
-
+        plt.autoscale(tight=True)
         plt.xlim(-limit,limit)
         plt.ylim(-limit,limit)
         plt.axes().set_aspect('equal')
+        x = xmax*np.cos(t)
+        y = ymax*np.sin(t)
         plt.plot(x, y,scalex=False,scaley=False)
         plt.xlabel("value")
         plt.title("ellipse")
 
-        dx = -xmax*np.sin(t)
-        dy = ymax*np.cos(t)
-        d2x = -xmax*np.cos(t)
-        d2y = -ymax*np.sin(t)
+        dx = np.gradient(x)
+        dy = np.gradient(y)
+        d2x = np.gradient(dx)
+        d2y = np.gradient(dy)
 
         num = np.absolute(dx*d2y - d2x*dy)
         deom = (dx*dx + dy*dy)**(3/2)
         curvature = num/deom
+        curvature[0] = curvature[2]
+        curvature[1] = curvature[2]
+        curvature[npts-1] = curvature[npts-3]
+        curvature[npts-2] = curvature[npts-3]
         f, ax = plt.subplots()
         ax.plot(t,curvature)
         ax.set_title('curvature')

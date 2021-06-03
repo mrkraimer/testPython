@@ -13,17 +13,20 @@ class Helix() :
  
     def show(self,xmax,ymax,nrot) :
         plt.close('all')
+        # r is radians
         npts = 500
-        inc = 1/nrot
-        stop = nrot*2*np.pi
-        t = np.linspace(0,stop,npts)
+        rmax = 2*np.pi*nrot
+        dr = rmax/npts
+        t = np.arange(0, rmax, dr)
         limit = xmax
         if ymax>xmax : limit = ymax
         plt.xlim(-limit,limit)
         plt.ylim(-limit,limit)
+        plt.axes().set_aspect('equal')
         x = xmax*np.cos(t)
         y = ymax*np.sin(t)
-        
+        z = np.arange(0, 1, 1/npts)
+         
         fig, ax = plt.subplots(ncols=1,tight_layout=True,subplot_kw={"projection": "3d"})
         ax.set_xlabel("x")
         ax.set_ylabel("y")
@@ -31,19 +34,23 @@ class Helix() :
         ax.set_title("helix")
         ax.plot3D(x, y, t/nrot, 'black')
 
-        dx = -xmax*np.sin(t)
-        dy = ymax*np.cos(t)
-        dz = np.full(npts,inc)
-        d2x = -xmax*np.cos(t)
-        d2y = -ymax*np.sin(t)
-        d2z = np.zeros(npts)
+        dx = np.gradient(x)
+        dy = np.gradient(y)
+        dz = np.gradient(z)
+        d2x = np.gradient(dx)
+        d2y = np.gradient(dy)
+        d2z = np.gradient(dz)
 
         num = (d2z*dy - d2y*dz)**2 + (d2x*dz - d2z*dx)**2 + (d2y*dx - d2x*dy)**2
         num = num**(1/2)
         deom = (dx*dx + dy*dy + dz*dz)
         deom = deom**(3/2)
         curvature = num/deom
-        curvature = curvature
+        curvature[0] = curvature[2]
+        curvature[1] = curvature[2]
+        curvature[npts-1] = curvature[npts-3]
+        curvature[npts-2] = curvature[npts-3]
+        #print('curvature=',curvature)
         f, ax1 = plt.subplots()
         ax1.plot(t,curvature)
         ax1.set_title('curvature')
