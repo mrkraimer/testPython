@@ -11,7 +11,7 @@ class Helix() :
     def __init__(self):
         pass
  
-    def show(self,xmax,ymax,nrot) :
+    def show(self,xmax,ymax,zmax,nrot) :
         plt.close('all')
         # r is radians
         npts = 500
@@ -25,14 +25,14 @@ class Helix() :
         plt.axes().set_aspect('equal')
         x = xmax*np.cos(t)
         y = ymax*np.sin(t)
-        z = np.arange(0, 1, 1/npts)
+        z = np.arange(0, zmax, zmax/npts)
          
         fig, ax = plt.subplots(ncols=1,tight_layout=True,subplot_kw={"projection": "3d"})
         ax.set_xlabel("x")
         ax.set_ylabel("y")
         ax.set_zlabel("z")
         ax.set_title("helix")
-        ax.plot3D(x, y, t/nrot, 'black')
+        ax.plot3D(x, y, z, 'black')
 
         dx = np.gradient(x)
         dy = np.gradient(y)
@@ -59,10 +59,11 @@ class Helix() :
         plt.show()
 
 class Viewer(QWidget) :
-    def __init__(self,xmax,ymax,nrot,parent=None):
+    def __init__(self,xmax,ymax,zmax,nrot,parent=None):
         super(QWidget, self).__init__(parent)
         self.xmax = xmax
         self.ymax = ymax
+        self.zmax = zmax
         self.nrot = nrot
         self.helix = Helix()
         self.displayButton = QPushButton('display')
@@ -80,6 +81,13 @@ class Viewer(QWidget) :
         self.ymaxText.setEnabled(True)
         self.ymaxText.setText(str(self.ymax))
         self.ymaxText.editingFinished.connect(self.ymaxEvent)
+        
+        zmaxLabel = QLabel("zmax:")
+        self.zmaxText = QLineEdit()
+        self.zmaxText.setEnabled(True)
+        self.zmaxText.setText(str(self.zmax))
+        self.zmaxText.editingFinished.connect(self.zmaxEvent)
+
 
         nrotLabel = QLabel("nrot:")
         self.nrotText = QLineEdit()
@@ -93,6 +101,8 @@ class Viewer(QWidget) :
         box.addWidget(self.xmaxText)
         box.addWidget(ymaxLabel)
         box.addWidget(self.ymaxText)
+        box.addWidget(zmaxLabel)
+        box.addWidget(self.zmaxText)
         box.addWidget(nrotLabel)
         box.addWidget(self.nrotText)
         self.setLayout(box)
@@ -111,6 +121,13 @@ class Viewer(QWidget) :
         except Exception as error:
             self.statusText.setText(str(error))
 
+    def zmaxEvent(self) :
+        try:
+            self.zmax = float(self.zmaxText.text())
+        except Exception as error:
+            self.statusText.setText(str(error))
+
+
     def nrotEvent(self) :
         try:
             self.nrot = float(self.nrotText.text())
@@ -118,7 +135,7 @@ class Viewer(QWidget) :
             self.statusText.setText(str(error))
 
     def display(self):
-        self.helix.show(self.xmax,self.ymax,self.nrot)
+        self.helix.show(self.xmax,self.ymax,self.zmax,self.nrot)
 
     def closeEvent(self, event) :
         QApplication.closeAllWindows()
@@ -128,10 +145,12 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     xmax = 1
     ymax = 1
+    zmax = 1
     nrot = 1
     nargs = len(sys.argv)
     if nargs >= 2: xmax = float(sys.argv[1])
     if nargs >= 3: ymax = float(sys.argv[2])
-    if nargs >= 4: nrot = float(sys.argv[3])
-    viewer = Viewer(xmax,ymax,nrot)
+    if nargs >= 4: zmax = float(sys.argv[3])
+    if nargs >= 5: nrot = float(sys.argv[4])
+    viewer = Viewer(xmax,ymax,zmax,nrot)
     sys.exit(app.exec_())
