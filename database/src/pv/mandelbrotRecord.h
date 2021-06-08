@@ -47,12 +47,11 @@ public:
     virtual void process();
     virtual ~MandelbrotRecord() {}
     virtual bool init() {return false;}
-    int calcIntensity(double x,double y);
     void createImage();
 private:
     MandelbrotRecord(std::string const & recordName,
-        epics::pvData::PVStructurePtr const & pvStructure);
-
+        epics::pvData::PVStructurePtr const & pvStructure);     
+    void expzCalc(double z[],int expz);
 };
 
 

@@ -40,6 +40,7 @@ MandelbrotRecordPtr MandelbrotRecord::create(
             add("nx",pvInt)->
             add("ny",pvInt)->
             add("nz",pvInt)->
+            add("expz",pvInt)->
             endNested()->
         addNestedStructure("result") ->
             addArray("value",pvUByte) ->
@@ -62,22 +63,26 @@ MandelbrotRecord::MandelbrotRecord(
 
 }
 
-int MandelbrotRecord::calcIntensity(double x,double y)
+void MandelbrotRecord::expzCalc(double z[], int expz)
 {
-    double c[2] = {x,y};
-    double z[2] = {0.0,0.0};
-    int i =0;
-    for(int j=0; j<255; ++j)
-    {
-        double absz = std::sqrt(z[0]*z[0] + z[1]*z[1]);
-        if(absz>=2.0) break;
-        i += 1;
-        double xz = z[0]*z[0] - z[1]*z[1] + c[0];
-        double yz = 2.0*z[0]*z[1] + c[1];
-        z[0] = xz;
-        z[1] = yz;
+    double zsq[2] = {0.0,0.0};
+    while(expz>=2) {
+        double a = z[0];
+        double b = z[1];
+        double real = a*a - b*b;
+        double img = 2*a*b;
+        z[0] = real;
+        z[1] = img;
+        zsq[0] = z[0];
+        zsq[1] = z[1];
+        expz -= 2;
     }
-    return i;
+    if(expz==1) {
+        double real = zsq[0]*z[0] - zsq[1]*z[1];
+        double img = zsq[1]*z[0] + zsq[0]*z[1];
+        z[0] = real;
+        z[1] = img;
+    }
 }
 
 void MandelbrotRecord::createImage()
@@ -89,6 +94,7 @@ void MandelbrotRecord::createImage()
     double ymax = pvArgument->getSubField<PVDouble>("ymax")->get();
     int nx = pvArgument->getSubField<PVInt>("nx")->get();
     int ny = pvArgument->getSubField<PVInt>("ny")->get();
+    int expz = pvArgument->getSubField<PVInt>("expz")->get();  
     double xinc = (xmax-xmin)/nx;
     double yinc = (ymax-ymin)/ny;
     double scaley = 1.0;
@@ -109,10 +115,21 @@ void MandelbrotRecord::createImage()
         {
              int indpix = indy*nx*nz + indx*nz;
              double x = xmin + indx*xinc*scalex;
-             int  intensity = calcIntensity(x,y);
+             double c[2] = {x,y};
+             double z[2] = {0.0,0.0};
+             int intensity =0;
+             for(int j=0; j<255; ++j)
+             {
+                 expzCalc(z,expz);
+                 z[0] = z[0] + c[0];
+                 z[1] = z[1] + c[1];
+                 double absz = std::sqrt(z[0]*z[0] + z[1]*z[1]);
+                 if(absz>=2.0) break;
+                 intensity += 1;
+             }
              if(nz==1) {
                 // Color scheme is grayscale
-                value[indpix] = 256 - intensity;
+                value[indpix] = 255 - intensity;
              } else {
                  // Color scheme is that of Julia sets
                  value[indpix] = intensity % 8 * 32;

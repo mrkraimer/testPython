@@ -16,13 +16,10 @@ class MandelbrotCreate() :
        self.channel.setConnectionCallback(self.connectionCallback)
 
    def addClientConnectionCallback(self,clientConnectionCallback) :
-       print('addClientConnectionCallback')
        self.clientConnectionCallback = clientConnectionCallback
-       print('self.clientConnectionCallback=',self.clientConnectionCallback)
        self.clientConnectionCallback.connectionCallback(self.isConnected)
       
    def connectionCallback(self,arg) :
-       print('connectionCallback arg=',arg)
        self.isConnected = arg
        if self.clientConnectionCallback!=None : 
            self.clientConnectionCallback.connectionCallback(arg)
@@ -38,6 +35,7 @@ class MandelbrotCreate() :
         nx =  arg[4]
         ny =  arg[5]
         nz = arg[6]
+        expz = arg[7]
         argxmin = 'argument.xmin=' + str(xmin)
         argxmax = 'argument.xmax=' + str(xmax)
         argymin = 'argument.ymin=' + str(ymin)
@@ -45,7 +43,8 @@ class MandelbrotCreate() :
         argnx = 'argument.nx=' + str(nx)
         argny = 'argument.ny=' + str(ny)
         argnz = 'argument.nz=' + str(nz)
-        args = [argxmin,argxmax,argymin,argymax,argnx,argny,argnz]
+        argexpz = 'argument.expz=' + str(expz)
+        args = [argxmin,argxmax,argymin,argymax,argnx,argny,argnz,argexpz]
         result = self.channel.parsePutGet(args,"putField(argument)getField(result)",True)
         val =  result['result.value']
         val = np.array(val,dtype='uint8')

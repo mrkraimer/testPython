@@ -31,10 +31,12 @@ class CurrentValues() :
         self.ny = imagesize
         self.nx = imagesize
         self.nz = 3
+        self.expz = 2
     def show(self) :
         print('self.xmin=',self.xmin,' self.xmax=',self.xmax)
         print('self.ymin=',self.ymin,' self.ymax=',self.ymax)
         print('self.nz=',self.nz)
+        print('self.expz=',self.expz)
 
         
 class Viewer(QWidget) :
@@ -132,6 +134,20 @@ class Viewer(QWidget) :
         ratiolayout.addWidget(self.ratioText)
         ratioGroupBox.setLayout(ratiolayout)
 
+        self.expz = 2
+        expzLabel = QLabel("expz:")
+        self.expzText = QLineEdit()
+        self.expzText.setEnabled(True)
+        self.expzText.setText(str(self.expz))
+        self.expzText.setFixedWidth(40)
+        self.expzText.editingFinished.connect(self.expzEvent)
+        expzGroupBox = QGroupBox()
+        expzGroupBox.setFixedWidth(60)
+        expzlayout = QVBoxLayout()
+        expzlayout.addWidget(expzLabel)
+        expzlayout.addWidget(self.expzText)
+        expzGroupBox.setLayout(expzlayout)
+
         self.rate = 60
         rateLabel = QLabel("rate:")
         self.rateText = QLineEdit()
@@ -190,6 +206,7 @@ class Viewer(QWidget) :
         box = QHBoxLayout()
         box.setContentsMargins(0,0,0,0);
         box.addWidget(nimagesGroupBox)
+        box.addWidget(expzGroupBox)
         box.addWidget(ratioGroupBox)
         box.addWidget(rateGroupBox)
         box.addWidget(xminGroupBox)
@@ -270,6 +287,12 @@ class Viewer(QWidget) :
     def nimagesEvent(self) :
         try:
             self.nimages = int(self.nimagesText.text())
+        except Exception as error:
+            self.statusText.setText(str(error))
+
+    def expzEvent(self) :
+        try:
+            self.expz = int(self.expzText.text())
         except Exception as error:
             self.statusText.setText(str(error))
 
@@ -376,7 +399,7 @@ class Viewer(QWidget) :
         arg = (self.currentValues.xmin,self.currentValues.xmax,\
               self.currentValues.ymin,self.currentValues.ymax,\
               self.currentValues.nx,self.currentValues.ny,\
-              self.currentValues.nz)
+              self.currentValues.nz,self.expz)  
         try :
             self.pixarray = self.mandelbrot.createImage(arg)
         except Exception as error:
