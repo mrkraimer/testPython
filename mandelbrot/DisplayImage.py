@@ -25,9 +25,9 @@ class CurrentValues() :
         self.pixeltype = pixeltype = "uint8"
         self.pixelmax = 256
         self.xmin = float(-2.5)
-        self.xmax = float(1.5)
-        self.ymin = float(-2.0)
-        self.ymax = float(2.0)
+        self.xmax = float(2.5)
+        self.ymin = float(-2.5)
+        self.ymax = float(2.5)
         self.ny = imagesize
         self.nx = imagesize
         self.nz = 3
