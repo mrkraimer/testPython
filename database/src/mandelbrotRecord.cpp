@@ -65,21 +65,21 @@ MandelbrotRecord::MandelbrotRecord(
 
 void MandelbrotRecord::expzCalc(double z[], int expz)
 {
-    double zsq[2] = {0.0,0.0};
+    double prevz[2] = {0.0,0.0};
     while(expz>=2) {
+        prevz[0] = z[0];
+        prevz[1] = z[1];
         double a = z[0];
         double b = z[1];
         double real = a*a - b*b;
         double img = 2*a*b;
         z[0] = real;
         z[1] = img;
-        zsq[0] = z[0];
-        zsq[1] = z[1];
         expz -= 2;
     }
     if(expz==1) {
-        double real = zsq[0]*z[0] - zsq[1]*z[1];
-        double img = zsq[1]*z[0] + zsq[0]*z[1];
+        double real = z[0]*prevz[0] - z[1]*prevz[1];
+        double img = z[0]*prevz[1] + z[1]*prevz[0];
         z[0] = real;
         z[1] = img;
     }
