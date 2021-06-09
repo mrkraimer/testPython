@@ -30,13 +30,11 @@ class CurrentValues() :
         self.ymax = float(2.5)
         self.ny = imagesize
         self.nx = imagesize
-        self.nz = 3
-        self.expz = 2
+#        self.nz = 3
     def show(self) :
         print('self.xmin=',self.xmin,' self.xmax=',self.xmax)
         print('self.ymin=',self.ymin,' self.ymax=',self.ymax)
-        print('self.nz=',self.nz)
-        print('self.expz=',self.expz)
+#        print('self.nz=',self.nz)
 
         
 class Viewer(QWidget) :
@@ -45,6 +43,8 @@ class Viewer(QWidget) :
         self.mandelbrot = mandelbrot
         self.imageSize = 800
         self.isClosed = False
+        self.expz = 2
+        self.nz = 3
         self.setWindowTitle("Viewer")
         self.currentValues = CurrentValues(self.imageSize)
         self.imageDisplay = NumpyImage(flipy=False,imageSize=self.imageSize)
@@ -134,7 +134,6 @@ class Viewer(QWidget) :
         ratiolayout.addWidget(self.ratioText)
         ratioGroupBox.setLayout(ratiolayout)
 
-        self.expz = 2
         expzLabel = QLabel("expz:")
         self.expzText = QLineEdit()
         self.expzText.setEnabled(True)
@@ -293,6 +292,14 @@ class Viewer(QWidget) :
     def expzEvent(self) :
         try:
             self.expz = int(self.expzText.text())
+            if(self.expz<2) :
+                self.expz = 2
+                self.expzText.setText(str(self.expz))
+                self.statusText.setText("expz must be ge 2")
+            if(self.expz>20) :
+                self.expz = 20
+                self.expzText.setText(str(self.expz))
+                self.statusText.setText("expz must be le 20")
         except Exception as error:
             self.statusText.setText(str(error))
 
@@ -320,12 +327,12 @@ class Viewer(QWidget) :
         self.reset()
 
     def colorModeEvent(self) :
-        if self.currentValues.nz==3 :
+        if self.nz==3 :
             self.colorModeButton.setText('mono')
-            self.currentValues.nz = 1;
-        else :
+            self.nz = 1;
+        elif self.nz==1:
             self.colorModeButton.setText('color')
-            self.currentValues.nz = 3;
+            self.nz = 3;
 
     def zoomStartEvent(self) :
         self.stopZoom = False
@@ -399,7 +406,7 @@ class Viewer(QWidget) :
         arg = (self.currentValues.xmin,self.currentValues.xmax,\
               self.currentValues.ymin,self.currentValues.ymax,\
               self.currentValues.nx,self.currentValues.ny,\
-              self.currentValues.nz,self.expz)  
+              self.nz,self.expz)  
         try :
             self.pixarray = self.mandelbrot.createImage(arg)
         except Exception as error:

@@ -58,28 +58,15 @@ MandelbrotRecordPtr MandelbrotRecord::create(
 MandelbrotRecord::MandelbrotRecord(
     string const & recordName,
     PVStructurePtr const & pvStructure)
-: PVRecord(recordName,pvStructure)
-{
-
-}
+: PVRecord(recordName,pvStructure) {}
 
 void MandelbrotRecord::expzCalc(double z[], int expz)
 {
-    double prevz[2] = {0.0,0.0};
-    while(expz>=2) {
-        prevz[0] = z[0];
-        prevz[1] = z[1];
-        double a = z[0];
-        double b = z[1];
-        double real = a*a - b*b;
-        double img = 2*a*b;
-        z[0] = real;
-        z[1] = img;
-        expz -= 2;
-    }
-    if(expz==1) {
-        double real = z[0]*prevz[0] - z[1]*prevz[1];
-        double img = z[0]*prevz[1] + z[1]*prevz[0];
+    double realorig = z[0];
+    double imgorig = z[1];
+    for(int ind=0; ind<(expz-1); ++ind) {
+        double real = z[0]*realorig - z[1]*imgorig;
+        double img = z[0]*imgorig + z[1]*realorig;
         z[0] = real;
         z[1] = img;
     }
@@ -127,9 +114,10 @@ void MandelbrotRecord::createImage()
                  if(absz>=2.0) break;
                  intensity += 1;
              }
+             intensity = 255 - intensity;
              if(nz==1) {
                 // Color scheme is grayscale
-                value[indpix] = 255 - intensity;
+                value[indpix] = intensity;
              } else {
                  // Color scheme is that of Julia sets
                  value[indpix] = intensity % 8 * 32;
