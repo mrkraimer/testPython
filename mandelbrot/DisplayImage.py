@@ -244,7 +244,7 @@ class Viewer(QWidget) :
         nx = self.currentValues.nx
         yoffset = self.currentValues.ymin
         ny = self.currentValues.ny
-        nz = self.currentValues.nz
+        nz = self.nz
         image = self.pixarray
         xx, yy = np.mgrid[0:nx, 0:ny]
         if nz==1 :
