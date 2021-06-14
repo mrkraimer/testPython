@@ -20,12 +20,12 @@ class Ellipse() :
         t = np.arange(0, rmax, dr)
         limit = xmax
         if ymax>xmax : limit = ymax
-        plt.autoscale(tight=True)
+        #plt.autoscale(tight=True)
         plt.xlim(-limit,limit)
         plt.ylim(-limit,limit)
         x = xmax*np.cos(t)
         y = ymax*np.sin(t)
-        plt.plot(x, y,scalex=False,scaley=False)
+        plt.plot(x, y)
         plt.xlabel("value")
         plt.title("ellipse")
 
