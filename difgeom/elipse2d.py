@@ -23,7 +23,6 @@ class Ellipse() :
         plt.autoscale(tight=True)
         plt.xlim(-limit,limit)
         plt.ylim(-limit,limit)
-        plt.axes().set_aspect('equal')
         x = xmax*np.cos(t)
         y = ymax*np.sin(t)
         plt.plot(x, y,scalex=False,scaley=False)

@@ -22,14 +22,12 @@ class Spiral() :
         if ymax>xmax : limit = ymax
         plt.xlim(-limit,limit)
         plt.ylim(-limit,limit)
-        plt.axes().set_aspect('equal')
-        #x = xmax*(t/rmax)*np.cos(t)
-        #x = (xmax/rmax)*t*np.cos(t)
         maxx = xmax/rmax
         x = maxx*t*np.cos(t)
         maxy = ymax/rmax
         y = maxy*t*np.sin(t)
         plt.plot(x, y,scalex=False,scaley=False)
+        plt.plot(x, y)
         plt.xlabel("value")
         plt.title("spiral")
 
