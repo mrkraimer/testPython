@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QWidget,QLabel,QLineEdit
 from PyQt5.QtWidgets import QPushButton,QHBoxLayout
 
-class Clover() :
+class Heart() :
     def __init__(self):
         pass
  
@@ -35,7 +35,7 @@ class Clover() :
         #plt.plot(x, y,scalex=False,scaley=False)
         plt.plot(x, y)
         plt.xlabel("value")
-        plt.title("clover")
+        plt.title("heart")
         if True : 
             plt.show()
             return
@@ -65,7 +65,7 @@ class Viewer(QWidget) :
         self.xmax = xmax
         self.ymax = ymax
         self.nrot = nrot
-        self.clover = Clover()
+        self.heart = Heart()
         self.displayButton = QPushButton('display')
         self.displayButton.setEnabled(True)
         self.displayButton.clicked.connect(self.display)
@@ -119,7 +119,7 @@ class Viewer(QWidget) :
             self.statusText.setText(str(error))
 
     def display(self):
-        self.clover.show(self.xmax,self.ymax,self.nrot)
+        self.heart.show(self.xmax,self.ymax,self.nrot)
         
     def closeEvent(self, event) :
         QApplication.closeAllWindows()
