@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QWidget,QLabel,QLineEdit
 from PyQt5.QtWidgets import QPushButton,QHBoxLayout
 
-class Clover() :
+class Figureight() :
     def __init__(self):
         pass
  
@@ -22,11 +22,13 @@ class Clover() :
         if ymax>xmax : limit = ymax
         plt.xlim(-limit,limit)
         plt.ylim(-limit,limit)
-        x = xmax*np.sin(nrot*t)*np.cos(t)
-        y = ymax*np.sin(nrot*t)*np.sin(t)
+        #x = xmax*np.sin(nrot*t)*np.cos(t)
+        #y = ymax*np.sin(nrot*t)*np.sin(t)
+        x = xmax*np.sin(t)*np.cos(t)
+        y = ymax*np.sin(t)
         plt.plot(x, y)
         plt.xlabel("value")
-        plt.title("clover")
+        plt.title("figureight")
         if True : 
             plt.show()
             return
@@ -56,7 +58,7 @@ class Viewer(QWidget) :
         self.xmax = xmax
         self.ymax = ymax
         self.nrot = nrot
-        self.clover = Clover()
+        self.figureight = Figureight()
         self.displayButton = QPushButton('display')
         self.displayButton.setEnabled(True)
         self.displayButton.clicked.connect(self.display)
@@ -110,7 +112,7 @@ class Viewer(QWidget) :
             self.statusText.setText(str(error))
 
     def display(self):
-        self.clover.show(self.xmax,self.ymax,self.nrot)
+        self.figureight.show(self.xmax,self.ymax,self.nrot)
         
     def closeEvent(self, event) :
         QApplication.closeAllWindows()

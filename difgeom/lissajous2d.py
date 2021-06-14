@@ -7,26 +7,24 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QWidget,QLabel,QLineEdit
 from PyQt5.QtWidgets import QPushButton,QHBoxLayout
 
-class Clover() :
+class Lissajous() :
     def __init__(self):
         pass
  
     def show(self,xmax,ymax,nrot) : 
         plt.close('all')
         # r is radians
-        npts = 500
-        rmax = 2*np.pi
+        npts = 2000
+        rmax = 2*np.pi*nrot
         dr = rmax/npts
         t = np.arange(0, rmax, dr)
-        limit = xmax
-        if ymax>xmax : limit = ymax
-        plt.xlim(-limit,limit)
-        plt.ylim(-limit,limit)
-        x = xmax*np.sin(nrot*t)*np.cos(t)
-        y = ymax*np.sin(nrot*t)*np.sin(t)
+        plt.xlim(-1.0,1.0)
+        plt.ylim(-1.0,1.0)
+        x = np.sin(xmax*t)
+        y = np.cos(ymax*t)
         plt.plot(x, y)
         plt.xlabel("value")
-        plt.title("clover")
+        plt.title("lissajous")
         if True : 
             plt.show()
             return
@@ -56,7 +54,7 @@ class Viewer(QWidget) :
         self.xmax = xmax
         self.ymax = ymax
         self.nrot = nrot
-        self.clover = Clover()
+        self.lissajous = Lissajous()
         self.displayButton = QPushButton('display')
         self.displayButton.setEnabled(True)
         self.displayButton.clicked.connect(self.display)
@@ -110,7 +108,7 @@ class Viewer(QWidget) :
             self.statusText.setText(str(error))
 
     def display(self):
-        self.clover.show(self.xmax,self.ymax,self.nrot)
+        self.lissajous.show(self.xmax,self.ymax,self.nrot)
         
     def closeEvent(self, event) :
         QApplication.closeAllWindows()
