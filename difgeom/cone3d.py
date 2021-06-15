@@ -22,15 +22,12 @@ class Cone() :
         if ymax>xmax : limit = ymax
         plt.xlim(-limit,limit)
         plt.ylim(-limit,limit)
-        #x = xmax*(t/rmax)*np.cos(t)
-        #x = (xmax/rmax)*t*np.cos(t)
         maxx = xmax/rmax
         x = maxx*t*np.cos(t)
         maxy = ymax/rmax
         y = maxy*t*np.sin(t)
         z = np.arange(0, zmax, zmax/npts)
         
-
         fig, ax = plt.subplots(ncols=1,tight_layout=True,subplot_kw={"projection": "3d"})
         ax.set_xlabel("x")
         ax.set_ylabel("y")
