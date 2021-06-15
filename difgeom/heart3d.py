@@ -11,8 +11,7 @@ class Heart() :
     def __init__(self):
         pass
  
-    def show(self,xmax,ymax,nrot) : 
-        plt.close('all')
+    def show(self,xmax,ymax,zmax,nrot) :
         # r is radians
         npts = 500
         rmax = 2*np.pi*nrot
@@ -20,45 +19,33 @@ class Heart() :
         t = np.arange(0, rmax, dr)
         limit = xmax
         if ymax>xmax : limit = ymax
+        plt.xlim(-limit,limit)
+        plt.ylim(-limit,limit)
         x = xmax*(1.0 - np.cos(t)*np.cos(t))*np.sin(t)
         y = ymax*(1.0 - np.cos(t)*np.cos(t)*np.cos(t))*np.cos(t)
-        plt.plot(x, y)
-        plt.xlabel("value")
-        plt.title("heart")
-        if True : 
-            plt.show()
-            return
-
-        f, ax = plt.subplots()
-        dx = np.gradient(x)
-        dy = np.gradient(y)
-        d2x = np.gradient(dx)
-        d2y = np.gradient(dy)
-        num = np.absolute(dx*d2y - d2x*dy)
-        deom = (dx*dx + dy*dy)**(3/2)
-        curvature = num/deom
-        ax.plot(t,curvature)
-        ax.set_title("curvature")
-        ax.set(xlabel="radians")
-      
-        radius = 1/curvature
-        f, ax = plt.subplots()
-        ax.plot(t,radius)
-        ax.set_title('radius of curvature')
-        ax.set(xlabel="radians")
+        z = np.arange(0, zmax, zmax/npts)
+        fig = plt.figure()
+        plt.close('all')
+        ax = plt.axes(projection='3d')
+        ax.set_xlabel("x")
+        ax.set_ylabel("y")
+        ax.set_zlabel("z")
+        ax.set_title("heart")
+        ax.plot3D(x, y, z, 'black')
         plt.show()
 
 class Viewer(QWidget) :
-    def __init__(self,xmax,ymax,nrot,parent=None):
+    def __init__(self,xmax,ymax,zmax,nrot,parent=None):
         super(QWidget, self).__init__(parent)
         self.xmax = xmax
         self.ymax = ymax
+        self.zmax = zmax
         self.nrot = nrot
         self.heart = Heart()
         self.displayButton = QPushButton('display')
         self.displayButton.setEnabled(True)
         self.displayButton.clicked.connect(self.display)
-       
+
         xmaxLabel = QLabel("xmax:")
         self.xmaxText = QLineEdit()
         self.xmaxText.setEnabled(True)
@@ -70,6 +57,13 @@ class Viewer(QWidget) :
         self.ymaxText.setEnabled(True)
         self.ymaxText.setText(str(self.ymax))
         self.ymaxText.editingFinished.connect(self.ymaxEvent)
+        
+        zmaxLabel = QLabel("zmax:")
+        self.zmaxText = QLineEdit()
+        self.zmaxText.setEnabled(True)
+        self.zmaxText.setText(str(self.zmax))
+        self.zmaxText.editingFinished.connect(self.zmaxEvent)
+
 
         nrotLabel = QLabel("nrot:")
         self.nrotText = QLineEdit()
@@ -83,6 +77,8 @@ class Viewer(QWidget) :
         box.addWidget(self.xmaxText)
         box.addWidget(ymaxLabel)
         box.addWidget(self.ymaxText)
+        box.addWidget(zmaxLabel)
+        box.addWidget(self.zmaxText)
         box.addWidget(nrotLabel)
         box.addWidget(self.nrotText)
         self.setLayout(box)
@@ -101,6 +97,13 @@ class Viewer(QWidget) :
         except Exception as error:
             self.statusText.setText(str(error))
 
+    def zmaxEvent(self) :
+        try:
+            self.zmax = float(self.zmaxText.text())
+        except Exception as error:
+            self.statusText.setText(str(error))
+
+
     def nrotEvent(self) :
         try:
             self.nrot = float(self.nrotText.text())
@@ -108,8 +111,8 @@ class Viewer(QWidget) :
             self.statusText.setText(str(error))
 
     def display(self):
-        self.heart.show(self.xmax,self.ymax,self.nrot)
-        
+        self.heart.show(self.xmax,self.ymax,self.zmax,self.nrot)
+
     def closeEvent(self, event) :
         QApplication.closeAllWindows()
     
@@ -118,10 +121,12 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     xmax = 1
     ymax = 1
+    zmax = 1
     nrot = 1
     nargs = len(sys.argv)
-    if nargs >= 2: a = float(sys.argv[1])
-    if nargs >= 3: b = float(sys.argv[2])
-    if nargs >= 4: c = float(sys.argv[3])
-    viewer = Viewer(xmax,ymax,nrot)
+    if nargs >= 2: xmax = float(sys.argv[1])
+    if nargs >= 3: ymax = float(sys.argv[2])
+    if nargs >= 4: zmax = float(sys.argv[3])
+    if nargs >= 5: nrot = float(sys.argv[4])
+    viewer = Viewer(xmax,ymax,zmax,nrot)
     sys.exit(app.exec_())
