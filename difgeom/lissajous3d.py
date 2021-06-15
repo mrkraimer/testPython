@@ -11,54 +11,41 @@ class Lissajous() :
     def __init__(self):
         pass
  
-    def show(self,xmul,ymul,nrot) : 
-        plt.close('all')
+    def show(self,xmul,ymul,zmax,nrot) :
         # r is radians
-        npts = 2000
-        rmax = 2*np.pi*nrot
+        npts = 500
+        rmax = 2*np.pi
         dr = rmax/npts
         t = np.arange(0, rmax, dr)
-        plt.xlim(-1.0,1.0)
-        plt.ylim(-1.0,1.0)
+        limit = xmul
+        if ymul>xmul : limit = ymul
+        plt.xlim(-limit,limit)
+        plt.ylim(-limit,limit)
         x = np.sin(xmul*t)
         y = np.cos(ymul*t)
-        plt.plot(x, y)
-        plt.xlabel("value")
-        plt.title("lissajous")
-        if True : 
-            plt.show()
-            return
-
-        f, ax = plt.subplots()
-        dx = np.gradient(x)
-        dy = np.gradient(y)
-        d2x = np.gradient(dx)
-        d2y = np.gradient(dy)
-        num = np.absolute(dx*d2y - d2x*dy)
-        deom = (dx*dx + dy*dy)**(3/2)
-        curvature = num/deom
-        ax.plot(t,curvature)
-        ax.set_title("curvature")
-        ax.set(xlabel="radians")
-      
-        radius = 1/curvature
-        f, ax = plt.subplots()
-        ax.plot(t,radius)
-        ax.set_title('radius of curvature')
-        ax.set(xlabel="radians")
+        z = np.arange(0, zmax, zmax/npts)
+        fig = plt.figure()
+        plt.close('all')
+        ax = plt.axes(projection='3d')
+        ax.set_xlabel("x")
+        ax.set_ylabel("y")
+        ax.set_zlabel("z")
+        ax.set_title("lissajous")
+        ax.plot3D(x, y, z, 'black')
         plt.show()
 
 class Viewer(QWidget) :
-    def __init__(self,xmul,ymul,nrot,parent=None):
+    def __init__(self,xmul,ymul,zmax,nrot,parent=None):
         super(QWidget, self).__init__(parent)
         self.xmul = xmul
         self.ymul = ymul
+        self.zmax = zmax
         self.nrot = nrot
         self.lissajous = Lissajous()
         self.displayButton = QPushButton('display')
         self.displayButton.setEnabled(True)
         self.displayButton.clicked.connect(self.display)
-       
+
         xmulLabel = QLabel("xmul:")
         self.xmulText = QLineEdit()
         self.xmulText.setEnabled(True)
@@ -70,6 +57,13 @@ class Viewer(QWidget) :
         self.ymulText.setEnabled(True)
         self.ymulText.setText(str(self.ymul))
         self.ymulText.editingFinished.connect(self.ymulEvent)
+        
+        zmaxLabel = QLabel("zmax:")
+        self.zmaxText = QLineEdit()
+        self.zmaxText.setEnabled(True)
+        self.zmaxText.setText(str(self.zmax))
+        self.zmaxText.editingFinished.connect(self.zmaxEvent)
+
 
         nrotLabel = QLabel("nrot:")
         self.nrotText = QLineEdit()
@@ -83,6 +77,8 @@ class Viewer(QWidget) :
         box.addWidget(self.xmulText)
         box.addWidget(ymulLabel)
         box.addWidget(self.ymulText)
+        box.addWidget(zmaxLabel)
+        box.addWidget(self.zmaxText)
         box.addWidget(nrotLabel)
         box.addWidget(self.nrotText)
         self.setLayout(box)
@@ -101,6 +97,13 @@ class Viewer(QWidget) :
         except Exception as error:
             self.statusText.setText(str(error))
 
+    def zmaxEvent(self) :
+        try:
+            self.zmax = float(self.zmaxText.text())
+        except Exception as error:
+            self.statusText.setText(str(error))
+
+
     def nrotEvent(self) :
         try:
             self.nrot = float(self.nrotText.text())
@@ -108,8 +111,8 @@ class Viewer(QWidget) :
             self.statusText.setText(str(error))
 
     def display(self):
-        self.lissajous.show(self.xmul,self.ymul,self.nrot)
-        
+        self.lissajous.show(self.xmul,self.ymul,self.zmax,self.nrot)
+
     def closeEvent(self, event) :
         QApplication.closeAllWindows()
     
@@ -118,10 +121,12 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     xmul = 1
     ymul = 3
+    zmax = 1
     nrot = 1
     nargs = len(sys.argv)
-    if nargs >= 2: a = float(sys.argv[1])
-    if nargs >= 3: b = float(sys.argv[2])
-    if nargs >= 4: c = float(sys.argv[3])
-    viewer = Viewer(xmul,ymul,nrot)
+    if nargs >= 2: xmul = float(sys.argv[1])
+    if nargs >= 3: ymul = float(sys.argv[2])
+    if nargs >= 4: zmax = float(sys.argv[3])
+    if nargs >= 5: nrot = float(sys.argv[4])
+    viewer = Viewer(xmul,ymul,zmax,nrot)
     sys.exit(app.exec_())
