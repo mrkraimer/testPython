@@ -17,22 +17,45 @@ class Heart() :
         rmax = 2*np.pi*nrot
         dr = rmax/npts
         t = np.arange(0, rmax, dr)
-        limit = xmax
-        if ymax>xmax : limit = ymax
-        plt.xlim(-limit,limit)
-        plt.ylim(-limit,limit)
         x = xmax*(1.0 - np.cos(t)*np.cos(t))*np.sin(t)
         y = ymax*(1.0 - np.cos(t)*np.cos(t)*np.cos(t))*np.cos(t)
         z = np.arange(0, zmax, zmax/npts)
         fig = plt.figure()
         plt.close('all')
-        ax = plt.axes(projection='3d')
+        
+        fig = plt.figure(figsize=(12,4))
+        ax = fig.add_subplot(131,projection='3d')
         ax.set_xlabel("x")
         ax.set_ylabel("y")
         ax.set_zlabel("z")
         ax.set_title("heart")
         ax.plot3D(x, y, z, 'black')
+
+        dx = np.gradient(x)
+        dy = np.gradient(y)
+        dz = np.gradient(z)
+        d2x = np.gradient(dx)
+        d2y = np.gradient(dy)
+        d2z = np.gradient(dz)
+        
+        num = (d2z*dy - d2y*dz)**2 + (d2x*dz - d2z*dx)**2 +(d2y*dx - d2x*dy)**2
+        num = num**(1/2)
+
+        deom = (dx*dx + dy*dy + dz*dz)
+        deom = deom**(3/2)
+        curvature = num/deom
+        ax = fig.add_subplot(132)
+        ax.set_title('curvature')
+        ax.set(xlabel="radians")
+        ax.plot(t,curvature)
+        
+        radius = 1/curvature
+        ax = fig.add_subplot(133)
+        ax.set_title('radius of curvature')
+        ax.set(xlabel="radians")
+        ax.plot(t,radius)
         plt.show()
+        
 
 class Viewer(QWidget) :
     def __init__(self,xmax,ymax,zmax,nrot,parent=None):

@@ -18,19 +18,19 @@ class Spiral() :
         rmax = 2*np.pi*nrot
         dr = rmax/npts
         t = np.arange(0, rmax, dr)
-        limit = xmax
-        if ymax>xmax : limit = ymax
-        plt.xlim(-limit,limit)
-        plt.ylim(-limit,limit)
         maxx = xmax/rmax
         x = maxx*t*np.cos(t)
         maxy = ymax/rmax
         y = maxy*t*np.sin(t)
-        plt.plot(x, y)
-        plt.xlabel("value")
-        plt.title("spiral")
 
-        f, ax = plt.subplots()
+        fig = plt.figure(figsize=(12,4))
+        ax = fig.add_subplot(131)
+        ax.set_xlabel("x")
+        ax.set_ylabel("y")
+        ax.set_title("spiral")
+        ax.plot(x,y)
+
+        ax = fig.add_subplot(132)
         dx = np.gradient(x)
         dy = np.gradient(y)
         d2x = np.gradient(dx)
@@ -43,7 +43,7 @@ class Spiral() :
         ax.set(xlabel="radians")
       
         radius = 1/curvature
-        f, ax = plt.subplots()
+        ax = fig.add_subplot(133)
         ax.plot(t,radius)
         ax.set_title('radius of curvature')
         ax.set(xlabel="radians")

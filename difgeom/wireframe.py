@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import numpy as np
-from mpl_toolkits.mplot3d import axes3d
 import matplotlib.pyplot as plt
 import sys
 from PyQt5.QtWidgets import QApplication

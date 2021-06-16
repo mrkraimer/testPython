@@ -18,17 +18,17 @@ class Clover() :
         rmax = 2*np.pi
         dr = rmax/npts
         t = np.arange(0, rmax, dr)
-        limit = xmax
-        if ymax>xmax : limit = ymax
-        plt.xlim(-limit,limit)
-        plt.ylim(-limit,limit)
         x = xmax*np.sin(nrot*t)*np.cos(t)
         y = ymax*np.sin(nrot*t)*np.sin(t)
-        plt.plot(x, y)
-        plt.xlabel("value")
-        plt.title("clover")
+        
+        fig = plt.figure(figsize=(12,4))
+        ax = fig.add_subplot(131)
+        ax.set_xlabel("x")
+        ax.set_ylabel("y")
+        ax.set_title("clover")
+        ax.plot(x,y)
 
-        f, ax = plt.subplots()
+        ax = fig.add_subplot(132)
         dx = np.gradient(x)
         dy = np.gradient(y)
         d2x = np.gradient(dx)
@@ -41,7 +41,7 @@ class Clover() :
         ax.set(xlabel="radians")
       
         radius = 1/curvature
-        f, ax = plt.subplots()
+        ax = fig.add_subplot(133)
         ax.plot(t,radius)
         ax.set_title('radius of curvature')
         ax.set(xlabel="radians")

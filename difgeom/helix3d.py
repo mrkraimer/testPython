@@ -18,15 +18,12 @@ class Helix() :
         rmax = 2*np.pi*nrot
         dr = rmax/npts
         t = np.arange(0, rmax, dr)
-        limit = xmax
-        if ymax>xmax : limit = ymax
-        plt.xlim(-limit,limit)
-        plt.ylim(-limit,limit)
         x = xmax*np.cos(t)
         y = ymax*np.sin(t)
         z = np.arange(0, zmax, zmax/npts)
          
-        fig, ax = plt.subplots(ncols=1,tight_layout=True,subplot_kw={"projection": "3d"})
+        fig = plt.figure(figsize=(12,4))
+        ax = fig.add_subplot(131,projection='3d')
         ax.set_xlabel("x")
         ax.set_ylabel("y")
         ax.set_zlabel("z")
@@ -45,16 +42,15 @@ class Helix() :
         deom = (dx*dx + dy*dy + dz*dz)
         deom = deom**(3/2)
         curvature = num/deom
-        f, ax1 = plt.subplots()
-        ax1.plot(t,curvature)
-        ax1.set_title('curvature')
-        ax1.set(xlabel="radians")
+        ax = fig.add_subplot(132)
+        ax.plot(t,curvature)
+        ax.set_title('curvature')
+        ax.set(xlabel="radians")
         radius = 1/curvature
-        f, ax = plt.subplots()
+        ax = fig.add_subplot(133)
         ax.plot(t,radius)
         ax.set_title('radius of curvature')
         ax.set(xlabel="radians")
-        plt.close(1)
         plt.show()
 
 class Viewer(QWidget) :
