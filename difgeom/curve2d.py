@@ -9,14 +9,12 @@ from PyQt5.QtWidgets import QPushButton,QHBoxLayout
 from PyQt5.QtWidgets import QListWidget
 
 class Clover() :
-    def __init__(self,xmax,ymax,nrot,parent=None):
-        # r is radians
-        self.npts = 500
+    def __init__(self,npts,xmax,ymax,nrot,parent=None):
         self.xmax = xmax
         self.ymax = ymax
         self.nrot = nrot
         self.rmax = 2*np.pi
-        self.dr = self.rmax/self.npts
+        self.dr = self.rmax/npts
     def gett(self): 
         self.t = np.arange(0, self.rmax, self.dr)
         return self.t
@@ -26,17 +24,14 @@ class Clover() :
     def gety(self): 
         y =  self.ymax*np.sin(self.nrot*self.t)*np.sin(self.t)
         return y
-    def getTitle(self) : return 'clover'    
 
 class Elipse() :
-    def __init__(self,xmax,ymax,nrot,parent=None):
-        # r is radians
-        self.npts = 500
+    def __init__(self,npts,xmax,ymax,nrot,parent=None):
         self.xmax = xmax
         self.ymax = ymax
         self.nrot = nrot
         self.rmax = 2*np.pi*nrot
-        self.dr = self.rmax/self.npts
+        self.dr = self.rmax/npts
     def gett(self): 
         self.t = np.arange(0, self.rmax, self.dr)
         return self.t
@@ -46,18 +41,14 @@ class Elipse() :
     def gety(self): 
         y =  self.ymax*np.sin(self.t)
         return y
-    def getTitle(self) : return 'clover'    
-    
 
 class Figure8() :
-    def __init__(self,xmax,ymax,nrot,parent=None):
-        # r is radians
-        self.npts = 500
+    def __init__(self,npts,xmax,ymax,nrot,parent=None):
         self.xmax = xmax
         self.ymax = ymax
         self.nrot = nrot
         self.rmax = 2*np.pi
-        self.dr = self.rmax/self.npts
+        self.dr = self.rmax/npts
     def gett(self): 
         self.t = np.arange(0, self.rmax, self.dr)
         return self.t
@@ -67,18 +58,14 @@ class Figure8() :
     def gety(self): 
         y =  self.ymax*np.sin(self.t)
         return y
-    def getTitle(self) : return 'clover'    
-
 
 class Heart() :
-    def __init__(self,xmax,ymax,nrot,parent=None):
-        # r is radians
-        self.npts = 500
+    def __init__(self,npts,xmax,ymax,nrot,parent=None):
         self.xmax = xmax
         self.ymax = ymax
         self.nrot = nrot
         self.rmax = 2*np.pi*nrot
-        self.dr = self.rmax/self.npts
+        self.dr = self.rmax/npts
     def gett(self): 
         self.t = np.arange(0, self.rmax, self.dr)
         return self.t
@@ -88,18 +75,14 @@ class Heart() :
     def gety(self): 
         y =  self.ymax*(1.0 - np.cos(self.t)*np.cos(self.t)*np.cos(self.t))*np.cos(self.t)
         return y
-    def getTitle(self) : return 'clover'    
-    
 
 class Lissajous() :
-    def __init__(self,xmax,ymax,nrot,parent=None):
-        # r is radians
-        self.npts = 500
+    def __init__(self,npts,xmax,ymax,nrot,parent=None):
         self.xmax = xmax
         self.ymax = ymax
         self.nrot = nrot
         self.rmax = 2*np.pi*nrot
-        self.dr = self.rmax/self.npts
+        self.dr = self.rmax/npts
     def gett(self): 
         self.t = np.arange(0, self.rmax, self.dr)
         return self.t
@@ -109,18 +92,14 @@ class Lissajous() :
     def gety(self): 
         y =  np.cos(self.ymax*self.t)
         return y
-    def getTitle(self) : return 'clover'    
 
-        
 class Spiral() :
-    def __init__(self,xmax,ymax,nrot,parent=None):
-        # r is radians
-        self.npts = 500
+    def __init__(self,npts,xmax,ymax,nrot,parent=None):
         self.xmax = xmax
         self.ymax = ymax
         self.nrot = nrot
         self.rmax = 2*np.pi*nrot
-        self.dr = self.rmax/self.npts
+        self.dr = self.rmax/npts
     def gett(self): 
         self.t = np.arange(0, self.rmax, self.dr)
         return self.t
@@ -132,9 +111,6 @@ class Spiral() :
         maxy = self.ymax/self.rmax
         y = maxy*self.t*np.sin(self.t)
         return y
-    def getTitle(self) : return 'clover'    
-
-
 
 class CurveDraw() :
     def __init__(self):
@@ -161,6 +137,9 @@ class CurveDraw() :
         num = np.absolute(dx*d2y - d2x*dy)
         deom = (dx*dx + dy*dy)**(3/2)
         curvature = num/deom
+        for i in range(0,len(curvature)) :
+            if curvature[i]<.1 : curvature[i] = .1
+            if curvature[i]>10.0 : curvature[i] = 10.0
         ax.plot(t,curvature)
         ax.set_title("curvature")
         ax.set(xlabel="radians")
@@ -172,9 +151,23 @@ class CurveDraw() :
         ax.set(xlabel="radians")
         plt.show()
 
+class ChooseCurve(QListWidget) :
+    def __init__(self,curveNames,callback,parent=None):
+        super(QListWidget, self).__init__(parent)
+        self.curveNames = curveNames
+        self.callback = callback
+        self.addItems(self.curveNames)
+        self.setEnabled(True)
+        self.itemClicked.connect(self.curveChoiceEvent)
+    def curveChoiceEvent(self,item) :
+        self.callback(item) 
+         
+
+
 class Viewer(QWidget) :
     def __init__(self,parent=None):
         super(QWidget, self).__init__(parent)
+        self.npts = 1000
         self.curves = [Clover,Elipse,Figure8,Heart,Lissajous,Spiral]
         self.curveNames = ["clover","elipse","figure8","heart","lissajous","spiral"]
         self.xmaxInit= [1,1,1,1,2,1]
@@ -189,11 +182,10 @@ class Viewer(QWidget) :
         self.displayButton.setEnabled(True)
         self.displayButton.clicked.connect(self.display)
 
-        curveChoiceLabel = QLabel("curve:")
-        self.curveChoice = QListWidget()
-        self.curveChoice.addItems(self.curveNames)
-        self.curveChoice.setEnabled(True)
-        self.curveChoice.itemClicked.connect(self.curveChoiceEvent)
+        self.chooseCurve = ChooseCurve(self.curveNames,self.curveChoiceEvent)
+        self.chooseCurveButton = QPushButton('chooseCurve')
+        self.chooseCurveButton.setEnabled(True)
+        self.chooseCurveButton.clicked.connect(self.chooseCurveEvent)
 
         xmaxLabel = QLabel("xmax:")
         self.xmaxText = QLineEdit()
@@ -214,8 +206,7 @@ class Viewer(QWidget) :
         self.nrotText.editingFinished.connect(self.nrotEvent)
         
         box = QHBoxLayout()
-        box.addWidget(curveChoiceLabel)
-        box.addWidget(self.curveChoice)
+        box.addWidget(self.chooseCurveButton)
         box.addWidget(self.displayButton)
         box.addWidget(xmaxLabel)
         box.addWidget(self.xmaxText)
@@ -226,8 +217,12 @@ class Viewer(QWidget) :
         self.setLayout(box)
         self.show()
 
+    def chooseCurveEvent(self,item) :
+        self.chooseCurve.show()
+
     def curveChoiceEvent(self,item) :
         try:
+            self.chooseCurve.hide()
             value = item.text()
             for i in range(0,len(self.curveNames)) :
                 if self.curveNames[i]==value :
@@ -238,7 +233,7 @@ class Viewer(QWidget) :
                     self.xmaxText.setText(str(self.xmax))
                     self.ymaxText.setText(str(self.ymax))
                     self.nrotText.setText(str(self.nrot))
-                    return
+
             raise Exception('did not find choice')
         except Exception as error:
             print(str(error))        
@@ -263,7 +258,7 @@ class Viewer(QWidget) :
 
     def display(self):
         curve = self.curves[self.indCurve]
-        curve = curve(self.xmax,self.ymax,self.nrot)
+        curve = curve(self.npts,self.xmax,self.ymax,self.nrot)
         curveName = self.curveNames[self.indCurve]
         self.curveDraw.show(curve,curveName)
        
