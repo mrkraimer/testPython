@@ -215,6 +215,7 @@ class Viewer(QWidget) :
         box.addWidget(nrotLabel)
         box.addWidget(self.nrotText)
         self.setLayout(box)
+        self.move(10,10)
         self.show()
 
     def chooseCurveEvent(self,item) :
@@ -233,6 +234,7 @@ class Viewer(QWidget) :
                     self.xmaxText.setText(str(self.xmax))
                     self.ymaxText.setText(str(self.ymax))
                     self.nrotText.setText(str(self.nrot))
+                    return
 
             raise Exception('did not find choice')
         except Exception as error:
