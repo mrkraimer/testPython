@@ -113,11 +113,12 @@ class Spiral() :
         return y
 
 class CurveDraw() :
-    def __init__(self):
+    def __init__(self,parent=None):
         pass
  
-    def show(self,curve,curveName) : 
-        plt.close('all')
+    def draw(self,curve,curveName) :
+        print('CurveDraw.draw')
+        plt.close(None)
         t = curve.gett()
         x = curve.getx()
         y = curve.gety()
@@ -128,8 +129,7 @@ class CurveDraw() :
         ax.set_ylabel("y")
         ax.set_title(curveName)
         ax.plot(x,y)
-
-        ax = fig.add_subplot(132)
+        
         dx = np.gradient(x)
         dy = np.gradient(y)
         d2x = np.gradient(dx)
@@ -140,10 +140,12 @@ class CurveDraw() :
         for i in range(0,len(curvature)) :
             if curvature[i]<.1 : curvature[i] = .1
             if curvature[i]>10.0 : curvature[i] = 10.0
+
+        ax = fig.add_subplot(132)
         ax.plot(t,curvature)
         ax.set_title("curvature")
         ax.set(xlabel="radians")
-      
+        
         radius = 1/curvature
         ax = fig.add_subplot(133)
         ax.plot(t,radius)
@@ -177,7 +179,6 @@ class Viewer(QWidget) :
         self.xmax = self.xmaxInit[self.indCurve]
         self.ymax = self.ymaxInit[self.indCurve]
         self.nrot = self.nrotInit[self.indCurve]
-        self.curveDraw = CurveDraw()
         self.displayButton = QPushButton('display')
         self.displayButton.setEnabled(True)
         self.displayButton.clicked.connect(self.display)
@@ -214,6 +215,8 @@ class Viewer(QWidget) :
         box.addWidget(self.ymaxText)
         box.addWidget(nrotLabel)
         box.addWidget(self.nrotText)
+        self.curveDraw = CurveDraw()
+        #box.addWidget(self.curveDraw)
         self.setLayout(box)
         self.move(10,10)
         self.show()
@@ -262,7 +265,7 @@ class Viewer(QWidget) :
         curve = self.curves[self.indCurve]
         curve = curve(self.npts,self.xmax,self.ymax,self.nrot)
         curveName = self.curveNames[self.indCurve]
-        self.curveDraw.show(curve,curveName)
+        self.curveDraw.draw(curve,curveName)
        
     def closeEvent(self, event) :
         QApplication.closeAllWindows()
