@@ -146,8 +146,8 @@ class CurveDraw() :
     def __init__(self):
         pass
  
-    def show(self,curve,curveName) : 
-        plt.close('all')
+    def draw(self,curve,curveName) : 
+        plt.close(None)
         t = curve.gett()
         x = curve.getx()
         y = curve.gety()
@@ -315,7 +315,7 @@ class Viewer(QWidget) :
         curve = self.curves[self.indCurve]
         curve = curve(self.npts,self.xmax,self.ymax,self.zmax,self.nrot)
         curveName = self.curveNames[self.indCurve]
-        self.curveDraw.show(curve,curveName)
+        self.curveDraw.draw(curve,curveName)
        
     def closeEvent(self, event) :
         QApplication.closeAllWindows()
