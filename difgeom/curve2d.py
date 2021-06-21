@@ -113,11 +113,10 @@ class Spiral() :
         return y
 
 class CurveDraw() :
-    def __init__(self,parent=None):
+    def __init__(self):
         pass
- 
+
     def draw(self,curve,curveName) :
-        print('CurveDraw.draw')
         plt.close(None)
         t = curve.gett()
         x = curve.getx()
@@ -266,7 +265,7 @@ class Viewer(QWidget) :
         curve = curve(self.npts,self.xmax,self.ymax,self.nrot)
         curveName = self.curveNames[self.indCurve]
         self.curveDraw.draw(curve,curveName)
-       
+
     def closeEvent(self, event) :
         QApplication.closeAllWindows()
     
