@@ -153,7 +153,7 @@ class CurveDraw() :
         y = curve.gety()
         z = curve.getz()
         
-        fig = plt.figure(figsize=(12,4))
+        fig = plt.figure(1,figsize=(12,4))
         ax = fig.add_subplot(131,projection='3d')
         ax.set_xlabel("x")
         ax.set_ylabel("y")
@@ -186,6 +186,30 @@ class CurveDraw() :
         ax.set(xlabel="radians")
         plt.show()
 
+class DynamicDraw() :
+    def __init__(self,xmin,xmax,ymin,ymax,zmin,zmax,curveName):
+        plt.close(None)
+        self.fig = plt.figure(2,figsize=(4,4))
+        self.ax = self.fig.add_subplot(111,projection='3d')
+        self.ax.set_xlabel("x")
+        self.ax.set_ylabel("y")
+        self.ax.set_xlim(xmin,xmax)
+        self.ax.set_ylim(ymin,ymax)
+        self.ax.set_zlim(zmin,zmax)
+        self.ax.set_title(curveName)
+        plt.show()
+
+    def draw(self,curve,num) :
+        t = curve.gett()
+        x = curve.getx()
+        y = curve.gety()
+        z = curve.getz()
+        x = x[0:num]
+        y = y[0:num]
+        z = z[0:num]
+        self.ax.plot3D(x, y, z,'black')
+        plt.draw()
+        
 class ChooseCurve(QListWidget) :
     def __init__(self,curveNames,callback,parent=None):
         super(QListWidget, self).__init__(parent)
@@ -219,6 +243,10 @@ class Viewer(QWidget) :
         self.displayButton.setEnabled(True)
         self.displayButton.clicked.connect(self.display)
 
+        self.dynamicButton = QPushButton('dynamic')
+        self.dynamicButton.setEnabled(True)
+        self.dynamicButton.clicked.connect(self.dynamic)
+
         self.chooseCurve = ChooseCurve(self.curveNames,self.curveChoiceEvent)
         self.chooseCurveButton = QPushButton('chooseCurve')
         self.chooseCurveButton.setEnabled(True)
@@ -251,6 +279,7 @@ class Viewer(QWidget) :
         box = QHBoxLayout()
         box.addWidget(self.chooseCurveButton)
         box.addWidget(self.displayButton)
+        box.addWidget(self.dynamicButton)
         box.addWidget(xmaxLabel)
         box.addWidget(self.xmaxText)
         box.addWidget(ymaxLabel)
@@ -316,6 +345,26 @@ class Viewer(QWidget) :
         curve = curve(self.npts,self.xmax,self.ymax,self.zmax,self.nrot)
         curveName = self.curveNames[self.indCurve]
         self.curveDraw.draw(curve,curveName)
+
+    def dynamic(self):
+        curve = self.curves[self.indCurve]
+        curve = curve(self.npts,self.xmax,self.ymax,self.zmax,self.nrot)
+        curveName = self.curveNames[self.indCurve]
+        t = curve.gett()
+        x = curve.getx()
+        y = curve.gety()
+        z = curve.getz()
+        xmin = x.min()
+        xmax = x.max()
+        ymin = y.min()
+        ymax = y.max()
+        zmin = z.min()
+        zmax = z.max()
+        dynamicDraw = DynamicDraw(xmin,xmax,ymin,ymax,zmin,zmax,curveName)
+        inc = 8
+        for i in range(inc,self.npts,inc) :
+            QApplication.processEvents()
+            dynamicDraw.draw(curve,i)
 
     def closeEvent(self, event) :
         QApplication.closeAllWindows()

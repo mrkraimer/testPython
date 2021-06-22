@@ -152,7 +152,6 @@ class CurveDraw() :
         ax.set(xlabel="radians")
         plt.show()
 
-
 class DynamicDraw() :
     def __init__(self,xmin,xmax,ymin,ymax,curveName):
         plt.close(None)
@@ -171,7 +170,7 @@ class DynamicDraw() :
         y = curve.gety()
         x = x[0:num]
         y = y[0:num]
-        self.ax.plot(x,y)
+        self.ax.plot(x,y,'black')
         plt.draw()
 
 class ChooseCurve(QListWidget) :
