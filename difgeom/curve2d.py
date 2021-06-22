@@ -2,14 +2,14 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import sys
+import sys,time
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QWidget,QLabel,QLineEdit
 from PyQt5.QtWidgets import QPushButton,QHBoxLayout
 from PyQt5.QtWidgets import QListWidget
 
 class Clover() :
-    def __init__(self,npts,xmax,ymax,nrot,parent=None):
+    def __init__(self,npts,xmax,ymax,nrot,):
         self.xmax = xmax
         self.ymax = ymax
         self.nrot = nrot
@@ -122,7 +122,7 @@ class CurveDraw() :
         x = curve.getx()
         y = curve.gety()
         
-        fig = plt.figure(figsize=(12,4))
+        fig = plt.figure(1,figsize=(12,4))
         ax = fig.add_subplot(131)
         ax.set_xlabel("x")
         ax.set_ylabel("y")
@@ -152,6 +152,28 @@ class CurveDraw() :
         ax.set(xlabel="radians")
         plt.show()
 
+
+class DynamicDraw() :
+    def __init__(self,xmin,xmax,ymin,ymax,curveName):
+        plt.close(None)
+        self.fig = plt.figure(2,figsize=(4,4))
+        self.ax = self.fig.add_subplot(111)
+        self.ax.set_xlabel("x")
+        self.ax.set_ylabel("y")
+        self.ax.set_xlim(xmin,xmax)
+        self.ax.set_ylim(ymin,ymax)
+        self.ax.set_title(curveName)
+        plt.show()
+
+    def draw(self,curve,num) :
+        t = curve.gett()
+        x = curve.getx()
+        y = curve.gety()
+        x = x[0:num]
+        y = y[0:num]
+        self.ax.plot(x,y)
+        plt.draw()
+
 class ChooseCurve(QListWidget) :
     def __init__(self,curveNames,callback,parent=None):
         super(QListWidget, self).__init__(parent)
@@ -178,9 +200,14 @@ class Viewer(QWidget) :
         self.xmax = self.xmaxInit[self.indCurve]
         self.ymax = self.ymaxInit[self.indCurve]
         self.nrot = self.nrotInit[self.indCurve]
+
         self.displayButton = QPushButton('display')
         self.displayButton.setEnabled(True)
         self.displayButton.clicked.connect(self.display)
+
+        self.dynamicButton = QPushButton('dynamic')
+        self.dynamicButton.setEnabled(True)
+        self.dynamicButton.clicked.connect(self.dynamic)
 
         self.chooseCurve = ChooseCurve(self.curveNames,self.curveChoiceEvent)
         self.chooseCurveButton = QPushButton('chooseCurve')
@@ -208,6 +235,7 @@ class Viewer(QWidget) :
         box = QHBoxLayout()
         box.addWidget(self.chooseCurveButton)
         box.addWidget(self.displayButton)
+        box.addWidget(self.dynamicButton)
         box.addWidget(xmaxLabel)
         box.addWidget(self.xmaxText)
         box.addWidget(ymaxLabel)
@@ -215,7 +243,6 @@ class Viewer(QWidget) :
         box.addWidget(nrotLabel)
         box.addWidget(self.nrotText)
         self.curveDraw = CurveDraw()
-        #box.addWidget(self.curveDraw)
         self.setLayout(box)
         self.move(10,10)
         self.show()
@@ -265,6 +292,23 @@ class Viewer(QWidget) :
         curve = curve(self.npts,self.xmax,self.ymax,self.nrot)
         curveName = self.curveNames[self.indCurve]
         self.curveDraw.draw(curve,curveName)
+
+    def dynamic(self):
+        curve = self.curves[self.indCurve]
+        curve = curve(self.npts,self.xmax,self.ymax,self.nrot)
+        curveName = self.curveNames[self.indCurve]
+        t = curve.gett()
+        x = curve.getx()
+        y = curve.gety()
+        xmin = x.min()
+        xmax = x.max()
+        ymin = y.min()
+        ymax = y.max()
+        dynamicDraw = DynamicDraw(xmin,xmax,ymin,ymax,curveName)
+        inc = 4
+        for i in range(inc,self.npts,inc) :
+            QApplication.processEvents()
+            dynamicDraw.draw(curve,i)
 
     def closeEvent(self, event) :
         QApplication.closeAllWindows()
