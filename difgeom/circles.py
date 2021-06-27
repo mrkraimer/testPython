@@ -33,8 +33,8 @@ class Circle() :
 if __name__ == "__main__":
     circle = Circle(1000,1.01)
     n = 3
-    xoffset = [0.0,0.5,-0.5]
-    yoffset = [0.0,0.5,0.5]
+    xoffset = [0.0,0.4,-0.4]
+    yoffset = [-0.1,0.4,0.4]
     for i in range(0,n) :
-        circle.draw(xoffset[i],yoffset[i],.5)
+        circle.draw(xoffset[i],yoffset[i],.6)
     circle.display()    
