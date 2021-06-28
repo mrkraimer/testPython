@@ -17,14 +17,10 @@ class Circle() :
         self.ax.spines['bottom'].set_visible(False)
         self.ax.set_xlim(-size,size)
         self.ax.set_ylim(-size,size)
-        self.tmax = 2*np.pi
-        self.dt = self.tmax/npts
-        self.t = np.arange(0, self.tmax, self.dt)
 
-    def draw(self,radius) :
-        x =  radius*np.cos(self.t)
-        y =  radius*np.sin(self.t)
-        self.ax.plot(x,y,'black')
+    def draw(self,radius,color) :
+        circle = plt.Circle((0,0),radius,facecolor='None', edgecolor=color, lw=3)
+        self.ax.add_patch(circle)
 
     def display(self) :
         plt.show()
@@ -33,6 +29,8 @@ class Circle() :
 if __name__ == "__main__":
     circle = Circle(1000,1.01)
     n = 3
-    for i in range(1,n+1) :
-        circle.draw(float(i/n))
+    color = ['r','g','b']
+    circle.draw(.03,'k')
+    for i in range(n) :
+        circle.draw(float((i+1)/n),color[i])
     circle.display()    
