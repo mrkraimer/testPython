@@ -3,7 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-import sys
+import sys,getopt
 
 class Parabola() :
     def __init__(self,npts,size):
@@ -58,6 +58,15 @@ class Parabola() :
 if __name__ == "__main__":
     nargs = len(sys.argv)
     arg = 'all'
+    try:
+      opts = getopt.getopt(sys.argv[1:],"help")
+    except getopt.GetoptError:
+      sys.exit(2)
+    opts = opts[0]
+    for opt in opts:
+       if opt[0] == '-h':
+          print('vb or vt or hr or hl or all : default all')
+          sys.exit()
     if nargs>=2 :
         arg = sys.argv[1]
     parabola = Parabola(1000,1.01)
