@@ -3,7 +3,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-import sys,getopt
+import sys
+import argparse
 
 class Parabola() :
     def __init__(self,npts,size):
@@ -56,28 +57,23 @@ class Parabola() :
         
 
 if __name__ == "__main__":
-    nargs = len(sys.argv)
-    arg = 'all'
-    try:
-      opts = getopt.getopt(sys.argv[1:],"help")
-    except getopt.GetoptError:
-      sys.exit(2)
-    opts = opts[0]
-    for opt in opts:
-       if opt[0] == '-h':
-          print('vb or vt or hr or hl or all : default all')
-          sys.exit()
-    if nargs>=2 :
-        arg = sys.argv[1]
+    parser = argparse.ArgumentParser(description='vb or vt or hr or hl or all : default all')
+    parser.add_argument('-vb', action="store_true")
+    parser.add_argument('-vt', action="store_true")
+    parser.add_argument('-hr', action="store_true")
+    parser.add_argument('-hl', action="store_true")
+    args = parser.parse_args()
+    if not(args.vb) and not(args.vt) and not(args.hr) and not(args.hr) :
+        args.vb = True; args.vt = True; args.hr = True; args.hl = True;
     parabola = Parabola(1000,1.01)
-    if arg=='all' or arg=='vb' :
-        parabola.drawVertical(True,'k')
-    if arg=='all' or arg=='vt' :
-        parabola.drawVertical(False,'k')
-    if arg=='all' or arg=='hr' :
-        parabola.drawHorizontalRight(True,'r')
-        parabola.drawHorizontalRight(False,'r')
-    if arg=='all' or arg=='hl' :
-        parabola.drawHorizontalLeft(True,'r')
-        parabola.drawHorizontalLeft(False,'r')
+    if args.vb :
+        parabola.drawVertical(True,'dimgray')
+    if args.vt : 
+        parabola.drawVertical(False,'black')
+    if args.hr :    
+        parabola.drawHorizontalRight(True,'salmon')
+        parabola.drawHorizontalRight(False,'red')
+    if args.hl : 
+        parabola.drawHorizontalLeft(True,'lime')
+        parabola.drawHorizontalLeft(False,'green')
     parabola.display()    
