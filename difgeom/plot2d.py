@@ -129,6 +129,22 @@ class Parabola() :
         y=self.ymax*self.x**2
         return y
 
+
+class Hyperbola() :
+    def __init__(self,npts,xmax,ymax,nrot,parent=None):
+        self.xmax = xmax
+        self.ymax = ymax
+        self.npts = npts
+        self.t = np.linspace(-self.xmax,self.xmax,self.npts)
+    def gett(self): 
+        return self.t
+    def getx(self):
+        self.x = self.t
+        return self.x
+    def gety(self):
+        y = np.sqrt((self.x*self.x + .4*.4))
+        return y
+
 class CurveDraw() :
     def __init__(self):
         mpl.rcParams['toolbar'] = 'None' 
@@ -207,11 +223,11 @@ class Viewer(QWidget) :
     def __init__(self,parent=None):
         super(QWidget, self).__init__(parent)
         self.npts = 1000
-        self.curves = [Clover,Elipse,Figure8,Heart,Lissajous,Spiral,Parabola]
-        self.curveNames = ["clover","elipse","figure8","heart","lissajous","spiral","parabola"]
-        self.xmaxInit= [1,1,1,1,2,1,1]
-        self.ymaxInit= [1,1,1,1,3,1,1]
-        self.nrotInit= [3,1,1,1,1,1,1]
+        self.curves = [Clover,Elipse,Figure8,Heart,Lissajous,Spiral,Parabola,Hyperbola]
+        self.curveNames = ["clover","elipse","figure8","heart","lissajous","spiral","parabola","hyperbola"]
+        self.xmaxInit= [1,1,1,1,2,1,1,1]
+        self.ymaxInit= [1,1,1,1,3,1,1,1]
+        self.nrotInit= [3,1,1,1,1,1,1,1]
         self.indCurve = 0;
         self.xmax = self.xmaxInit[self.indCurve]
         self.ymax = self.ymaxInit[self.indCurve]
