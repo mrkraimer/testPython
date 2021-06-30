@@ -6,7 +6,7 @@ import matplotlib as mpl
 import sys
 import argparse
 
-class Parabola() :
+class Hyperbola() :
     def __init__(self,npts,size):
         mpl.rcParams['toolbar'] = 'None'
         self.size = size
@@ -22,58 +22,63 @@ class Parabola() :
         self.ax.set_xlim(-size,size)
         self.ax.set_ylim(-size,size)
 
-    def drawVertical(self,invert,color) :
+    def drawVertical(self,invert,offset,color) :
         self.t = np.linspace(-self.size,self.size,self.npts)
         self.x = self.t
         if not invert :
-            self.y = self.size*self.x**2
+            self.y = np.sqrt((self.x*self.x + offset*offset))
         else :
-            self.y = -self.size*self.x**2
+            self.y = -np.sqrt((self.x*self.x + offset*offset))
         self.ax.plot(self.x,self.y,color)
 
-    def drawHorizontalRight(self,invert,color) :
+    def drawHorizontalRight(self,invert,offset,color) :
         if not invert :
             self.t = np.linspace(0,self.size,self.npts)
             self.y = self.t
-            self.x = self.size*self.t**2
+            self.x = np.sqrt((self.y*self.y + offset*offset))
         else :
             self.t = np.linspace(0,self.size,self.npts)
             self.y = -self.t
-            self.x = self.size*self.t**2
+            self.x = np.sqrt((self.y*self.y + offset*offset))
         self.ax.plot(self.x,self.y,color)
 
-    def drawHorizontalLeft(self,invert,color) :
+    def drawHorizontalLeft(self,invert,offset,color) :
         if not invert :
             self.t = np.linspace(-self.size,0,self.npts)
             self.y = self.t
-            self.x = -self.size*self.t**2
+            self.x = -np.sqrt((self.y*self.y + offset*offset))
         else :
             self.t = np.linspace(-self.size,0,self.npts)
             self.y = -self.t
-            self.x = -self.size*self.t**2
+            self.x = -np.sqrt((self.y*self.y + offset*offset))
         self.ax.plot(self.x,self.y,color)
     def display(self) :
         plt.show()
         
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='-vb -vt -hr -hl : default all')
+    parser = argparse.ArgumentParser(description='offset -vb -vt -hr -hl : default all')
+    parser.add_argument('offset', action="store")
     parser.add_argument('-vb', action="store_true")
     parser.add_argument('-vt', action="store_true")
     parser.add_argument('-hr', action="store_true")
     parser.add_argument('-hl', action="store_true")
     args = parser.parse_args()
+    offset = float(args.offset)
+    if offset<.1 or offset>.8 :
+        print('offset must be between .1 and .8')
+        exit()
     if not(args.vb) and not(args.vt) and not(args.hr) and not(args.hr) :
         args.vb = True; args.vt = True; args.hr = True; args.hl = True;
-    parabola = Parabola(1000,1.01)
+    hyperbola = Hyperbola(1000,1.01)
     if args.vb :
-        parabola.drawVertical(True,'dimgray')
+        hyperbola.drawVertical(True,offset,'dimgray')
     if args.vt : 
-        parabola.drawVertical(False,'black')
+        hyperbola.drawVertical(False,offset,'black')
     if args.hr :    
-        parabola.drawHorizontalRight(True,'salmon')
-        parabola.drawHorizontalRight(False,'red')
+        hyperbola.drawHorizontalRight(True,offset,'salmon')
+        hyperbola.drawHorizontalRight(False,offset,'red')
     if args.hl : 
-        parabola.drawHorizontalLeft(True,'lime')
-        parabola.drawHorizontalLeft(False,'green')
-    parabola.display()    
+        hyperbola.drawHorizontalLeft(True,offset,'lime')
+        hyperbola.drawHorizontalLeft(False,offset,'green')
+    hyperbola.display()    
