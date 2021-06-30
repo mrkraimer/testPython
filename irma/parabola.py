@@ -57,7 +57,7 @@ class Parabola() :
         
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='vb or vt or hr or hl or all : default all')
+    parser = argparse.ArgumentParser(description='-vb -vt -hr -hl : default all')
     parser.add_argument('-vb', action="store_true")
     parser.add_argument('-vt', action="store_true")
     parser.add_argument('-hr', action="store_true")
