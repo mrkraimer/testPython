@@ -135,6 +135,7 @@ class Hyperbola() :
         self.xmax = xmax
         self.ymax = ymax
         self.npts = npts
+        self.offset = .2*.2
         self.t = np.linspace(-self.xmax,self.xmax,self.npts)
     def gett(self): 
         return self.t
@@ -142,7 +143,7 @@ class Hyperbola() :
         self.x = self.t
         return self.x
     def gety(self):
-        y = np.sqrt((self.x*self.x + .4*.4))
+        y = np.sqrt((self.x*self.x + self.offset))
         return y
 
 class CurveDraw() :
@@ -332,11 +333,7 @@ class Viewer(QWidget) :
         t = curve.gett()
         x = curve.getx()
         y = curve.gety()
-        xmin = x.min()
-        xmax = x.max()
-        ymin = y.min()
-        ymax = y.max()
-        dynamicDraw = DynamicDraw(xmin,xmax,ymin,ymax,curveName)
+        dynamicDraw = DynamicDraw(-self.xmax,self.xmax,-self.ymax,self.ymax,curveName)
         inc = 4
         for i in range(inc,self.npts,inc) :
             QApplication.processEvents()
