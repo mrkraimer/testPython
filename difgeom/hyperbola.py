@@ -13,12 +13,6 @@ class Hyperbola() :
         self.npts = npts
         self.fig = plt.figure(figsize=(8,8))
         self.ax = self.fig.add_subplot()
-        #self.ax.xaxis.set_visible(False)
-        #self.ax.yaxis.set_visible(False)
-        #self.ax.spines['top'].set_visible(False)
-        #self.ax.spines['right'].set_visible(False)
-        #self.ax.spines['left'].set_visible(False)
-        #self.ax.spines['bottom'].set_visible(False)
         self.ax.set_xlim(-size,size)
         self.ax.set_ylim(-size,size)
 
@@ -52,6 +46,15 @@ class Hyperbola() :
             self.y = -self.t
             self.x = -np.sqrt((self.y*self.y + offset*offset))
         self.ax.plot(self.x,self.y,color)
+
+    def drawAxis(self) :
+        x = (-self.size,self.size)
+        y = (-self.size,self.size)
+        self.ax.plot(x,y,'black',linestyle = 'dotted')
+        x = (self.size,-self.size)
+        y = (-self.size,self.size)
+        self.ax.plot(x,y,'black',linestyle = 'dotted')
+
     def display(self) :
         plt.show()
         
@@ -65,20 +68,21 @@ if __name__ == "__main__":
     parser.add_argument('-hl', action="store_true")
     args = parser.parse_args()
     offset = float(args.offset)
-    if offset<.1 or offset>.8 :
-        print('offset must be between .1 and .8')
+    if offset<0 or offset>1 :
+        print('offset must be between 0 and 1')
         exit()
     if not(args.vb) and not(args.vt) and not(args.hr) and not(args.hr) :
         args.vb = True; args.vt = True; args.hr = True; args.hl = True;
     hyperbola = Hyperbola(1000,1.01)
     if args.vb :
-        hyperbola.drawVertical(True,offset,'dimgray')
+        hyperbola.drawVertical(True,offset,'darkblue')
     if args.vt : 
-        hyperbola.drawVertical(False,offset,'black')
-    if args.hr :    
-        hyperbola.drawHorizontalRight(True,offset,'salmon')
+        hyperbola.drawVertical(False,offset,'blue')
+    if args.hr :
+        hyperbola.drawHorizontalRight(True,offset,'darkred')
         hyperbola.drawHorizontalRight(False,offset,'red')
-    if args.hl : 
-        hyperbola.drawHorizontalLeft(True,offset,'lime')
+    if args.hl :
+        hyperbola.drawHorizontalLeft(True,offset,'limegreen')
         hyperbola.drawHorizontalLeft(False,offset,'green')
+    hyperbola.drawAxis()
     hyperbola.display()    

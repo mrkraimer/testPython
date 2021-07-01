@@ -13,12 +13,6 @@ class Parabola() :
         self.npts = npts
         self.fig = plt.figure(figsize=(8,8))
         self.ax = self.fig.add_subplot()
-        #self.ax.xaxis.set_visible(False)
-        #self.ax.yaxis.set_visible(False)
-        #self.ax.spines['top'].set_visible(False)
-        #self.ax.spines['right'].set_visible(False)
-        #self.ax.spines['left'].set_visible(False)
-        #self.ax.spines['bottom'].set_visible(False)
         self.ax.set_xlim(-size,size)
         self.ax.set_ylim(-size,size)
 
@@ -52,6 +46,13 @@ class Parabola() :
             self.y = -self.t
             self.x = -self.size*self.t**2
         self.ax.plot(self.x,self.y,color)
+
+    def drawAxis(self) :
+        points = (-self.size,self.size)
+        zeros = (0,0)
+        self.ax.plot(points,zeros,'black',linestyle = 'dotted')
+        self.ax.plot(zeros,points,'black',linestyle = 'dotted')
+
     def display(self) :
         plt.show()
         
@@ -67,13 +68,14 @@ if __name__ == "__main__":
         args.vb = True; args.vt = True; args.hr = True; args.hl = True;
     parabola = Parabola(1000,1.01)
     if args.vb :
-        parabola.drawVertical(True,'dimgray')
+        parabola.drawVertical(True,'darkblue')
     if args.vt : 
-        parabola.drawVertical(False,'black')
+        parabola.drawVertical(False,'blue')
     if args.hr :    
-        parabola.drawHorizontalRight(True,'salmon')
+        parabola.drawHorizontalRight(True,'darkred')
         parabola.drawHorizontalRight(False,'red')
     if args.hl : 
-        parabola.drawHorizontalLeft(True,'lime')
+        parabola.drawHorizontalLeft(True,'limegreen')
         parabola.drawHorizontalLeft(False,'green')
+    parabola.drawAxis()
     parabola.display()    
