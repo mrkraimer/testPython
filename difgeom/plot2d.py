@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import QPushButton,QHBoxLayout
 from PyQt5.QtWidgets import QListWidget
 
 class Clover() :
-    def __init__(self,npts,xmax,ymax,nrot,):
+    def __init__(self,npts,xmax,ymax,nrot):
         self.xmax = xmax
         self.ymax = ymax
         self.nrot = nrot
