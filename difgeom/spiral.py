@@ -18,10 +18,10 @@ class Spiral() :
         self.ax.spines['bottom'].set_visible(False)
         self.ax.set_xlim(-size,size)
         self.ax.set_ylim(-size,size)
-        self.rmax = 2*np.pi*10
-        self.dr = self.rmax/npts
 
-    def draw(self,xoffset,yoffset) :
+    def draw(self,xoffset,yoffset,rmax) :
+        self.rmax = 2*np.pi*rmax
+        self.dr = self.rmax/self.npts
         self.t = np.arange(0, self.rmax, self.dr)
         fact = 1.0/self.rmax
         x = fact*self.t*np.cos(self.t) + xoffset
@@ -37,6 +37,7 @@ if __name__ == "__main__":
     n = 5
     xoffset = [0,2,2,-2,-2]
     yoffset = [0,2,-2,2,-2]
+    rmax = [1,3,5,7,9]
     for i in range(n) :
-        spiral.draw(xoffset[i],yoffset[i])
+        spiral.draw(xoffset[i],yoffset[i],rmax[i])
     spiral.display()    

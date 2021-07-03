@@ -21,21 +21,30 @@ class Figure8() :
         self.rmax = 2*np.pi
         self.dr = self.rmax/npts
 
-    def draw(self,xoffset,yoffset) :
+    def drawVertical(self,xoffset,yoffset,xmax,ymax) :
         self.t = np.arange(0, self.rmax, self.dr)
-        x =  np.sin(self.t)*np.cos(self.t) + xoffset
-        y =  np.sin(self.t) + yoffset
+        x =  xmax*np.sin(self.t)*np.cos(self.t) + xoffset
+        y =  ymax*np.sin(self.t) + yoffset
         self.ax.plot(x,y,'black')
+
+    def drawHorizantal(self,xoffset,yoffset,xmax,ymax) :
+        self.t = np.arange(0, self.rmax, self.dr)
+        y =  xmax*np.sin(self.t)*np.cos(self.t) + yoffset
+        x =  ymax*np.sin(self.t) + xoffset
+        self.ax.plot(x,y,'lime')
 
     def display(self) :
         plt.show()
         
 
 if __name__ == "__main__":
-    figure8 = Figure8(1000,3)
+    figure8 = Figure8(1000,4)
     n = 5
-    xoffset = [0,2,2,-2,-2]
-    yoffset = [0,2,-2,2,-2]
+    xoffset = [0,2,-2, 2,-2]
+    yoffset = [0,2, 2,-2,-2]
+    xmax = [1.0,1.00,1.00,1.0,1.0]
+    ymax = [1.1,1.25,1.25,1.5,1.5]
     for i in range(n) :
-        figure8.draw(xoffset[i],yoffset[i])
+        figure8.drawVertical(xoffset[i],yoffset[i],xmax[i],ymax[i])
+        figure8.drawHorizantal(xoffset[i],yoffset[i],xmax[i],ymax[i])
     figure8.display()    

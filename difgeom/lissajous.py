@@ -21,10 +21,10 @@ class Lissajous() :
         self.rmax = 2*np.pi
         self.dr = self.rmax/npts
 
-    def draw(self,xoffset,yoffset) :
+    def draw(self,xoffset,yoffset,xfact,yfact) :
         self.t = np.arange(0, self.rmax, self.dr)
-        x = np.sin(2*self.t) + xoffset
-        y = np.cos(3*self.t) + yoffset
+        x = np.sin(xfact*self.t) + xoffset
+        y = np.cos(yfact*self.t) + yoffset
         self.ax.plot(x,y,'black')
 
     def display(self) :
@@ -36,6 +36,8 @@ if __name__ == "__main__":
     n = 5
     xoffset = [0,2,2,-2,-2]
     yoffset = [0,2,-2,2,-2]
+    xfact = [2,1,3,5,3]
+    yfact = [3,3,1,3,5]
     for i in range(n) :
-        lissajous.draw(xoffset[i],yoffset[i])
+        lissajous.draw(xoffset[i],yoffset[i],xfact[i],yfact[i])
     lissajous.display()    

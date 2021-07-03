@@ -21,10 +21,10 @@ class Clover() :
         self.rmax = 2*np.pi
         self.dr = self.rmax/npts
 
-    def draw(self,xoffset,yoffset) :
+    def draw(self,xoffset,yoffset,nrot) :
         self.t = np.arange(0, self.rmax, self.dr)
-        x = np.sin(3*self.t)*np.cos(self.t) + xoffset
-        y = np.sin(3*self.t)*np.sin(self.t) + yoffset
+        x = np.sin(nrot*self.t)*np.cos(self.t) + xoffset
+        y = np.sin(nrot*self.t)*np.sin(self.t) + yoffset
         self.ax.plot(x,y,'green')
 
     def display(self) :
@@ -36,6 +36,7 @@ if __name__ == "__main__":
     n = 5
     xoffset = [0,2,2,-2,-2]
     yoffset = [0,2,-2,2,-2]
+    nrot = [2,3,4,5,6]
     for i in range(n) :
-        clover.draw(xoffset[i],yoffset[i])
+        clover.draw(xoffset[i],yoffset[i],nrot[i])
     clover.display()    
