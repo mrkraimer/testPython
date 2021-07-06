@@ -128,7 +128,7 @@ class Spiral() :
         self.rmax = 2*np.pi*nrot
         self.dr = self.rmax/npts
     def gett(self): 
-        self.t = np.arange(0, self.rmax, self.dr)
+        self.t = np.arange(-self.rmax, self.rmax, self.dr)
         return self.t
     def getx(self):
         maxx = self.xmax/self.rmax
@@ -139,7 +139,7 @@ class Spiral() :
         y = maxy*self.t*np.sin(self.t)
         return y
     def getz(self): 
-        z =  np.arange(0, self.zmax, self.zmax/self.npts)
+        z =  np.arange(-1,1, 1/self.npts)
         return z    
 
 class CurveDraw() :
@@ -189,6 +189,7 @@ class CurveDraw() :
 class DynamicDraw() :
     def __init__(self,xmin,xmax,ymin,ymax,zmin,zmax,curveName):
         plt.close(None)
+        self.curveName = curveName
         self.fig = plt.figure(2,figsize=(4,4))
         self.ax = self.fig.add_subplot(111,projection='3d')
         self.ax.set_xlabel("x")
@@ -204,6 +205,7 @@ class DynamicDraw() :
         x = curve.getx()
         y = curve.gety()
         z = curve.getz()
+        if self.curveName == 'spiral' : num = num*2
         x = x[0:num]
         y = y[0:num]
         z = z[0:num]
@@ -232,7 +234,7 @@ class Viewer(QWidget) :
         self.xmaxInit= [1,1,1,1,2,1]
         self.ymaxInit= [1,1,1,1,3,1]
         self.zmaxInit= [1,1,1,1,1,1]
-        self.nrotInit= [3,1,1,1,1,1]
+        self.nrotInit= [3,1,1,1,1,8]
         self.indCurve = 0;
         self.xmax = self.xmaxInit[self.indCurve]
         self.ymax = self.ymaxInit[self.indCurve]
