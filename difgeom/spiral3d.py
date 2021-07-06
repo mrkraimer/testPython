@@ -10,26 +10,30 @@ class Spiral() :
         self.npts = npts
         self.fig = plt.figure(figsize=(8,8))
         self.ax = self.fig.add_subplot(111,projection='3d')
+        self.ax.set_xlabel("x")
+        self.ax.set_ylabel("y")
+        self.ax.set_zlabel("z")
 
     def draw(self,rmax) :
-        self.rmax = 2*np.pi*rmax
-        self.dr = self.rmax/self.npts
-        self.t = np.arange(0, self.rmax, self.dr)
-        fact = 1.0/self.rmax
-        x = fact*self.t*np.cos(self.t)
-        y = fact*self.t*np.sin(self.t)
+        rmax = 2*np.pi*rmax
+        dr = rmax/self.npts
+        fact = 2.0/rmax
+        t = np.arange(-rmax,0,dr)
+        x = fact*t*np.cos(t)
+        y = fact*t*np.sin(t)
+        z = np.arange(-1, 0,1/self.npts)
+        self.ax.plot3D(x,y,z,'lime')
+        t = np.arange(0, rmax, dr)
+        x = fact*t*np.cos(t)
+        y = fact*t*np.sin(t)
         z = np.arange(0, 1,1/self.npts)
         self.ax.plot3D(x,y,z,'red')
-        self.t = np.arange(-self.rmax,0, self.dr)
-        x = fact*self.t*np.cos(self.t)
-        y = fact*self.t*np.sin(self.t)
-        self.ax.plot3D(x,y,z,'lime')
 
     def display(self) :
         plt.show()
         
 
 if __name__ == "__main__":
-    spiral = Spiral(1000)
+    spiral = Spiral(500)
     spiral.draw(8)
     spiral.display()    
