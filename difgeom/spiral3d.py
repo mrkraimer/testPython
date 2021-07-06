@@ -18,16 +18,11 @@ class Spiral() :
         rmax = 2*np.pi*rmax
         dr = rmax/self.npts
         fact = 2.0/rmax
-        t = np.arange(-rmax,0,dr)
+        t = np.arange(-rmax,rmax,dr)
         x = fact*t*np.cos(t)
         y = fact*t*np.sin(t)
-        z = np.arange(-1, 0,1/self.npts)
+        z = np.arange(-1,1,1/self.npts)
         self.ax.plot3D(x,y,z,'lime')
-        t = np.arange(0, rmax, dr)
-        x = fact*t*np.cos(t)
-        y = fact*t*np.sin(t)
-        z = np.arange(0, 1,1/self.npts)
-        self.ax.plot3D(x,y,z,'red')
 
     def display(self) :
         plt.show()
