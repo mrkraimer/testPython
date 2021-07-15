@@ -139,7 +139,7 @@ class Spiral() :
         y = maxy*self.t*np.sin(self.t)
         return y
     def getz(self): 
-        z =  np.arange(-1,1, 1/self.npts)
+        z =  np.arange(-self.zmax, self.zmax, self.zmax/self.npts)
         return z    
 
 class CurveDraw() :
