@@ -1,0 +1,3 @@
+#!/bin/sh
+export PYTHONPATH=/home/epics7/modules/pvaPy/lib/python/3.9/linux-x86_64
+python putTime.py
