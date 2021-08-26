@@ -105,7 +105,7 @@ void MandelbrotRecord::createImage()
              double c[2] = {x,y};
              double z[2] = {0.0,0.0};
              int intensity =0;
-             for(int j=0; j<255; ++j)
+             for(int j=0; j<127; ++j)
              {
                  expzCalc(z,expz);
                  z[0] = z[0] + c[0];
@@ -114,7 +114,7 @@ void MandelbrotRecord::createImage()
                  if(absz>=2.0) break;
                  intensity += 1;
              }
-             intensity = 255 - intensity;
+             intensity = 127 - intensity;
              if(nz==1) {
                 // Color scheme is grayscale
                 value[indpix] = intensity;

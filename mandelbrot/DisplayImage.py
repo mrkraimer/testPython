@@ -22,8 +22,6 @@ from numpyImage import NumpyImage
 
 class CurrentValues() :
     def __init__(self,imagesize):
-        self.pixeltype = pixeltype = "uint8"
-        self.pixelmax = 256
         self.xmin = float(-2)
         self.xmax = float(1)
         self.ymin = float(-1.5)
